@@ -173,8 +173,7 @@ with tab2:
         - `buyer` - Buyer name
         - `notes` - Optional notes about the payment
         
-        Note: Bulk uploaded payments are not automatically allocated to sales.
-        You can manually allocate them later.
+        Payments will be automatically allocated to oldest outstanding sales first (FIFO).
         """)
         
         sample_data = pd.DataFrame({
@@ -200,23 +199,70 @@ with tab2:
             st.subheader("Preview of Uploaded Data")
             st.dataframe(df, use_container_width=True)
             
-            if st.button("Import All Rows", type="primary", key="import_payments"):
+            if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
                 count = 0
+                total_allocated_all = 0
+                total_unallocated_all = 0
+                
                 for _, row in df.iterrows():
+                    amount = float(row.get('amount_eur', 0))
+                    
+                    pending_sales = [s for s in sales if s.get('payment_status') != 'Paid']
+                    pending_sales_sorted = sorted(pending_sales, key=lambda x: x.get('contract_date', ''))
+                    
+                    allocation_data = []
+                    remaining = amount
+                    
+                    for sale in pending_sales_sorted:
+                        sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
+                        if sale_owed > 0 and remaining > 0:
+                            alloc_amount = min(remaining, sale_owed)
+                            allocation_data.append({
+                                'sale_id': sale['id'],
+                                'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
+                                'amount': alloc_amount
+                            })
+                            remaining -= alloc_amount
+                    
+                    total_allocated = sum(a['amount'] for a in allocation_data)
+                    related_sales = [a['sale_ref'] for a in allocation_data]
+                    
                     new_payment = {
                         "id": generate_id(),
                         "payment_date": str(row.get('payment_date', '')),
-                        "amount_eur": float(row.get('amount_eur', 0)),
+                        "amount_eur": amount,
                         "buyer": str(row.get('buyer', settings['buyers'][0])),
-                        "related_sales_dates": [],
-                        "allocations": [],
+                        "related_sales_dates": related_sales,
+                        "allocations": allocation_data,
+                        "allocated_amount": total_allocated,
+                        "unallocated_amount": remaining,
                         "notes": str(row.get('notes', ''))
                     }
                     payments.append(new_payment)
+                    
+                    for alloc in allocation_data:
+                        for sale in sales:
+                            if sale['id'] == alloc['sale_id']:
+                                current_paid = sale.get('amount_paid', 0)
+                                sale['amount_paid'] = current_paid + alloc['amount']
+                                
+                                if sale['amount_paid'] >= sale['total_revenue']:
+                                    sale['payment_status'] = 'Paid'
+                                elif sale['amount_paid'] > 0:
+                                    sale['payment_status'] = 'Partial'
+                                break
+                    
                     count += 1
+                    total_allocated_all += total_allocated
+                    total_unallocated_all += remaining
                 
                 save_payments_received(payments)
-                st.success(f"Successfully imported {count} payments!")
+                save_sales(sales)
+                
+                if total_unallocated_all > 0:
+                    st.success(f"Imported {count} payments! Allocated €{total_allocated_all:,.2f}. €{total_unallocated_all:,.2f} unallocated.")
+                else:
+                    st.success(f"Imported {count} payments! Fully allocated €{total_allocated_all:,.2f} to outstanding sales.")
                 st.rerun()
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")
