@@ -11,8 +11,8 @@
     "total_revenue": 3080.0,
     "total_margin": -42.199999999999925,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 3080.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555220946",
@@ -26,8 +26,8 @@
     "total_revenue": 3025.0,
     "total_margin": 12.800000000000145,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 3025.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555220988",
@@ -41,8 +41,8 @@
     "total_revenue": 3020.0,
     "total_margin": 27.800000000000004,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 3020.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221032",
@@ -56,8 +56,8 @@
     "total_revenue": 2960.0,
     "total_margin": 7.800000000000075,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2960.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221069",
@@ -71,8 +71,8 @@
     "total_revenue": 2990.0,
     "total_margin": 37.79999999999979,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2990.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221102",
@@ -86,8 +86,8 @@
     "total_revenue": 2830.0,
     "total_margin": -62.199999999999854,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2830.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221134",
@@ -101,8 +101,8 @@
     "total_revenue": 2975.0,
     "total_margin": 32.800000000000075,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2975.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221167",
@@ -116,8 +116,8 @@
     "total_revenue": 3047.0,
     "total_margin": 44.79999999999982,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 3047.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221199",
@@ -131,8 +131,8 @@
     "total_revenue": 3025.0,
     "total_margin": 52.800000000000004,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 3025.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221230",
@@ -146,8 +146,8 @@
     "total_revenue": 3010.0,
     "total_margin": 37.800000000000146,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 3010.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221261",
@@ -161,8 +161,8 @@
     "total_revenue": 2870.0,
     "total_margin": 37.79999999999979,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2680.0,
+    "payment_status": "Partial"
   },
   {
     "id": "20251215132555221344",
@@ -191,8 +191,8 @@
     "total_revenue": 2755.0,
     "total_margin": -74.49999999999991,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2755.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221458",
@@ -206,8 +206,8 @@
     "total_revenue": 2810.0,
     "total_margin": 99.50000000000028,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2810.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221512",
@@ -221,8 +221,8 @@
     "total_revenue": 2940.0,
     "total_margin": -69.5000000000002,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2940.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221549",
@@ -236,8 +236,8 @@
     "total_revenue": 2800.0,
     "total_margin": -29.499999999999993,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2800.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221581",
@@ -251,8 +251,8 @@
     "total_revenue": 2800.0,
     "total_margin": -29.499999999999993,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2800.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221612",
@@ -266,8 +266,8 @@
     "total_revenue": 2830.0,
     "total_margin": 0.5000000000000792,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2830.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221643",
@@ -281,8 +281,8 @@
     "total_revenue": 2890.0,
     "total_margin": 130.4999999999998,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2890.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221673",
@@ -296,8 +296,8 @@
     "total_revenue": 2906.0,
     "total_margin": 177.50000000000003,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2906.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221704",
@@ -311,8 +311,8 @@
     "total_revenue": 2900.0,
     "total_margin": 106.49999999999994,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2900.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221750",
@@ -326,8 +326,8 @@
     "total_revenue": 2880.0,
     "total_margin": 70.5,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2880.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221793",
@@ -341,8 +341,8 @@
     "total_revenue": 2880.0,
     "total_margin": 70.5,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2880.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221828",
@@ -356,8 +356,8 @@
     "total_revenue": 2890.0,
     "total_margin": 80.4999999999998,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2890.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221882",
@@ -370,6 +370,276 @@
     "margin_eur_mwh": 2.7079999999999997,
     "total_revenue": 3090.0,
     "total_margin": 270.79999999999995,
+    "buyer": "Keler",
+    "amount_paid": 3090.0,
+    "payment_status": "Paid"
+  },
+  {
+    "id": "20251215134228930801",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228930900",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931001",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931087",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931167",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931229",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931338",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931399",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931453",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931503",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931551",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931599",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931649",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931698",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931746",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931794",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931851",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
+    "buyer": "Keler",
+    "amount_paid": 0,
+    "payment_status": "Pending"
+  },
+  {
+    "id": "20251215134228931934",
+    "contract_date": "",
+    "sales_price_eur_mwh": 0.0,
+    "quantity_mwh": 0.0,
+    "cost_capacity_eur_mwh": 0.0,
+    "cost_transport_eur_mwh": 0.0,
+    "purchase_price_eur_mwh": 0.0,
+    "margin_eur_mwh": 0.0,
+    "total_revenue": 0.0,
+    "total_margin": 0.0,
     "buyer": "Keler",
     "amount_paid": 0,
     "payment_status": "Pending"
