@@ -1,6 +1,5 @@
 {
   "suppliers": [
-    "Default Supplier",
     "GPE"
   ],
   "payment_methods": [
@@ -10,7 +9,5 @@
   "buyers": [
     "Keler"
   ],
-  "gas_trading_names": [
-    "Default Trading Name"
-  ]
+  "gas_trading_names": []
 }

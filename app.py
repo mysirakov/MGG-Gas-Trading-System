@@ -66,8 +66,8 @@ col1, col2, col3, col4 = st.columns(4)
 
 total_sent = purchases_df['amount_sent_eur'].sum() if not purchases_df.empty and 'amount_sent_eur' in purchases_df.columns else 0
 total_received_supplier = purchases_df['amount_received_eur'].sum() if not purchases_df.empty and 'amount_received_eur' in purchases_df.columns else 0
-total_cost = purchases_df['total_cost'].sum() if not purchases_df.empty and 'total_cost' in purchases_df.columns else 0
-supplier_balance = total_received_supplier - total_cost
+total_purchase_cost = (sales_df['quantity_mwh'] * sales_df['purchase_price_eur_mwh']).sum() if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns else 0
+supplier_balance = total_received_supplier - total_purchase_cost
 
 with col1:
     st.metric("💳 Paid to Suppliers", f"€{total_sent:,.2f}")
