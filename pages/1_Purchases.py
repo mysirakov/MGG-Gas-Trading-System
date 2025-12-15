@@ -267,7 +267,8 @@ with tab4:
         
         st.markdown("---")
         
-        filter_status = st.multiselect("Filter by Status", options=inv_df['status'].unique().tolist(), default=['Partial'])
+        status_options = inv_df['status'].unique().tolist()
+        filter_status = st.multiselect("Filter by Status", options=status_options)
         
         filtered_inv_df = inv_df.copy()
         if filter_status:

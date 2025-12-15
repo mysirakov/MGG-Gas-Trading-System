@@ -1,0 +1,58 @@
+[
+  {
+    "id": "20251215130913760866",
+    "payment_date": "45937",
+    "supplier": "GPE",
+    "payment_method": "Unicredit",
+    "amount_sent_eur": 50000.0,
+    "invoice_number": "3000392382/1900064680",
+    "receipt_date": "45959",
+    "amount_received_eur": 49985.0,
+    "price_eur_mwh": NaN,
+    "quantity_mwh": NaN,
+    "gas_trading_name": "nan",
+    "total_cost": NaN
+  },
+  {
+    "id": "20251215130913761008",
+    "payment_date": "45993",
+    "supplier": "GPE",
+    "payment_method": "Financial Agent",
+    "amount_sent_eur": 50050.0,
+    "invoice_number": "3000392382/1900064680",
+    "receipt_date": "45996",
+    "amount_received_eur": 50336.0,
+    "price_eur_mwh": NaN,
+    "quantity_mwh": NaN,
+    "gas_trading_name": "nan",
+    "total_cost": NaN
+  },
+  {
+    "id": "20251215131034360139",
+    "payment_date": "07/10/2025",
+    "supplier": "GPE",
+    "payment_method": "Unicredit",
+    "amount_sent_eur": 50000.0,
+    "invoice_number": "3000392382/1900064680",
+    "receipt_date": "29/10/2025",
+    "amount_received_eur": 49985.0,
+    "price_eur_mwh": NaN,
+    "quantity_mwh": NaN,
+    "gas_trading_name": "nan",
+    "total_cost": NaN
+  },
+  {
+    "id": "20251215131034360276",
+    "payment_date": "02/12/2025",
+    "supplier": "GPE",
+    "payment_method": "Financial Agent",
+    "amount_sent_eur": 50050.0,
+    "invoice_number": "3000392382/1900064680",
+    "receipt_date": "05/12/2025",
+    "amount_received_eur": 50336.0,
+    "price_eur_mwh": NaN,
+    "quantity_mwh": NaN,
+    "gas_trading_name": "nan",
+    "total_cost": NaN
+  }
+]
