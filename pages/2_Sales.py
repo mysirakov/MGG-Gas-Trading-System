@@ -65,6 +65,7 @@ with tab1:
             "total_revenue": total_revenue,
             "total_margin": total_margin,
             "buyer": buyer,
+            "amount_paid": 0,
             "payment_status": "Pending"
         }
         sales.append(new_sale)
@@ -137,6 +138,7 @@ with tab2:
                         "total_revenue": sales_price * quantity,
                         "total_margin": margin * quantity,
                         "buyer": str(row.get('buyer', settings['buyers'][0])),
+                        "amount_paid": 0,
                         "payment_status": "Pending"
                     }
                     sales.append(new_sale)

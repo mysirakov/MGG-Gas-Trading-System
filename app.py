@@ -45,6 +45,12 @@ total_margin = sales_df['total_margin'].sum() if not sales_df.empty and 'total_m
 total_quantity_sold = sales_df['quantity_mwh'].sum() if not sales_df.empty and 'quantity_mwh' in sales_df.columns else 0
 payments_received = payments_df['amount_eur'].sum() if not payments_df.empty and 'amount_eur' in payments_df.columns else 0
 
+outstanding_from_sales = 0
+for sale in sales:
+    sale_revenue = sale.get('total_revenue', 0)
+    sale_paid = sale.get('amount_paid', 0)
+    outstanding_from_sales += max(0, sale_revenue - sale_paid)
+
 with col1:
     st.metric("💵 Total Revenue", f"€{total_revenue:,.2f}")
 with col2:
@@ -52,8 +58,7 @@ with col2:
 with col3:
     st.metric("⚡ Quantity Traded", f"{total_quantity_sold:,.0f} MWh")
 with col4:
-    outstanding = total_revenue - payments_received
-    st.metric("📋 Outstanding", f"€{outstanding:,.2f}")
+    st.metric("📋 Outstanding", f"€{outstanding_from_sales:,.2f}")
 
 st.markdown("---")
 
@@ -191,8 +196,8 @@ st.header("🔔 Alerts & Status")
 col1, col2 = st.columns(2)
 
 with col1:
-    if outstanding > 0:
-        st.warning(f"⚠️ Outstanding receivables: €{outstanding:,.2f}")
+    if outstanding_from_sales > 0:
+        st.warning(f"⚠️ Outstanding receivables: €{outstanding_from_sales:,.2f}")
     else:
         st.success("✅ All receivables collected")
 

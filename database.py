@@ -76,7 +76,7 @@ def sales_to_df(sales):
         return pd.DataFrame(columns=[
             'id', 'contract_date', 'sales_price_eur_mwh', 'quantity_mwh',
             'cost_capacity_eur_mwh', 'cost_transport_eur_mwh', 'purchase_price_eur_mwh',
-            'margin_eur_mwh', 'total_revenue', 'total_margin', 'buyer', 'payment_status'
+            'margin_eur_mwh', 'total_revenue', 'total_margin', 'buyer', 'amount_paid', 'payment_status'
         ])
     return pd.DataFrame(sales)
 

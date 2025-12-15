@@ -49,16 +49,22 @@ total_received_supplier = purchases_df['amount_received_eur'].sum() if not purch
 total_cost = purchases_df['total_cost'].sum() if not purchases_df.empty and 'total_cost' in purchases_df.columns else 0
 supplier_balance = total_received_supplier - total_cost
 
+payments_received = payments_df['amount_eur'].sum() if not payments_df.empty and 'amount_eur' in payments_df.columns else 0
+
+outstanding_from_sales = 0
+for sale in sales:
+    sale_revenue = sale.get('total_revenue', 0)
+    sale_paid = sale.get('amount_paid', 0)
+    outstanding_from_sales += max(0, sale_revenue - sale_paid)
+
 with col1:
     st.metric("Total Paid to Suppliers", f"€{total_sent:,.2f}")
 with col2:
     st.metric("Supplier Balance", f"€{supplier_balance:,.2f}")
 with col3:
-    payments_received = payments_df['amount_eur'].sum() if not payments_df.empty and 'amount_eur' in payments_df.columns else 0
     st.metric("Payments Received", f"€{payments_received:,.2f}")
 with col4:
-    outstanding = total_revenue - payments_received
-    st.metric("Outstanding Receivables", f"€{outstanding:,.2f}")
+    st.metric("Outstanding Receivables", f"€{outstanding_from_sales:,.2f}")
 
 st.markdown("---")
 
