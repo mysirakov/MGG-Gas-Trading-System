@@ -82,6 +82,7 @@ with tab1:
             new_invoice = {
                 "id": generate_id(),
                 "invoice_number": invoice_number,
+                "supplier": supplier,
                 "total_amount": total_amt,
                 "paid_amount": amount_sent,
                 "remaining_amount": max(0, total_amt - amount_sent),
@@ -175,6 +176,7 @@ with tab2:
                         new_invoice = {
                             "id": generate_id(),
                             "invoice_number": invoice_num,
+                            "supplier": str(row.get('supplier', settings['suppliers'][0])),
                             "total_amount": invoice_total,
                             "paid_amount": amount_sent,
                             "remaining_amount": max(0, invoice_total - amount_sent),
@@ -213,6 +215,28 @@ with tab3:
                 st.metric("Weighted Avg Price", f"€{avg_price:,.2f}/MWh")
             else:
                 st.metric("Weighted Avg Price", "€0.00/MWh")
+        
+        st.markdown("---")
+        st.subheader("💰 Supplier Balance Summary")
+        st.markdown("Track the balance available with each supplier (Amount Received - Value of Gas Purchased)")
+        
+        suppliers_in_data = df['supplier'].unique().tolist()
+        balance_data = []
+        for sup in suppliers_in_data:
+            sup_df = df[df['supplier'] == sup]
+            amount_received = sup_df['amount_received_eur'].sum()
+            total_cost = sup_df['total_cost'].sum() if 'total_cost' in sup_df.columns else 0
+            balance = amount_received - total_cost
+            balance_data.append({
+                'Supplier': sup,
+                'Amount Received (EUR)': f"€{amount_received:,.2f}",
+                'Value of Gas Purchased (EUR)': f"€{total_cost:,.2f}",
+                'Available Balance (EUR)': f"€{balance:,.2f}"
+            })
+        
+        if balance_data:
+            balance_df = pd.DataFrame(balance_data)
+            st.dataframe(balance_df, use_container_width=True, hide_index=True)
         
         st.markdown("---")
         
@@ -284,6 +308,7 @@ with tab4:
         with col1:
             st.markdown("**Add New Invoice**")
             new_inv_number = st.text_input("Invoice Number", key="new_inv_number")
+            new_inv_supplier = st.selectbox("Supplier", options=settings.get("suppliers", ["GPE"]), key="new_inv_supplier")
             new_inv_total = st.number_input("Total Amount (EUR)", min_value=0.0, step=100.0, key="new_inv_total")
             
             if st.button("Create Invoice", type="primary"):
@@ -291,6 +316,7 @@ with tab4:
                     new_invoice = {
                         "id": generate_id(),
                         "invoice_number": new_inv_number,
+                        "supplier": new_inv_supplier,
                         "total_amount": new_inv_total,
                         "paid_amount": 0,
                         "remaining_amount": new_inv_total,

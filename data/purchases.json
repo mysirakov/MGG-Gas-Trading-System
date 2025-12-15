@@ -8,10 +8,10 @@
     "invoice_number": "3000392382/1900064680",
     "receipt_date": "29/10/2025",
     "amount_received_eur": 49985.0,
-    "price_eur_mwh": NaN,
-    "quantity_mwh": NaN,
+    "price_eur_mwh": 0,
+    "quantity_mwh": 0,
     "gas_trading_name": "nan",
-    "total_cost": NaN
+    "total_cost": 0
   },
   {
     "id": "20251215131034360276",
@@ -22,9 +22,9 @@
     "invoice_number": "3000392382/1900064680",
     "receipt_date": "05/12/2025",
     "amount_received_eur": 50336.0,
-    "price_eur_mwh": NaN,
-    "quantity_mwh": NaN,
+    "price_eur_mwh": 0,
+    "quantity_mwh": 0,
     "gas_trading_name": "nan",
-    "total_cost": NaN
+    "total_cost": 0
   }
 ]

@@ -90,7 +90,7 @@ def payments_to_df(payments):
 def invoices_to_df(invoices):
     if not invoices:
         return pd.DataFrame(columns=[
-            'id', 'invoice_number', 'total_amount', 'paid_amount', 'remaining_amount', 'status'
+            'id', 'invoice_number', 'supplier', 'total_amount', 'paid_amount', 'remaining_amount', 'status'
         ])
     return pd.DataFrame(invoices)
 

@@ -75,7 +75,7 @@ if not sales_df.empty and not purchases_df.empty:
     
     with col1:
         if 'contract_date' in sales_df.columns:
-            sales_df['contract_date'] = pd.to_datetime(sales_df['contract_date'])
+            sales_df['contract_date'] = pd.to_datetime(sales_df['contract_date'], dayfirst=True)
             sales_daily = sales_df.groupby('contract_date').agg({
                 'sales_price_eur_mwh': 'mean',
                 'purchase_price_eur_mwh': 'mean',

@@ -1,0 +1,16 @@
+{
+  "suppliers": [
+    "Default Supplier",
+    "GPE"
+  ],
+  "payment_methods": [
+    "Unicredit",
+    "Financial Agent"
+  ],
+  "buyers": [
+    "Keler"
+  ],
+  "gas_trading_names": [
+    "Default Trading Name"
+  ]
+}
