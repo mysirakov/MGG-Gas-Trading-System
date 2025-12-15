@@ -1,0 +1,164 @@
+[
+  {
+    "id": "20251215133402330677",
+    "payment_date": "07/11/2025",
+    "amount_eur": 3080.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330740",
+    "payment_date": "10/11/2025",
+    "amount_eur": 3076.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330775",
+    "payment_date": "11/11/2025",
+    "amount_eur": 2945.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330806",
+    "payment_date": "13/11/2025",
+    "amount_eur": 2960.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330833",
+    "payment_date": "14/11/2025",
+    "amount_eur": 2990.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330860",
+    "payment_date": "17/11/2025",
+    "amount_eur": 2830.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330886",
+    "payment_date": "18/11/2025",
+    "amount_eur": 2975.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330911",
+    "payment_date": "19/11/2025",
+    "amount_eur": 3047.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330936",
+    "payment_date": "20/11/2025",
+    "amount_eur": 3025.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330961",
+    "payment_date": "21/11/2025",
+    "amount_eur": 3010.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402330986",
+    "payment_date": "25/11/2025",
+    "amount_eur": 2870.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331010",
+    "payment_date": "26/11/2025",
+    "amount_eur": 2900.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331045",
+    "payment_date": "02/12/2025",
+    "amount_eur": 5569.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331071",
+    "payment_date": "08/12/2025",
+    "amount_eur": 11374.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331097",
+    "payment_date": "10/11/2025",
+    "amount_eur": 2890.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331123",
+    "payment_date": "11/12/2025",
+    "amount_eur": 2906.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331148",
+    "payment_date": "12/12/2025",
+    "amount_eur": 2900.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  },
+  {
+    "id": "20251215133402331174",
+    "payment_date": "15/12/2025",
+    "amount_eur": 8650.0,
+    "buyer": "Keler",
+    "related_sales_dates": [],
+    "allocations": [],
+    "notes": "nan"
+  }
+]

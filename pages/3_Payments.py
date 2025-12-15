@@ -55,63 +55,76 @@ with tab1:
         payment_date = st.date_input("Payment Received Date", value=date.today(), key="single_payment_recv_date")
         amount = st.number_input("Amount Received (EUR)", min_value=0.0, step=100.0, key="single_recv_amount")
         buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_recv_buyer")
+        notes = st.text_area("Notes", key="single_recv_notes", placeholder="e.g., Settlement for gas days Nov 1-3")
     
     with col2:
         pending_sales = [s for s in sales if s.get('payment_status') != 'Paid']
-        if pending_sales:
-            st.markdown("**Allocate to Sales**")
+        pending_sales_sorted = sorted(pending_sales, key=lambda x: x.get('contract_date', ''))
+        
+        if pending_sales_sorted and amount > 0:
+            st.markdown("**Outstanding Sales (oldest first)**")
             
-            allocation_data = []
-            remaining_amount = amount
-            
-            for i, sale in enumerate(pending_sales):
+            for sale in pending_sales_sorted[:5]:
                 sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
                 if sale_owed > 0:
-                    col_a, col_b = st.columns([2, 1])
-                    with col_a:
-                        st.text(f"{sale['contract_date']} - Owed: €{sale_owed:,.2f}")
-                    with col_b:
-                        alloc = st.number_input(
-                            f"Allocate", 
-                            min_value=0.0, 
-                            max_value=float(sale_owed),
-                            value=0.0,
-                            step=100.0,
-                            key=f"alloc_{i}",
-                            label_visibility="collapsed"
-                        )
-                        if alloc > 0:
-                            allocation_data.append({
-                                'sale_id': sale['id'],
-                                'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
-                                'amount': alloc
-                            })
+                    st.text(f"📋 {sale['contract_date']} - {sale.get('buyer', 'Unknown')} - Owed: €{sale_owed:,.2f}")
             
-            total_allocated = sum(a['amount'] for a in allocation_data)
-            unallocated = amount - total_allocated
-            
-            if total_allocated > 0:
-                if total_allocated > amount:
-                    st.error(f"Allocation exceeds payment! Allocated: €{total_allocated:,.2f} > Received: €{amount:,.2f}")
-                elif unallocated > 0:
-                    st.warning(f"Allocated: €{total_allocated:,.2f} of €{amount:,.2f} — €{unallocated:,.2f} unallocated")
-                else:
-                    st.success(f"Fully allocated: €{total_allocated:,.2f}")
-            elif amount > 0:
-                st.info(f"Payment of €{amount:,.2f} not allocated to any sales")
+            if len(pending_sales_sorted) > 5:
+                st.caption(f"...and {len(pending_sales_sorted) - 5} more outstanding sales")
+        elif not pending_sales_sorted:
+            st.success("No outstanding sales!")
+        else:
+            st.info("Enter payment amount to see allocation preview")
+    
+    if amount > 0 and pending_sales_sorted:
+        allocation_preview = []
+        remaining = amount
+        
+        for sale in pending_sales_sorted:
+            sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
+            if sale_owed > 0 and remaining > 0:
+                alloc_amount = min(remaining, sale_owed)
+                allocation_preview.append({
+                    'sale_id': sale['id'],
+                    'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
+                    'contract_date': sale['contract_date'],
+                    'amount': alloc_amount,
+                    'owed': sale_owed
+                })
+                remaining -= alloc_amount
+        
+        st.markdown("---")
+        st.markdown("**Auto-allocation Preview (oldest first)**")
+        
+        for alloc in allocation_preview:
+            status = "Full" if alloc['amount'] >= alloc['owed'] else "Partial"
+            st.write(f"✓ {alloc['contract_date']}: €{alloc['amount']:,.2f} ({status})")
+        
+        total_to_allocate = sum(a['amount'] for a in allocation_preview)
+        if remaining > 0:
+            st.warning(f"€{remaining:,.2f} will remain unallocated after clearing oldest balances")
+        else:
+            st.success(f"€{total_to_allocate:,.2f} will be fully allocated to {len(allocation_preview)} sale(s)")
+    
+    if st.button("Record Payment & Auto-Allocate", type="primary", key="add_payment"):
+        if amount <= 0:
+            st.error("Please enter a payment amount")
         else:
             allocation_data = []
-            st.info("No pending sales to allocate")
-        
-        notes = st.text_area("Notes", key="single_recv_notes", placeholder="e.g., Settlement for gas days Nov 1-3")
-    
-    total_allocated = sum(a['amount'] for a in allocation_data) if allocation_data else 0
-    allocation_valid = total_allocated <= amount
-    
-    if st.button("Record Payment", type="primary", key="add_payment", disabled=not allocation_valid):
-        if not allocation_valid:
-            st.error("Cannot record payment: allocations exceed received amount")
-        else:
+            remaining = amount
+            
+            for sale in pending_sales_sorted:
+                sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
+                if sale_owed > 0 and remaining > 0:
+                    alloc_amount = min(remaining, sale_owed)
+                    allocation_data.append({
+                        'sale_id': sale['id'],
+                        'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
+                        'amount': alloc_amount
+                    })
+                    remaining -= alloc_amount
+            
+            total_allocated = sum(a['amount'] for a in allocation_data)
             related_sales = [a['sale_ref'] for a in allocation_data]
             
             new_payment = {
@@ -122,7 +135,7 @@ with tab1:
                 "related_sales_dates": related_sales,
                 "allocations": allocation_data,
                 "allocated_amount": total_allocated,
-                "unallocated_amount": amount - total_allocated,
+                "unallocated_amount": remaining,
                 "notes": notes
             }
             payments.append(new_payment)
@@ -142,10 +155,10 @@ with tab1:
             
             save_sales(sales)
             
-            if amount - total_allocated > 0:
-                st.success(f"Payment recorded! €{amount - total_allocated:,.2f} remains unallocated.")
+            if remaining > 0:
+                st.success(f"Payment recorded! Allocated €{total_allocated:,.2f} to {len(allocation_data)} sale(s). €{remaining:,.2f} unallocated.")
             else:
-                st.success("Payment recorded successfully!")
+                st.success(f"Payment recorded! Fully allocated €{total_allocated:,.2f} to {len(allocation_data)} sale(s).")
             st.rerun()
 
 with tab2:
