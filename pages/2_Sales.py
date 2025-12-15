@@ -17,9 +17,9 @@ purchases = load_purchases()
 
 purchases_df = purchases_to_df(purchases)
 if not purchases_df.empty and 'quantity_mwh' in purchases_df.columns:
-    avg_purchase_price = (purchases_df['price_eur_mwh'] * purchases_df['quantity_mwh']).sum() / purchases_df['quantity_mwh'].sum() if purchases_df['quantity_mwh'].sum() > 0 else 0
+    avg_purchase_price = float((purchases_df['price_eur_mwh'] * purchases_df['quantity_mwh']).sum() / purchases_df['quantity_mwh'].sum()) if purchases_df['quantity_mwh'].sum() > 0 else 0.0
 else:
-    avg_purchase_price = 0
+    avg_purchase_price = 0.0
 
 tab1, tab2, tab3 = st.tabs(["📝 Add Sale", "📤 Bulk Upload", "📊 View Sales"])
 
