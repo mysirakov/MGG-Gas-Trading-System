@@ -1,8 +1,8 @@
-
 [theme]
+base = "dark"
 primaryColor = "#8B5CF6"
 backgroundColor = "#0f0c29"
-secondaryBackgroundColor = "rgba(255, 255, 255, 0.05)"
+secondaryBackgroundColor = "#1a1625"
 textColor = "#ffffff"
 font = "sans serif"
 
@@ -19,3 +19,6 @@ enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
