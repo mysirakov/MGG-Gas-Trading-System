@@ -342,5 +342,20 @@ with tab4:
                     save_invoices(invoices)
                     st.success("Invoice updated!")
                     st.rerun()
+        
+        st.markdown("---")
+        st.markdown("**Delete Invoice**")
+        if invoices:
+            del_inv_options = [f"{inv['invoice_number']} - {inv.get('supplier', 'N/A')} (€{inv['total_amount']:,.2f})" for inv in invoices]
+            selected_del_inv = st.selectbox("Select Invoice to Delete", options=del_inv_options, key="del_inv")
+            
+            if st.button("🗑️ Delete Invoice", type="secondary"):
+                idx = del_inv_options.index(selected_del_inv)
+                deleted_inv = invoices.pop(idx)
+                save_invoices(invoices)
+                st.success(f"Invoice '{deleted_inv['invoice_number']}' deleted!")
+                st.rerun()
+        else:
+            st.info("No invoices to delete.")
     else:
         st.info("No invoices recorded yet. Invoices are created when you add purchases.")
