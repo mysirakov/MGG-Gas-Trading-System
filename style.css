@@ -129,9 +129,23 @@ div[data-testid="stDataFrame"] table tbody tr,
 
 div[data-testid="stDataFrame"] table thead th,
 .stDataFrame thead th {
-    background: rgba(139, 92, 246, 0.2) !important;
+    background: rgba(139, 92, 246, 0.4) !important;
     color: #ffffff !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    padding: 1rem 0.75rem !important;
+    border-bottom: 2px solid rgba(139, 92, 246, 0.6) !important;
+}
+
+div[data-testid="stDataFrame"] table tbody td,
+.stDataFrame tbody td {
+    padding: 0.75rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+div[data-testid="stDataFrame"] table tbody tr:hover,
+.stDataFrame tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
 }
 
 /* ============================================
@@ -147,29 +161,39 @@ div[data-testid="stPlotlyChart"],
     -webkit-backdrop-filter: blur(10px) !important;
     border-radius: 16px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 1rem !important;
+    padding: 1.5rem !important;
+    margin-bottom: 2rem !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
     overflow: visible !important;
     max-width: 100% !important;
     width: 100% !important;
+    min-height: 450px !important;
 }
 
 .stPlotlyChart > div,
-div[data-testid="stPlotlyChart"] > div {
+div[data-testid="stPlotlyChart"] > div,
+.js-plotly-plot,
+.plotly {
     overflow: visible !important;
     max-width: 100% !important;
+    height: auto !important;
+    min-height: 400px !important;
 }
 
 .js-plotly-plot .plotly .main-svg,
-.js-plotly-plot .plotly .svg-container {
+.js-plotly-plot .plotly .svg-container,
+.svg-container {
     overflow: visible !important;
+    height: 100% !important;
 }
 
 /* Remove all clipping constraints */
 div[data-testid="column"],
 div[data-testid="column"] > div,
 div[data-testid="stHorizontalBlock"],
-.element-container {
+div[data-testid="stHorizontalBlock"] > div,
+.element-container,
+.block-container {
     overflow: visible !important;
     max-width: 100% !important;
 }
@@ -291,22 +315,33 @@ label {
 
 /* Select dropdown options */
 .stSelectbox [role="listbox"],
-.stMultiSelect [role="listbox"] {
-    background: rgba(15, 12, 41, 0.95) !important;
+.stMultiSelect [role="listbox"],
+[data-baseweb="popover"] {
+    background: rgba(15, 12, 41, 0.98) !important;
     backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
 
 .stSelectbox [role="option"],
-.stMultiSelect [role="option"] {
-    background: rgba(15, 12, 41, 0.8) !important;
+.stMultiSelect [role="option"],
+[data-baseweb="menu"] li,
+[role="option"] {
+    background: rgba(15, 12, 41, 0.95) !important;
     color: #ffffff !important;
-    padding: 0.5rem 1rem !important;
+    padding: 0.75rem 1rem !important;
 }
 
 .stSelectbox [role="option"]:hover,
-.stMultiSelect [role="option"]:hover {
-    background: rgba(139, 92, 246, 0.3) !important;
+.stMultiSelect [role="option"]:hover,
+[data-baseweb="menu"] li:hover,
+[role="option"]:hover {
+    background: rgba(139, 92, 246, 0.5) !important;
+    color: #ffffff !important;
+}
+
+/* Dropdown selected value */
+.stSelectbox div[data-baseweb="select"] > div,
+.stSelectbox input {
     color: #ffffff !important;
 }
 

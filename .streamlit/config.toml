@@ -6,6 +6,11 @@ secondaryBackgroundColor = "rgba(255, 255, 255, 0.05)"
 textColor = "#ffffff"
 font = "sans serif"
 
+[theme.sidebar]
+widgetBackgroundColor = "#1a1640"
+widgetBorderColor = "rgba(139, 92, 246, 0.3)"
+skeletonBackgroundColor = "rgba(255, 255, 255, 0.1)"
+
 [server]
 headless = true
 port = 5000
