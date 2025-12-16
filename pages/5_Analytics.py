@@ -85,36 +85,26 @@ if not sales_df.empty:
             'purchase_price_eur_mwh': 'mean',
             'margin_eur_mwh': 'mean'
         }).reset_index()
-
+        
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['sales_price_eur_mwh'],
-                                mode='lines+markers', name='Sales Price', line=dict(color='#22c55e')))
+                                mode='lines+markers', name='Sales Price', line=dict(color='green')))
         fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['purchase_price_eur_mwh'],
-                                mode='lines+markers', name='Purchase Price', line=dict(color='#ef4444')))
+                                mode='lines+markers', name='Purchase Price', line=dict(color='red')))
         fig.update_layout(title='Sales vs Purchase Price Over Time',
                         xaxis_title='Date', yaxis_title='Price (EUR/MWh)',
                         hovermode='x unified',
                         height=400,
-                        plot_bgcolor='#1e1e1e',
-                        paper_bgcolor='#1e1e1e',
-                        font_color='white',
-                        xaxis=dict(color='white'),
-                        yaxis=dict(color='white'),
                         margin=dict(l=60, r=40, t=50, b=50))
         st.plotly_chart(fig, use_container_width=True)
-
+        
         fig = go.Figure()
-        colors = ['#22c55e' if x >= 0 else '#ef4444' for x in sales_daily['margin_eur_mwh']]
+        colors = ['green' if x >= 0 else 'red' for x in sales_daily['margin_eur_mwh']]
         fig.add_trace(go.Bar(x=sales_daily['contract_date'], y=sales_daily['margin_eur_mwh'],
                             name='Margin', marker_color=colors))
         fig.update_layout(title='Daily Margin per MWh',
                         xaxis_title='Date', yaxis_title='Margin (EUR/MWh)',
                         height=350,
-                        plot_bgcolor='#1e1e1e',
-                        paper_bgcolor='#1e1e1e',
-                        font_color='white',
-                        xaxis=dict(color='white'),
-                        yaxis=dict(color='white'),
                         margin=dict(l=60, r=40, t=50, b=50))
         st.plotly_chart(fig, use_container_width=True)
 else:
@@ -129,7 +119,7 @@ if not sales_df.empty:
     capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
     transport_cost = (sales_df['cost_transport_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_transport_eur_mwh' in sales_df.columns else 0
     purchase_cost_total = (sales_df['purchase_price_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'purchase_price_eur_mwh' in sales_df.columns else 0
-
+    
     pnl_data = {
         'Category': ['Gross Revenue', 'Capacity Costs', 'Transport Costs', 'Purchase Costs', 'Net Profit'],
         'Amount (EUR)': [
@@ -142,17 +132,13 @@ if not sales_df.empty:
     }
     pnl_df = pd.DataFrame(pnl_data)
     st.dataframe(pnl_df, use_container_width=True, hide_index=True)
-
+    
     cost_values = [abs(purchase_cost_total), abs(capacity_cost), abs(transport_cost)]
     cost_labels = ['Purchase Costs', 'Capacity Costs', 'Transport Costs']
-
+    
     if sum(cost_values) > 0:
         fig = px.pie(values=cost_values, names=cost_labels, title='Cost Distribution')
-        fig.update_layout(height=400, margin=dict(l=40, r=40, t=50, b=40),
-                          plot_bgcolor='#1e1e1e',
-                          paper_bgcolor='#1e1e1e',
-                          font_color='white',
-                          title_font_color='white')
+        fig.update_layout(height=400, margin=dict(l=40, r=40, t=50, b=40))
         fig.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig, use_container_width=True)
 else:
@@ -161,24 +147,19 @@ else:
 st.subheader("Trading Volume")
 if not sales_df.empty and 'contract_date' in sales_df.columns:
     sales_df_copy = sales_df.copy()
-    sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'], format='mixed', dayfirst=True)
+    sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'], dayfirst=True)
     volume_daily = sales_df_copy.groupby('contract_date').agg({
         'quantity_mwh': 'sum',
         'total_revenue': 'sum',
         'total_margin': 'sum'
     }).reset_index()
-
+    
     fig = go.Figure()
     fig.add_trace(go.Bar(x=volume_daily['contract_date'], y=volume_daily['quantity_mwh'],
                         name='Volume (MWh)', marker_color='steelblue'))
     fig.update_layout(title='Daily Trading Volume',
                     xaxis_title='Date', yaxis_title='Volume (MWh)',
                     height=350,
-                    plot_bgcolor='#1e1e1e',
-                    paper_bgcolor='#1e1e1e',
-                    font_color='white',
-                    xaxis=dict(color='white'),
-                    yaxis=dict(color='white'),
                     margin=dict(l=60, r=40, t=50, b=50))
     st.plotly_chart(fig, use_container_width=True)
 else:
@@ -194,13 +175,13 @@ if not sales_df.empty:
         sales_df_display = sales_df_display[sales_df_display['quantity_mwh'] > 0]
     if 'contract_date' in sales_df_display.columns:
         sales_df_display = sales_df_display.sort_values('contract_date', ascending=False)
-
-    display_cols = ['contract_date', 'buyer', 'quantity_mwh', 'sales_price_eur_mwh',
+    
+    display_cols = ['contract_date', 'buyer', 'quantity_mwh', 'sales_price_eur_mwh', 
                    'purchase_price_eur_mwh', 'margin_eur_mwh', 'total_margin', 'payment_status']
     available_cols = [col for col in display_cols if col in sales_df_display.columns]
-
+    
     st.dataframe(sales_df_display[available_cols], use_container_width=True, hide_index=True)
-
+    
     csv = sales_df_display.to_csv(index=False)
     st.download_button("Export Full Report", csv, "trading_report.csv", "text/csv")
 else:
@@ -215,16 +196,11 @@ if not purchases_df.empty and 'payment_date' in purchases_df.columns:
     purchases_df_copy = purchases_df.copy()
     purchases_df_copy['payment_date'] = pd.to_datetime(purchases_df_copy['payment_date'], dayfirst=True)
     outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum().reset_index()
-
+    
     fig = px.bar(outflow_daily, x='payment_date', y='amount_sent_eur',
                 title='Daily Payments to Suppliers', color_discrete_sequence=['#ef4444'])
     fig.update_layout(xaxis_title='Date', yaxis_title='Amount (EUR)',
                     height=350,
-                    plot_bgcolor='#1e1e1e',
-                    paper_bgcolor='#1e1e1e',
-                    font_color='white',
-                    xaxis=dict(color='white'),
-                    yaxis=dict(color='white'),
                     margin=dict(l=60, r=40, t=50, b=50))
     st.plotly_chart(fig, use_container_width=True)
 else:
@@ -235,16 +211,11 @@ if not payments_df.empty and 'payment_date' in payments_df.columns:
     payments_df_copy = payments_df.copy()
     payments_df_copy['payment_date'] = pd.to_datetime(payments_df_copy['payment_date'], format='mixed', dayfirst=True)
     inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum().reset_index()
-
+    
     fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',
                 title='Daily Payments Received', color_discrete_sequence=['#22c55e'])
     fig.update_layout(xaxis_title='Date', yaxis_title='Amount (EUR)',
                     height=350,
-                    plot_bgcolor='#1e1e1e',
-                    paper_bgcolor='#1e1e1e',
-                    font_color='white',
-                    xaxis=dict(color='white'),
-                    yaxis=dict(color='white'),
                     margin=dict(l=60, r=40, t=50, b=50))
     st.plotly_chart(fig, use_container_width=True)
 else:
@@ -260,16 +231,12 @@ if not sales_df.empty and 'payment_status' in sales_df.columns:
         'quantity_mwh': 'sum'
     }).reset_index()
     status_summary.columns = ['Status', 'Total Amount (EUR)', 'Quantity (MWh)']
-
+    
     st.dataframe(status_summary, use_container_width=True, hide_index=True)
-
+    
     fig = px.pie(status_summary, values='Total Amount (EUR)', names='Status',
                 title='Revenue by Payment Status')
-    fig.update_layout(height=400, margin=dict(l=40, r=40, t=50, b=40),
-                      plot_bgcolor='#1e1e1e',
-                      paper_bgcolor='#1e1e1e',
-                      font_color='white',
-                      title_font_color='white')
+    fig.update_layout(height=400, margin=dict(l=40, r=40, t=50, b=40))
     fig.update_traces(textposition='inside', textinfo='percent+label')
     st.plotly_chart(fig, use_container_width=True)
 else:

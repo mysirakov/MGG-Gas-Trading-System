@@ -100,63 +100,23 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
     
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=daily_metrics['contract_date'], y=daily_metrics['total_revenue'],
-                            mode='lines+markers', name='Revenue', 
-                            line=dict(color='#60A5FA', width=3),
-                            marker=dict(size=8, color='#60A5FA')))
+                            mode='lines+markers', name='Revenue', line=dict(color='steelblue')))
     fig.add_trace(go.Scatter(x=daily_metrics['contract_date'], y=daily_metrics['total_margin'],
-                            mode='lines+markers', name='Profit', 
-                            line=dict(color='#34D399', width=3),
-                            marker=dict(size=8, color='#34D399')))
-    fig.update_layout(
-        title=dict(text='Revenue vs Profit Over Time', font=dict(color='#ffffff', size=20)),
-        xaxis=dict(
-            title=dict(text='Date', font=dict(color='#ffffff', size=14)),
-            tickfont=dict(color='#ffffff', size=12),
-            gridcolor='rgba(255, 255, 255, 0.1)',
-            showgrid=True
-        ),
-        yaxis=dict(
-            title=dict(text='Amount (EUR)', font=dict(color='#ffffff', size=14)),
-            tickfont=dict(color='#ffffff', size=12),
-            gridcolor='rgba(255, 255, 255, 0.1)',
-            showgrid=True
-        ),
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        font=dict(color='#ffffff'),
-        hovermode='x unified',
-        hoverlabel=dict(bgcolor='rgba(15, 12, 41, 0.9)', font=dict(color='#ffffff')),
-        legend=dict(font=dict(color='#ffffff', size=12)),
-        height=400,
-        margin=dict(l=60, r=40, t=50, b=50)
-    )
+                            mode='lines+markers', name='Profit', line=dict(color='green')))
+    fig.update_layout(title='Revenue vs Profit Over Time',
+                    xaxis_title='Date', yaxis_title='Amount (EUR)',
+                    hovermode='x unified',
+                    height=400,
+                    margin=dict(l=60, r=40, t=50, b=50))
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     
     daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
     
     fig = px.bar(daily_volume, x='contract_date', y='quantity_mwh',
-                title='Daily Trading Volume', color_discrete_sequence=['#8B5CF6'])
-    fig.update_layout(
-        title=dict(text='Daily Trading Volume', font=dict(color='#ffffff', size=20)),
-        xaxis=dict(
-            title=dict(text='Date', font=dict(color='#ffffff', size=14)),
-            tickfont=dict(color='#ffffff', size=12),
-            gridcolor='rgba(255, 255, 255, 0.1)',
-            showgrid=True
-        ),
-        yaxis=dict(
-            title=dict(text='Volume (MWh)', font=dict(color='#ffffff', size=14)),
-            tickfont=dict(color='#ffffff', size=12),
-            gridcolor='rgba(255, 255, 255, 0.1)',
-            showgrid=True
-        ),
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        font=dict(color='#ffffff'),
-        hoverlabel=dict(bgcolor='rgba(15, 12, 41, 0.9)', font=dict(color='#ffffff')),
-        height=350,
-        margin=dict(l=60, r=40, t=50, b=50)
-    )
+                title='Daily Trading Volume', color_discrete_sequence=['steelblue'])
+    fig.update_layout(xaxis_title='Date', yaxis_title='Volume (MWh)',
+                    height=350,
+                    margin=dict(l=60, r=40, t=50, b=50))
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.info("📊 Add sales data to see charts")

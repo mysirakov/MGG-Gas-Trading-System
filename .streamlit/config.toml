@@ -1,24 +1,14 @@
-[theme]
-base = "dark"
-primaryColor = "#8B5CF6"
-backgroundColor = "#0f0c29"
-secondaryBackgroundColor = "#1a1625"
-textColor = "#ffffff"
-font = "sans serif"
-
-[theme.sidebar]
-widgetBackgroundColor = "#1a1640"
-widgetBorderColor = "rgba(139, 92, 246, 0.3)"
-skeletonBackgroundColor = "rgba(255, 255, 255, 0.1)"
-
 [server]
 headless = true
+address = "0.0.0.0"
 port = 5000
-enableCORS = false
-enableXsrfProtection = false
+
+[theme]
+primaryColor = "#3b82f6"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8fafc"
+textColor = "#0f172a"
+font = "sans serif"
 
 [browser]
 gatherUsageStats = false
-
-[client]
-toolbarMode = "minimal"
