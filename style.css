@@ -229,6 +229,23 @@ div[data-testid="stHorizontalBlock"] {
     border-radius: 16px;
     padding: 1rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.stPlotlyChart > div {
+    overflow: hidden !important;
+}
+
+/* Fix Plotly tooltip positioning */
+.js-plotly-plot .plotly {
+    position: relative !important;
+}
+
+.js-plotly-plot .plotly .modebar {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
 }
 
 /* Info/Warning/Success Messages */

@@ -108,8 +108,10 @@ with col1:
                                 mode='lines+markers', name='Profit', line=dict(color='green')))
         fig.update_layout(title='Revenue vs Profit Over Time',
                         xaxis_title='Date', yaxis_title='Amount (EUR)',
-                        hovermode='x unified')
-        st.plotly_chart(fig, use_container_width=True)
+                        hovermode='x unified',
+                        margin=dict(l=50, r=50, t=50, b=50),
+                        modebar_remove=['pan', 'select', 'lasso2d', 'zoomIn', 'zoomOut'])
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("📊 Add sales data to see revenue charts")
 
@@ -121,8 +123,10 @@ with col2:
         
         fig = px.bar(daily_volume, x='contract_date', y='quantity_mwh',
                     title='Daily Trading Volume', color_discrete_sequence=['steelblue'])
-        fig.update_layout(xaxis_title='Date', yaxis_title='Volume (MWh)')
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(xaxis_title='Date', yaxis_title='Volume (MWh)',
+                        margin=dict(l=50, r=50, t=50, b=50),
+                        modebar_remove=['pan', 'select', 'lasso2d', 'zoomIn', 'zoomOut'])
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("📊 Add sales data to see volume charts")
 
