@@ -91,7 +91,7 @@ st.header("📈 Performance Charts")
 
 if not sales_df.empty and 'contract_date' in sales_df.columns:
     sales_df_chart = sales_df.copy()
-    sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'], dayfirst=True)
+    sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'], format='mixed', dayfirst=True)
     daily_metrics = sales_df_chart.groupby('contract_date').agg({
         'total_revenue': 'sum',
         'total_margin': 'sum',

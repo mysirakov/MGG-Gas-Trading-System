@@ -79,7 +79,7 @@ st.header("📈 Price Analysis")
 if not sales_df.empty:
     if 'contract_date' in sales_df.columns:
         sales_df_copy = sales_df.copy()
-        sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'], dayfirst=True)
+        sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'], format='mixed', dayfirst=True)
         sales_daily = sales_df_copy.groupby('contract_date').agg({
             'sales_price_eur_mwh': 'mean',
             'purchase_price_eur_mwh': 'mean',

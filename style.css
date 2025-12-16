@@ -1,102 +1,27 @@
-/* Modern Glassmorphism Theme with Proper Light/Dark Mode */
+/* Clean Streamlit Theme Enhancements */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Dark Theme (Default) */
-:root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(148, 163, 184, 0.2);
-    --card-bg: rgba(51, 65, 85, 0.6);
-    --accent-cyan: #06b6d4;
-    --accent-blue: #3b82f6;
-    --accent-purple: #8b5cf6;
-    --accent-green: #10b981;
-    --accent-orange: #f59e0b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+/* Apply Inter font globally */
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
-/* Global Styles */
+/* Prevent horizontal overflow */
 .stApp {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     overflow-x: hidden !important;
 }
 
-/* Sidebar Styling */
-section[data-testid="stSidebar"] {
-    background: rgba(15, 23, 42, 0.98) !important;
-    backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-section[data-testid="stSidebar"] > div {
-    background: transparent !important;
-}
-
-/* Rename "app" to "Dashboard" in sidebar navigation */
-section[data-testid="stSidebar"] a[href="/"] span {
-    visibility: hidden;
-    position: relative;
-}
-
-section[data-testid="stSidebar"] a[href="/"] span::after {
-    content: "Dashboard";
-    visibility: visible;
-    position: absolute;
-    left: 0;
-}
-
-/* Sidebar navigation links */
-section[data-testid="stSidebar"] a {
-    color: var(--text-secondary) !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 8px !important;
-    margin: 0.25rem 0 !important;
-    transition: all 0.2s ease !important;
-}
-
-section[data-testid="stSidebar"] a:hover {
-    color: var(--accent-cyan) !important;
-    background: rgba(6, 182, 212, 0.1) !important;
-}
-
-section[data-testid="stSidebar"] a[aria-current="page"] {
-    background: rgba(6, 182, 212, 0.15) !important;
-    color: var(--accent-cyan) !important;
-}
-
-/* Main Content Area - Prevent overflow */
 .main .block-container {
     padding: 1.5rem 2rem !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
 }
 
-/* Headers */
-h1 {
-    color: var(--text-primary) !important;
-    font-weight: 700 !important;
-    font-size: 2.2rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
-h2, h3 {
-    color: var(--text-primary) !important;
-    font-weight: 600 !important;
-}
-
-/* Metric Cards */
+/* Metric Cards - works with both light and dark mode */
 div[data-testid="metric-container"] {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
     border-radius: 12px;
     padding: 1rem !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease;
 }
 
@@ -105,7 +30,6 @@ div[data-testid="metric-container"]:hover {
 }
 
 div[data-testid="metric-container"] label {
-    color: var(--text-secondary) !important;
     font-size: 0.8rem !important;
     font-weight: 500 !important;
     text-transform: uppercase;
@@ -113,19 +37,15 @@ div[data-testid="metric-container"] label {
 }
 
 div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    color: var(--text-primary) !important;
     font-size: 1.6rem !important;
     font-weight: 700 !important;
 }
 
 /* DataFrame/Table Styling - FIXED OVERFLOW */
 div[data-testid="stDataFrame"] {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
     border-radius: 12px;
     padding: 0.75rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -139,12 +59,9 @@ div[data-testid="stDataFrame"] > div {
 
 /* Plotly Chart Styling - FIXED OVERFLOW */
 .stPlotlyChart {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
     border-radius: 12px;
     padding: 0.75rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -185,29 +102,18 @@ div[data-testid="stHorizontalBlock"] {
     overflow: hidden !important;
 }
 
-/* Tabs */
+/* Tabs styling */
 .stTabs [data-baseweb="tab-list"] {
     gap: 4px;
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
     border-radius: 10px;
     padding: 0.4rem;
-    border: 1px solid var(--glass-border);
 }
 
 .stTabs [data-baseweb="tab"] {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
     font-weight: 500;
     padding: 0.6rem 1.2rem;
     border-radius: 6px;
     transition: all 0.2s ease;
-}
-
-.stTabs [data-baseweb="tab"]:hover {
-    background: rgba(139, 92, 246, 0.1);
-    color: var(--accent-purple);
 }
 
 .stTabs [aria-selected="true"] {
@@ -216,210 +122,46 @@ div[data-testid="stHorizontalBlock"] {
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
-/* Input Fields */
-.stTextInput input, .stNumberInput input, .stSelectbox select, .stDateInput input {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 8px !important;
-    color: var(--text-primary) !important;
-    padding: 0.6rem !important;
-}
-
-.stTextInput input:focus, .stNumberInput input:focus, .stSelectbox select:focus {
-    border-color: var(--accent-cyan) !important;
-    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
-}
-
 /* Buttons */
 .stButton button {
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
-    color: white !important;
-    border: none !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.5rem !important;
     font-weight: 600 !important;
-    box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);
     transition: all 0.2s ease;
 }
 
 .stButton button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(6, 182, 212, 0.4);
 }
 
-.stButton button[kind="secondary"] {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
+/* Input Fields */
+.stTextInput input, .stNumberInput input, .stSelectbox select, .stDateInput input {
+    border-radius: 8px !important;
+    padding: 0.6rem !important;
 }
 
-/* Info/Warning/Success Messages */
+/* Alerts */
 .stAlert {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
     border-radius: 10px;
-    color: var(--text-primary) !important;
 }
 
 /* Expander */
 .streamlit-expanderHeader {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
     border-radius: 10px;
-    color: var(--text-primary) !important;
-}
-
-/* Markdown text */
-.stMarkdown {
-    color: var(--text-secondary) !important;
-}
-
-.stMarkdown p, .stMarkdown li {
-    color: var(--text-secondary) !important;
 }
 
 /* Horizontal Rule */
 hr {
-    border-color: var(--glass-border) !important;
     opacity: 0.4;
     margin: 1.5rem 0 !important;
 }
 
-/* Download Button */
-.stDownloadButton button {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    color: var(--text-primary) !important;
-}
-
-.stDownloadButton button:hover {
-    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)) !important;
-    border-color: transparent !important;
-}
-
-/* Multiselect */
-.stMultiSelect [data-baseweb="tag"] {
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
-    border-radius: 6px;
-}
-
 /* File Uploader */
 .stFileUploader {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(20px);
-    border: 2px dashed var(--glass-border) !important;
     border-radius: 10px;
 }
 
-/* Caption */
-.stCaption, caption {
-    color: var(--text-muted) !important;
-}
-
-/* ========================================
-   LIGHT THEME OVERRIDES
-   ======================================== */
-
-/* Light theme detection - Streamlit adds data-theme="light" to root */
-@media (prefers-color-scheme: light) {
-    :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8fafc;
-        --glass-bg: rgba(255, 255, 255, 0.95);
-        --glass-border: rgba(148, 163, 184, 0.3);
-        --card-bg: rgba(255, 255, 255, 0.9);
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-    }
-}
-
-/* Streamlit light theme overrides */
-[data-testid="stAppViewContainer"][data-theme="light"],
-.stApp[data-basetheme="light"],
-html[data-theme="light"] .stApp {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%) !important;
-}
-
-[data-theme="light"] section[data-testid="stSidebar"],
-html[data-theme="light"] section[data-testid="stSidebar"] {
-    background: rgba(248, 250, 252, 0.98) !important;
-    border-right: 1px solid rgba(148, 163, 184, 0.3) !important;
-}
-
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-html[data-theme="light"] h1,
-html[data-theme="light"] h2,
-html[data-theme="light"] h3 {
-    color: #0f172a !important;
-}
-
-[data-theme="light"] div[data-testid="metric-container"],
-html[data-theme="light"] div[data-testid="metric-container"] {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(148, 163, 184, 0.3) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-}
-
-[data-theme="light"] div[data-testid="metric-container"] label,
-html[data-theme="light"] div[data-testid="metric-container"] label {
-    color: #475569 !important;
-}
-
-[data-theme="light"] div[data-testid="metric-container"] [data-testid="stMetricValue"],
-html[data-theme="light"] div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    color: #0f172a !important;
-}
-
-[data-theme="light"] div[data-testid="stDataFrame"],
-html[data-theme="light"] div[data-testid="stDataFrame"] {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(148, 163, 184, 0.3) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-}
-
-[data-theme="light"] .stPlotlyChart,
-html[data-theme="light"] .stPlotlyChart {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(148, 163, 184, 0.3) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-}
-
-[data-theme="light"] .stTabs [data-baseweb="tab-list"],
-html[data-theme="light"] .stTabs [data-baseweb="tab-list"] {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(148, 163, 184, 0.3) !important;
-}
-
-[data-theme="light"] .stTabs [data-baseweb="tab"],
-html[data-theme="light"] .stTabs [data-baseweb="tab"] {
-    color: #475569 !important;
-}
-
-[data-theme="light"] .stAlert,
-html[data-theme="light"] .stAlert {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(148, 163, 184, 0.3) !important;
-}
-
-[data-theme="light"] .stMarkdown,
-[data-theme="light"] .stMarkdown p,
-[data-theme="light"] .stMarkdown li,
-html[data-theme="light"] .stMarkdown,
-html[data-theme="light"] .stMarkdown p {
-    color: #475569 !important;
-}
-
-[data-theme="light"] section[data-testid="stSidebar"] a,
-html[data-theme="light"] section[data-testid="stSidebar"] a {
-    color: #475569 !important;
-}
-
-[data-theme="light"] section[data-testid="stSidebar"] a:hover,
-html[data-theme="light"] section[data-testid="stSidebar"] a:hover {
-    color: #0891b2 !important;
-    background: rgba(8, 145, 178, 0.1) !important;
+/* Multiselect tags */
+.stMultiSelect [data-baseweb="tag"] {
+    border-radius: 6px;
 }

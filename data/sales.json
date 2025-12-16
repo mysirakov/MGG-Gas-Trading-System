@@ -645,21 +645,6 @@
     "payment_status": "Pending"
   },
   {
-    "id": "20251216123102583572",
-    "contract_date": "2025-12-16",
-    "sales_price_eur_mwh": 29.9,
-    "quantity_mwh": 100.0,
-    "cost_capacity_eur_mwh": 1.283,
-    "cost_transport_eur_mwh": 0.012,
-    "purchase_price_eur_mwh": 25.68,
-    "margin_eur_mwh": 2.924999999999999,
-    "total_revenue": 2990.0,
-    "total_margin": 292.4999999999999,
-    "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
-  },
-  {
     "id": "20251216123106718375",
     "contract_date": "2025-12-16",
     "sales_price_eur_mwh": 29.9,
