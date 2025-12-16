@@ -134,7 +134,7 @@ with tab2:
     if st.button("Add Sale", type="primary", key="add_single_sale"):
         new_sale = {
             "id": generate_id(),
-            "contract_date": str(contract_date),
+            "contract_date": contract_date.strftime("%d/%m/%Y"),
             "sales_price_eur_mwh": sales_price,
             "quantity_mwh": quantity_mwh,
             "cost_capacity_eur_mwh": cost_capacity,
