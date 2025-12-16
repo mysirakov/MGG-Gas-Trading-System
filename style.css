@@ -1,5 +1,4 @@
-
-/* Dark Glassmorphism Theme - Complete Fix */
+/* Dark Glassmorphism Theme - Simplified & Fixed */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ============================================
@@ -17,7 +16,7 @@ html, body, [class*="css"], .stApp, [data-testid="stAppViewContainer"] {
 }
 
 /* ============================================
-   TEXT VISIBILITY - Force White Text Everywhere
+   TEXT VISIBILITY - Force White Text
    ============================================ */
 h1, h2, h3, h4, h5, h6,
 p, span, div, label, a,
@@ -27,7 +26,6 @@ p, span, div, label, a,
 [data-testid="stMarkdownContainer"] p,
 [data-testid="stMarkdownContainer"] span {
     color: #ffffff !important;
-    font-weight: inherit;
 }
 
 h1 {
@@ -56,17 +54,15 @@ h3 {
 }
 
 /* ============================================
-   METRIC CARDS - Glassmorphism
+   METRIC CARDS - Simple Glassmorphism
    ============================================ */
 div[data-testid="metric-container"] {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     padding: 1.5rem !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
 div[data-testid="metric-container"]:hover {
@@ -98,7 +94,7 @@ div[data-testid="metric-container"] [data-testid="stMetricDelta"] > div {
 }
 
 /* ============================================
-   DATAFRAMES/TABLES - Glassmorphism
+   DATAFRAMES/TABLES - Simple Style
    ============================================ */
 div[data-testid="stDataFrame"],
 div[data-testid="stDataFrame"] > div,
@@ -106,7 +102,7 @@ div[data-testid="stDataFrame"] > div,
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     padding: 1rem !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
@@ -129,16 +125,16 @@ div[data-testid="stDataFrame"] table tbody tr,
 
 div[data-testid="stDataFrame"] table thead th,
 .stDataFrame thead th {
-    background: rgba(139, 92, 246, 0.4) !important;
+    background: rgba(139, 92, 246, 0.3) !important;
     color: #ffffff !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     font-size: 0.95rem !important;
-    padding: 1rem 0.75rem !important;
-    border-bottom: 2px solid rgba(139, 92, 246, 0.6) !important;
+    padding: 0.75rem !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.5) !important;
 }
 
 div[data-testid="stDataFrame"] table tbody td,
-.stDataFrame tbody td {
+.stDataFrame tbodytd {
     padding: 0.75rem !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
@@ -149,35 +145,39 @@ div[data-testid="stDataFrame"] table tbody tr:hover,
 }
 
 /* ============================================
-   CHARTS - NO CLIPPING, Full Visibility
+   CHARTS - NO NESTED CONTAINERS, VISIBLE
    ============================================ */
 .stPlotlyChart,
-div[data-testid="stPlotlyChart"],
+div[data-testid="stPlotlyChart"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 1rem 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+}
+
+/* Remove all inner wrappers */
+.stPlotlyChart > div,
+div[data-testid="stPlotlyChart"] > div {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+}
+
+/* Actual chart container */
 .js-plotly-plot,
 .plotly,
 .plot-container {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 1.5rem !important;
-    margin-bottom: 2rem !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    padding: 1rem !important;
     overflow: visible !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    min-height: 450px !important;
-}
-
-.stPlotlyChart > div,
-div[data-testid="stPlotlyChart"] > div,
-.js-plotly-plot,
-.plotly {
-    overflow: visible !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 400px !important;
 }
 
 .js-plotly-plot .plotly .main-svg,
@@ -199,7 +199,7 @@ div[data-testid="stHorizontalBlock"] > div,
 }
 
 /* ============================================
-   BUTTONS - Unified Purple Gradient
+   BUTTONS - Unified Purple Style
    ============================================ */
 .stButton button,
 .stDownloadButton button,
@@ -208,18 +208,18 @@ button[kind="secondary"] {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     padding: 0.75rem 2rem !important;
     font-weight: 600 !important;
     font-size: 1rem !important;
     transition: all 0.3s ease !important;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
 }
 
 .stButton button:hover,
 .stDownloadButton button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4) !important;
 }
 
 /* ============================================
@@ -227,7 +227,7 @@ button[kind="secondary"] {
    ============================================ */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px !important;
-    background: rgba(255, 255, 255, 0.03) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     border-radius: 12px !important;
     padding: 0.5rem !important;
@@ -267,7 +267,7 @@ button[kind="secondary"] {
 }
 
 /* ============================================
-   INPUT FIELDS - Glassmorphism
+   INPUT FIELDS - Simple Glassmorphism
    ============================================ */
 .stTextInput input, 
 .stNumberInput input, 
@@ -279,7 +279,7 @@ input, textarea, select {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     padding: 0.75rem !important;
     color: #ffffff !important;
     font-size: 1rem !important;
@@ -317,25 +317,25 @@ label {
 .stSelectbox [role="listbox"],
 .stMultiSelect [role="listbox"],
 [data-baseweb="popover"] {
-    background: rgba(15, 12, 41, 0.98) !important;
+    background: rgba(15, 12, 41, 0.95) !important;
     backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .stSelectbox [role="option"],
 .stMultiSelect [role="option"],
 [data-baseweb="menu"] li,
 [role="option"] {
-    background: rgba(15, 12, 41, 0.95) !important;
+    background: rgba(15, 12, 41, 0.9) !important;
     color: #ffffff !important;
-    padding: 0.75rem 1rem !important;
+    padding: 0.75rem !important;
 }
 
 .stSelectbox [role="option"]:hover,
 .stMultiSelect [role="option"]:hover,
 [data-baseweb="menu"] li:hover,
 [role="option"]:hover {
-    background: rgba(139, 92, 246, 0.5) !important;
+    background: rgba(139, 92, 246, 0.4) !important;
     color: #ffffff !important;
 }
 
@@ -353,13 +353,13 @@ label {
 }
 
 /* ============================================
-   ALERTS - Glassmorphism
+   ALERTS - Simple Style
    ============================================ */
 .stAlert,
 div[data-testid="stNotification"] {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
-    border-radius: 12px !important;
+    border-radius: 8px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: #ffffff !important;
 }
@@ -392,7 +392,7 @@ div[data-testid="stNotification"] span {
 }
 
 /* ============================================
-   SIDEBAR - Dark Glassmorphism
+   SIDEBAR - Dark Style
    ============================================ */
 section[data-testid="stSidebar"] {
     background: rgba(15, 12, 41, 0.8) !important;
@@ -424,7 +424,7 @@ section[data-testid="stSidebar"] h3 {
 .streamlit-expanderHeader {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: #ffffff !important;
     font-weight: 500 !important;
@@ -470,12 +470,12 @@ hr {
 
 ::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: rgba(139, 92, 246, 0.5);
-    border-radius: 10px;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
