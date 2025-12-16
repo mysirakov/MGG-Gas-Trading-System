@@ -203,7 +203,7 @@ with col1:
 with col2:
     st.subheader("Cash Inflows (from Buyers)")
     if not payments_df.empty and 'payment_date' in payments_df.columns:
-        payments_df['payment_date'] = pd.to_datetime(payments_df['payment_date'], dayfirst=True)
+        payments_df['payment_date'] = pd.to_datetime(payments_df['payment_date'], format='mixed', dayfirst=True)
         inflow_daily = payments_df.groupby('payment_date')['amount_eur'].sum().reset_index()
         
         fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',

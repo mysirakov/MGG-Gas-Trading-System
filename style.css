@@ -2,7 +2,7 @@
 /* Modern Glassmorphism Theme */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Root Variables */
+/* Root Variables - Dark Theme */
 :root {
     --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     --glass-bg: rgba(30, 41, 59, 0.7);
@@ -15,6 +15,23 @@
     --accent-orange: #f59e0b;
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
+}
+
+/* Light Theme Variables */
+[data-theme="light"], 
+.stApp[data-theme="light"],
+body[data-theme="light"] {
+    --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(148, 163, 184, 0.2);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --accent-cyan: #0891b2;
+    --accent-blue: #2563eb;
+    --accent-purple: #7c3aed;
+    --accent-green: #059669;
+    --accent-orange: #d97706;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
 }
 
 /* Global Styles */

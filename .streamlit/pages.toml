@@ -1,5 +1,7 @@
 
-[pages]
-[pages.app]
-label = "Dashboard"
+
+[[pages]]
+path = "app.py"
+name = "Dashboard"
 icon = "⛽"
+
