@@ -116,6 +116,18 @@ div[data-testid="stDataFrame"] > div {
     overflow-y: auto !important;
 }
 
+/* Table headers and cells */
+div[data-testid="stDataFrame"] table th,
+div[data-testid="stDataFrame"] table td {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+div[data-testid="stDataFrame"] table thead th {
+    background: rgba(139, 92, 246, 0.2) !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
 /* Plotly Chart Styling - Glassmorphism */
 .stPlotlyChart {
     background: rgba(255, 255, 255, 0.05) !important;
@@ -125,19 +137,23 @@ div[data-testid="stDataFrame"] > div {
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     padding: 1rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     max-width: 100% !important;
     width: 100% !important;
 }
 
 .stPlotlyChart > div {
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 .js-plotly-plot, .plotly, .plot-container {
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+}
+
+.js-plotly-plot .plotly .main-svg {
+    overflow: visible !important;
 }
 
 /* Column containers */
@@ -267,6 +283,45 @@ div[data-testid="stHorizontalBlock"] {
 .stSelectbox > div > div {
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+/* Dropdown menu items */
+.stSelectbox [role="listbox"] {
+    background: rgba(15, 12, 41, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.stSelectbox [role="option"] {
+    background: rgba(15, 12, 41, 0.8) !important;
+    color: white !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.stSelectbox [role="option"]:hover {
+    background: rgba(139, 92, 246, 0.3) !important;
+    color: white !important;
+}
+
+.stSelectbox [data-baseweb="select"] > div {
+    color: white !important;
+}
+
+/* Multiselect dropdown options */
+.stMultiSelect [role="listbox"] {
+    background: rgba(15, 12, 41, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.stMultiSelect [role="option"] {
+    background: rgba(15, 12, 41, 0.8) !important;
+    color: white !important;
+}
+
+.stMultiSelect [role="option"]:hover {
+    background: rgba(139, 92, 246, 0.3) !important;
     color: white !important;
 }
 
