@@ -19,12 +19,14 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Architecture
 - **Streamlit Multi-Page Application**: The app uses Streamlit's native multi-page structure with pages stored in the `pages/` directory
 - **Page Structure**:
-  - `app.py` - Main dashboard with key metrics overview
-  - `pages/1_Purchases.py` - Purchase management with single entry and bulk upload
+  - `app.py` - Main Dashboard with key metrics overview
+  - `pages/1_Purchases.py` - View daily gas purchase details (derived from Sales data)
   - `pages/2_Sales.py` - Sales tracking with margin calculations
-  - `pages/3_Payments.py` - Payment reconciliation and tracking
-  - `pages/4_Analytics.py` - P&L charts and performance metrics using Plotly
-  - `pages/5_Settings.py` - Configuration for suppliers, buyers, and payment methods
+  - `pages/3_Payments.py` - Payment reconciliation and tracking from buyers
+  - `pages/4_Seller_Balance.py` - Supplier payment management and invoices
+  - `pages/5_Analytics.py` - P&L charts and performance metrics using Plotly
+  - `pages/6_Settings.py` - Configuration for suppliers, buyers, and payment methods
+- **Tab Ordering**: All pages with tabs show View/Statistics tabs first, followed by entry forms
 
 ### Data Storage
 - **JSON File-Based Storage**: All data is persisted as JSON files in a `data/` directory
@@ -48,8 +50,8 @@ Preferred communication style: Simple, everyday language.
 - **Outstanding Receivables**: Calculated by comparing total revenue from sales against payments received
 
 ### Known Issues
-- There's an error in the Purchases page where a multiselect filter defaults to 'Partial' status which may not exist in the data options. Default values need to be validated against available options.
-- Some purchase records contain NaN values and inconsistent date formats (both Excel serial numbers like "45937" and date strings like "07/10/2025")
+- Some sales/purchase records contain inconsistent date formats (both Excel serial numbers like "45937" and date strings like "DD/MM/YYYY"). The system uses dayfirst=True for date parsing.
+- Zero-value rows are filtered out from Analytics and purchase cost calculations
 
 ## External Dependencies
 
