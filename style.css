@@ -1,8 +1,7 @@
-
-/* Light Glassmorphism Theme */
+/* Clean Streamlit Theme Enhancements */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Global Font & Base Styles */
+/* Apply Inter font globally */
 html, body, [class*="css"] {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
@@ -10,7 +9,6 @@ html, body, [class*="css"] {
 /* Prevent horizontal overflow */
 .stApp {
     overflow-x: hidden !important;
-    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%) !important;
 }
 
 .main .block-container {
@@ -19,69 +17,35 @@ html, body, [class*="css"] {
     overflow-x: hidden !important;
 }
 
-/* Glassmorphism Cards */
+/* Metric Cards - works with both light and dark mode */
 div[data-testid="metric-container"] {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 16px !important;
-    padding: 1.5rem !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    border-radius: 12px;
+    padding: 1rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
 }
 
 div[data-testid="metric-container"]:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-2px);
 }
 
 div[data-testid="metric-container"] label {
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    color: #6366f1 !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    font-size: 2rem !important;
+    font-size: 1.6rem !important;
     font-weight: 700 !important;
-    color: #1e293b !important;
 }
 
-/* Unified Titles */
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 700 !important;
-    color: #1e293b !important;
-}
-
-h1 {
-    font-size: 2.5rem !important;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-}
-
-h2 {
-    font-size: 1.75rem !important;
-}
-
-h3 {
-    font-size: 1.5rem !important;
-}
-
-/* DataFrame/Table with Glassmorphism */
+/* DataFrame/Table Styling - FIXED OVERFLOW */
 div[data-testid="stDataFrame"] {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 16px !important;
-    padding: 1rem !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -93,34 +57,11 @@ div[data-testid="stDataFrame"] > div {
     overflow-y: auto !important;
 }
 
-div[data-testid="stDataFrame"] table thead th {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
-    padding: 1rem 0.75rem !important;
-    border: none !important;
-}
-
-div[data-testid="stDataFrame"] table tbody td {
-    padding: 0.875rem 0.75rem !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
-    color: #334155 !important;
-}
-
-div[data-testid="stDataFrame"] table tbody tr:hover {
-    background: rgba(99, 102, 241, 0.05) !important;
-}
-
-/* Plotly Charts with Glassmorphism */
+/* Plotly Chart Styling - FIXED OVERFLOW */
 .stPlotlyChart {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 16px !important;
-    padding: 1rem !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -131,12 +72,13 @@ div[data-testid="stDataFrame"] table tbody tr:hover {
     overflow: hidden !important;
 }
 
+/* Ensure chart SVGs don't overflow */
 .js-plotly-plot, .plotly, .plot-container {
     max-width: 100% !important;
     overflow: hidden !important;
 }
 
-/* Column containers */
+/* Column containers - prevent overflow */
 div[data-testid="column"] {
     overflow: hidden !important;
     max-width: 100% !important;
@@ -147,262 +89,79 @@ div[data-testid="column"] > div {
     max-width: 100% !important;
 }
 
+/* Horizontal block - prevent overflow */
 div[data-testid="stHorizontalBlock"] {
     overflow: hidden !important;
-    gap: 1rem !important;
+    gap: 1rem;
     max-width: 100% !important;
 }
 
+/* Element containers */
 .element-container {
     max-width: 100% !important;
     overflow: hidden !important;
 }
 
-/* Unified Button Styles */
-.stButton button {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 12px !important;
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
-    font-family: 'Inter', sans-serif !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3) !important;
-}
-
-.stButton button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
-}
-
-.stButton button:active {
-    transform: translateY(0) !important;
-}
-
-/* Secondary Button */
-.stButton button[kind="secondary"] {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    color: #6366f1 !important;
-    border: 1px solid rgba(99, 102, 241, 0.3) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
-}
-
-.stButton button[kind="secondary"]:hover {
-    background: rgba(99, 102, 241, 0.1) !important;
-    border-color: rgba(99, 102, 241, 0.5) !important;
-}
-
-/* Tabs with Glassmorphism */
+/* Tabs styling */
 .stTabs [data-baseweb="tab-list"] {
-    background: rgba(255, 255, 255, 0.6) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    gap: 0.5rem !important;
-    border-radius: 12px !important;
-    padding: 0.5rem !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+    gap: 4px;
+    border-radius: 10px;
+    padding: 0.4rem;
 }
 
 .stTabs [data-baseweb="tab"] {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 600 !important;
-    padding: 0.75rem 1.5rem !important;
-    border-radius: 8px !important;
-    transition: all 0.2s ease !important;
-    color: #64748b !important;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
 .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
     color: white !important;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
-/* Input Fields with Glassmorphism */
-.stTextInput input, 
-.stNumberInput input, 
-.stSelectbox select, 
-.stDateInput input,
-.stTextArea textarea {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(99, 102, 241, 0.2) !important;
-    border-radius: 10px !important;
-    padding: 0.75rem !important;
-    font-family: 'Inter', sans-serif !important;
-    color: #1e293b !important;
-    transition: all 0.2s ease !important;
-}
-
-.stTextInput input:focus, 
-.stNumberInput input:focus, 
-.stSelectbox select:focus, 
-.stDateInput input:focus,
-.stTextArea textarea:focus {
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
-}
-
-/* Selectbox Dropdown */
-.stSelectbox [role="listbox"],
-.stMultiSelect [role="listbox"],
-[data-baseweb="popover"] {
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(99, 102, 241, 0.2) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-}
-
-.stSelectbox [role="option"],
-.stMultiSelect [role="option"],
-[data-baseweb="menu"] li,
-[role="option"] {
-    background: transparent !important;
-    color: #1e293b !important;
-    padding: 0.75rem 1rem !important;
-    font-family: 'Inter', sans-serif !important;
-}
-
-.stSelectbox [role="option"]:hover,
-.stMultiSelect [role="option"]:hover,
-[data-baseweb="menu"] li:hover,
-[role="option"]:hover {
-    background: rgba(99, 102, 241, 0.1) !important;
-    color: #6366f1 !important;
-}
-
-/* Dropdown selected value */
-.stSelectbox div[data-baseweb="select"] > div,
-.stSelectbox input {
-    color: #1e293b !important;
-}
-
-/* Alerts with Glassmorphism */
-.stAlert {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Expander with Glassmorphism */
-.streamlit-expanderHeader {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 12px !important;
-    font-family: 'Inter', sans-serif !important;
+/* Buttons */
+.stButton button {
+    border-radius: 8px !important;
+    padding: 0.6rem 1.5rem !important;
     font-weight: 600 !important;
-    color: #1e293b !important;
+    transition: all 0.2s ease;
+}
+
+.stButton button:hover {
+    transform: translateY(-1px);
+}
+
+/* Input Fields */
+.stTextInput input, .stNumberInput input, .stSelectbox select, .stDateInput input {
+    border-radius: 8px !important;
+    padding: 0.6rem !important;
+}
+
+/* Alerts */
+.stAlert {
+    border-radius: 10px;
+}
+
+/* Expander */
+.streamlit-expanderHeader {
+    border-radius: 10px;
 }
 
 /* Horizontal Rule */
 hr {
-    opacity: 0.2 !important;
+    opacity: 0.4;
     margin: 1.5rem 0 !important;
-    border-color: #cbd5e1 !important;
 }
 
 /* File Uploader */
 .stFileUploader {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 10px;
 }
 
 /* Multiselect tags */
 .stMultiSelect [data-baseweb="tag"] {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: white !important;
-    border-radius: 8px !important;
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 500 !important;
-}
-
-/* Sidebar with Glassmorphism */
-section[data-testid="stSidebar"] {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.8) !important;
-    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.04) !important;
-}
-
-section[data-testid="stSidebar"] .block-container {
-    padding-top: 2rem !important;
-}
-
-/* Download Button */
-.stDownloadButton button {
-    background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    color: #6366f1 !important;
-    border: 1px solid rgba(99, 102, 241, 0.3) !important;
-    border-radius: 12px !important;
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 600 !important;
-    font-family: 'Inter', sans-serif !important;
-    transition: all 0.3s ease !important;
-}
-
-.stDownloadButton button:hover {
-    background: rgba(99, 102, 241, 0.1) !important;
-    border-color: rgba(99, 102, 241, 0.5) !important;
-    transform: translateY(-2px) !important;
-}
-
-/* Caption text */
-.stCaption {
-    font-family: 'Inter', sans-serif !important;
-    color: #64748b !important;
-}
-
-/* Markdown text */
-.stMarkdown {
-    font-family: 'Inter', sans-serif !important;
-    color: #334155 !important;
-}
-
-/* Info boxes */
-.stInfo {
-    background: rgba(59, 130, 246, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-left: 4px solid #3b82f6 !important;
-}
-
-.stSuccess {
-    background: rgba(34, 197, 94, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-left: 4px solid #22c55e !important;
-}
-
-.stWarning {
-    background: rgba(245, 158, 11, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-left: 4px solid #f59e0b !important;
-}
-
-.stError {
-    background: rgba(239, 68, 68, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-left: 4px solid #ef4444 !important;
+    border-radius: 6px;
 }
