@@ -1,67 +1,63 @@
 
-/* Dark Glassmorphism Theme */
+/* Dark Glassmorphism Theme - Complete Fix */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Global Styles */
-html, body, [class*="css"] {
+/* ============================================
+   GLOBAL FOUNDATION - Force Dark Background
+   ============================================ */
+html, body, [class*="css"], .stApp, [data-testid="stAppViewContainer"] {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     background: linear-gradient(135deg, #0f0c29, #302b63, #24243e) !important;
-}
-
-/* Main App Container */
-.stApp {
-    overflow-x: hidden !important;
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e) !important;
+    color: #ffffff !important;
 }
 
 .main .block-container {
     padding: 1.5rem 2rem !important;
     max-width: 100% !important;
-    overflow-x: hidden !important;
 }
 
-/* Headers - Unified Styling */
-h1, h2, h3, h4, h5, h6 {
+/* ============================================
+   TEXT VISIBILITY - Force White Text Everywhere
+   ============================================ */
+h1, h2, h3, h4, h5, h6,
+p, span, div, label, a,
+.stMarkdown, .stMarkdown p, .stMarkdown span,
+.stText, [data-testid="stText"],
+[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span {
     color: #ffffff !important;
-    font-weight: 600 !important;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-weight: inherit;
 }
 
 h1 {
     font-size: 2.5rem !important;
+    font-weight: 600 !important;
     margin-bottom: 0.5rem !important;
 }
 
 h2 {
     font-size: 2rem !important;
+    font-weight: 600 !important;
     margin-bottom: 0.75rem !important;
 }
 
 h3 {
     font-size: 1.5rem !important;
+    font-weight: 600 !important;
     margin-bottom: 0.5rem !important;
 }
 
-/* Paragraphs and Text */
-p, span, div {
-    color: rgba(255, 255, 255, 0.9) !important;
+/* Specific text elements */
+.element-container p,
+.element-container span,
+.element-container div {
+    color: rgba(255, 255, 255, 0.95) !important;
 }
 
-.stMarkdown {
-    color: rgba(255, 255, 255, 0.9) !important;
-}
-
-/* Glassmorphism Card Style */
-.glass-card {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-radius: 16px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Metric Cards - Glassmorphism */
+/* ============================================
+   METRIC CARDS - Glassmorphism
+   ============================================ */
 div[data-testid="metric-container"] {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
@@ -78,7 +74,8 @@ div[data-testid="metric-container"]:hover {
     box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3) !important;
 }
 
-div[data-testid="metric-container"] label {
+div[data-testid="metric-container"] label,
+div[data-testid="metric-container"] [data-testid="stMetricLabel"] {
     font-size: 0.85rem !important;
     font-weight: 500 !important;
     text-transform: uppercase;
@@ -86,114 +83,139 @@ div[data-testid="metric-container"] label {
     color: rgba(255, 255, 255, 0.7) !important;
 }
 
-div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+div[data-testid="metric-container"] [data-testid="stMetricValue"],
+div[data-testid="metric-container"] [data-testid="stMetricValue"] > div {
     font-size: 2rem !important;
     font-weight: 700 !important;
     color: #ffffff !important;
 }
 
-div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
+div[data-testid="metric-container"] [data-testid="stMetricDelta"],
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] svg,
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] > div {
     color: rgba(255, 255, 255, 0.8) !important;
+    fill: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* DataFrame/Table Styling - Glassmorphism */
-div[data-testid="stDataFrame"] {
+/* ============================================
+   DATAFRAMES/TABLES - Glassmorphism
+   ============================================ */
+div[data-testid="stDataFrame"],
+div[data-testid="stDataFrame"] > div,
+.stDataFrame {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
     border-radius: 16px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 1rem;
+    padding: 1rem !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     max-width: 100% !important;
     width: 100% !important;
 }
 
-div[data-testid="stDataFrame"] > div {
-    max-width: 100% !important;
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-}
-
-/* Table headers and cells */
+/* Table text visibility */
+div[data-testid="stDataFrame"] table,
 div[data-testid="stDataFrame"] table th,
-div[data-testid="stDataFrame"] table td {
-    color: rgba(255, 255, 255, 0.9) !important;
+div[data-testid="stDataFrame"] table td,
+div[data-testid="stDataFrame"] table tbody tr,
+.stDataFrame table,
+.stDataFrame th,
+.stDataFrame td {
+    color: rgba(255, 255, 255, 0.95) !important;
+    background: transparent !important;
 }
 
-div[data-testid="stDataFrame"] table thead th {
+div[data-testid="stDataFrame"] table thead th,
+.stDataFrame thead th {
     background: rgba(139, 92, 246, 0.2) !important;
-    color: white !important;
+    color: #ffffff !important;
     font-weight: 600 !important;
 }
 
-/* Plotly Chart Styling - Glassmorphism */
-.stPlotlyChart {
+/* ============================================
+   CHARTS - NO CLIPPING, Full Visibility
+   ============================================ */
+.stPlotlyChart,
+div[data-testid="stPlotlyChart"],
+.js-plotly-plot,
+.plotly,
+.plot-container {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
     border-radius: 16px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 1rem;
+    padding: 1rem !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
     overflow: visible !important;
     max-width: 100% !important;
     width: 100% !important;
 }
 
-.stPlotlyChart > div {
+.stPlotlyChart > div,
+div[data-testid="stPlotlyChart"] > div {
+    overflow: visible !important;
     max-width: 100% !important;
+}
+
+.js-plotly-plot .plotly .main-svg,
+.js-plotly-plot .plotly .svg-container {
     overflow: visible !important;
 }
 
-.js-plotly-plot, .plotly, .plot-container {
-    max-width: 100% !important;
-    overflow: visible !important;
-}
-
-.js-plotly-plot .plotly .main-svg {
-    overflow: visible !important;
-}
-
-/* Column containers */
-div[data-testid="column"] {
-    overflow: hidden !important;
-    max-width: 100% !important;
-}
-
-div[data-testid="column"] > div {
-    overflow: hidden !important;
-    max-width: 100% !important;
-}
-
-div[data-testid="stHorizontalBlock"] {
-    overflow: hidden !important;
-    gap: 1rem;
-    max-width: 100% !important;
-}
-
+/* Remove all clipping constraints */
+div[data-testid="column"],
+div[data-testid="column"] > div,
+div[data-testid="stHorizontalBlock"],
 .element-container {
+    overflow: visible !important;
     max-width: 100% !important;
-    overflow: hidden !important;
 }
 
-/* Tabs - Unified Purple Glassmorphism */
+/* ============================================
+   BUTTONS - Unified Purple Gradient
+   ============================================ */
+.stButton button,
+.stDownloadButton button,
+button[kind="primary"],
+button[kind="secondary"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+}
+
+.stButton button:hover,
+.stDownloadButton button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
+}
+
+/* ============================================
+   TABS - Unified Purple Style
+   ============================================ */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
+    gap: 8px !important;
     background: rgba(255, 255, 255, 0.03) !important;
     backdrop-filter: blur(10px) !important;
-    border-radius: 12px;
-    padding: 0.5rem;
+    border-radius: 12px !important;
+    padding: 0.5rem !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .stTabs [data-baseweb="tab"] {
-    font-weight: 500;
+    font-weight: 500 !important;
     font-size: 1rem !important;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
     color: rgba(255, 255, 255, 0.7) !important;
     background: transparent !important;
 }
@@ -205,63 +227,37 @@ div[data-testid="stHorizontalBlock"] {
 
 .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
+    color: #ffffff !important;
     box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4) !important;
 }
 
-/* Buttons - Unified Purple Glassmorphism */
-.stButton button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 2rem !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+/* Tab content text */
+.stTabs [data-baseweb="tab-panel"] {
+    color: #ffffff !important;
 }
 
-.stButton button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
+.stTabs [data-baseweb="tab-panel"] p,
+.stTabs [data-baseweb="tab-panel"] span,
+.stTabs [data-baseweb="tab-panel"] div {
+    color: rgba(255, 255, 255, 0.95) !important;
 }
 
-.stButton button[kind="secondary"] {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Download Buttons */
-.stDownloadButton button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 2rem !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
-}
-
-.stDownloadButton button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
-}
-
-/* Input Fields - Glassmorphism */
+/* ============================================
+   INPUT FIELDS - Glassmorphism
+   ============================================ */
 .stTextInput input, 
 .stNumberInput input, 
 .stSelectbox select, 
 .stDateInput input,
 .stTextArea textarea,
-.stMultiSelect > div {
+.stMultiSelect > div,
+input, textarea, select {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 10px !important;
     padding: 0.75rem !important;
-    color: white !important;
+    color: #ffffff !important;
     font-size: 1rem !important;
 }
 
@@ -277,135 +273,92 @@ div[data-testid="stHorizontalBlock"] {
 .stTextArea textarea:focus {
     border-color: rgba(139, 92, 246, 0.5) !important;
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+    outline: none !important;
 }
 
-/* Select boxes */
-.stSelectbox > div > div {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
-}
-
-/* Dropdown menu items */
-.stSelectbox [role="listbox"] {
-    background: rgba(15, 12, 41, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.stSelectbox [role="option"] {
-    background: rgba(15, 12, 41, 0.8) !important;
-    color: white !important;
-    padding: 0.5rem 1rem !important;
-}
-
-.stSelectbox [role="option"]:hover {
-    background: rgba(139, 92, 246, 0.3) !important;
-    color: white !important;
-}
-
-.stSelectbox [data-baseweb="select"] > div {
-    color: white !important;
-}
-
-/* Multiselect dropdown options */
-.stMultiSelect [role="listbox"] {
-    background: rgba(15, 12, 41, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.stMultiSelect [role="option"] {
-    background: rgba(15, 12, 41, 0.8) !important;
-    color: white !important;
-}
-
-.stMultiSelect [role="option"]:hover {
-    background: rgba(139, 92, 246, 0.3) !important;
-    color: white !important;
-}
-
-/* Labels */
+/* Input labels */
+.stTextInput label,
+.stNumberInput label,
+.stSelectbox label,
+.stDateInput label,
+.stTextArea label,
+.stMultiSelect label,
 label {
     color: rgba(255, 255, 255, 0.9) !important;
     font-weight: 500 !important;
     font-size: 0.95rem !important;
 }
 
-/* Alerts - Glassmorphism */
-.stAlert {
-    background: rgba(255, 255, 255, 0.05) !important;
+/* Select dropdown options */
+.stSelectbox [role="listbox"],
+.stMultiSelect [role="listbox"] {
+    background: rgba(15, 12, 41, 0.95) !important;
     backdrop-filter: blur(10px) !important;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Success Alert */
-.stSuccess {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-color: rgba(34, 197, 94, 0.3) !important;
+.stSelectbox [role="option"],
+.stMultiSelect [role="option"] {
+    background: rgba(15, 12, 41, 0.8) !important;
+    color: #ffffff !important;
+    padding: 0.5rem 1rem !important;
 }
 
-/* Warning Alert */
-.stWarning {
-    background: rgba(251, 191, 36, 0.1) !important;
-    border-color: rgba(251, 191, 36, 0.3) !important;
-}
-
-/* Error Alert */
-.stError {
-    background: rgba(239, 68, 68, 0.1) !important;
-    border-color: rgba(239, 68, 68, 0.3) !important;
-}
-
-/* Info Alert */
-.stInfo {
-    background: rgba(59, 130, 246, 0.1) !important;
-    border-color: rgba(59, 130, 246, 0.3) !important;
-}
-
-/* Expander - Glassmorphism */
-.streamlit-expanderHeader {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px) !important;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: white !important;
-    font-weight: 500 !important;
-}
-
-.streamlit-expanderHeader:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Horizontal Rule */
-hr {
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    opacity: 1;
-    margin: 2rem 0 !important;
-}
-
-/* File Uploader - Glassmorphism */
-.stFileUploader {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px) !important;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.stFileUploader label {
-    color: white !important;
+.stSelectbox [role="option"]:hover,
+.stMultiSelect [role="option"]:hover {
+    background: rgba(139, 92, 246, 0.3) !important;
+    color: #ffffff !important;
 }
 
 /* Multiselect tags */
 .stMultiSelect [data-baseweb="tag"] {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border-radius: 6px;
-    color: white !important;
+    border-radius: 6px !important;
+    color: #ffffff !important;
 }
 
-/* Sidebar - Glassmorphism */
+/* ============================================
+   ALERTS - Glassmorphism
+   ============================================ */
+.stAlert,
+div[data-testid="stNotification"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.stSuccess {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+.stWarning {
+    background: rgba(251, 191, 36, 0.1) !important;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+.stError {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.stInfo {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Alert text */
+.stAlert p, .stAlert span,
+div[data-testid="stNotification"] p,
+div[data-testid="stNotification"] span {
+    color: #ffffff !important;
+}
+
+/* ============================================
+   SIDEBAR - Dark Glassmorphism
+   ============================================ */
 section[data-testid="stSidebar"] {
     background: rgba(15, 12, 41, 0.8) !important;
     backdrop-filter: blur(10px) !important;
@@ -416,25 +369,65 @@ section[data-testid="stSidebar"] > div {
     background: transparent !important;
 }
 
-/* Radio buttons */
-.stRadio > div {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px) !important;
-    border-radius: 10px !important;
-    padding: 0.5rem !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.stRadio label {
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] a {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* Captions */
-.stCaption {
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #ffffff !important;
+}
+
+/* ============================================
+   EXPANDER - Glassmorphism
+   ============================================ */
+.streamlit-expanderHeader {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+.streamlit-expanderHeader:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ============================================
+   CAPTIONS AND FOOTER
+   ============================================ */
+.stCaption,
+.stCaption p,
+.stCaption span {
     color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Scrollbar styling for dark theme */
+footer {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+footer a {
+    color: rgba(139, 92, 246, 0.8) !important;
+}
+
+/* ============================================
+   HORIZONTAL RULE
+   ============================================ */
+hr {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    opacity: 1 !important;
+    margin: 2rem 0 !important;
+}
+
+/* ============================================
+   SCROLLBAR - Dark Theme
+   ============================================ */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -454,11 +447,64 @@ section[data-testid="stSidebar"] > div {
     background: rgba(139, 92, 246, 0.7);
 }
 
-/* Footer/Caption text */
-footer {
-    color: rgba(255, 255, 255, 0.5) !important;
+/* ============================================
+   FILE UPLOADER
+   ============================================ */
+.stFileUploader {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-footer a {
-    color: rgba(139, 92, 246, 0.8) !important;
+.stFileUploader label,
+.stFileUploader p,
+.stFileUploader span {
+    color: #ffffff !important;
+}
+
+/* ============================================
+   RADIO BUTTONS
+   ============================================ */
+.stRadio > div {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 10px !important;
+    padding: 0.5rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.stRadio label,
+.stRadio span {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ============================================
+   ADDITIONAL TEXT OVERRIDES
+   ============================================ */
+[data-testid="stCaptionContainer"] {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.stMarkdown ul li,
+.stMarkdown ol li {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Code blocks */
+code {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    padding: 0.2rem 0.4rem !important;
+    border-radius: 4px !important;
+}
+
+pre {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+pre code {
+    color: #ffffff !important;
 }
