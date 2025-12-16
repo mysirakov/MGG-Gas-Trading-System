@@ -1,19 +1,19 @@
 [
   {
-    "id": "20251215130913760930",
+    "id": "20251216074524123426",
     "invoice_number": "3000392382/1900064680",
     "supplier": "GPE",
     "total_amount": 50000.0,
-    "paid_amount": 150050.0,
+    "paid_amount": 50000.0,
     "remaining_amount": 0,
     "status": "Paid"
   },
   {
-    "id": "20251215130913760931",
-    "invoice_number": "3000392382/1900064681",
+    "id": "20251216074524123508",
+    "invoice_number": "3000393951/1900065174",
     "supplier": "GPE",
-    "total_amount": 50000.0,
-    "paid_amount": 50000.0,
+    "total_amount": 100000.0,
+    "paid_amount": 100100.0,
     "remaining_amount": 0,
     "status": "Paid"
   }
