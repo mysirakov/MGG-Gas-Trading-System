@@ -8,6 +8,13 @@ from database import (
 
 st.set_page_config(page_title="Sales", page_icon="💰", layout="wide")
 
+# Load custom CSS
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
+
 st.title("💰 Sales Management")
 st.markdown("Track natural gas sales, margins, and buyer transactions")
 

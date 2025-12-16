@@ -3,6 +3,13 @@ from database import load_settings, save_settings
 
 st.set_page_config(page_title="Settings", page_icon="⚙️", layout="wide")
 
+# Load custom CSS
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
+
 st.title("⚙️ Settings")
 st.markdown("Manage suppliers, buyers, and payment methods")
 

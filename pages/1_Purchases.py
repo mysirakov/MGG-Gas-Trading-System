@@ -4,6 +4,13 @@ from database import load_sales, sales_to_df
 
 st.set_page_config(page_title="Purchases", page_icon="📦", layout="wide")
 
+# Load custom CSS
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
+
 st.title("📦 Daily Gas Purchases")
 st.markdown("View daily gas purchase details calculated from sales data")
 

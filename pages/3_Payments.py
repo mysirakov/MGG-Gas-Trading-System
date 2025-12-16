@@ -8,6 +8,13 @@ from database import (
 
 st.set_page_config(page_title="Payments", page_icon="💳", layout="wide")
 
+# Load custom CSS
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
+
 st.title("💳 Payment Tracking")
 st.markdown("Track payments received from buyers and reconcile outstanding balances")
 

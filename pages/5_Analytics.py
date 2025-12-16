@@ -10,6 +10,13 @@ from database import (
 
 st.set_page_config(page_title="Analytics", page_icon="📈", layout="wide")
 
+# Load custom CSS
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
+
 st.title("📈 Financial Analytics Dashboard")
 st.markdown("Comprehensive P&L analysis, trading performance, and financial metrics")
 
@@ -183,7 +190,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("Cash Outflows (to Suppliers)")
     if not purchases_df.empty and 'payment_date' in purchases_df.columns:
-        purchases_df['payment_date'] = pd.to_datetime(purchases_df['payment_date'])
+        purchases_df['payment_date'] = pd.to_datetime(purchases_df['payment_date'], dayfirst=True)
         outflow_daily = purchases_df.groupby('payment_date')['amount_sent_eur'].sum().reset_index()
         
         fig = px.bar(outflow_daily, x='payment_date', y='amount_sent_eur',
@@ -196,7 +203,7 @@ with col1:
 with col2:
     st.subheader("Cash Inflows (from Buyers)")
     if not payments_df.empty and 'payment_date' in payments_df.columns:
-        payments_df['payment_date'] = pd.to_datetime(payments_df['payment_date'])
+        payments_df['payment_date'] = pd.to_datetime(payments_df['payment_date'], dayfirst=True)
         inflow_daily = payments_df.groupby('payment_date')['amount_eur'].sum().reset_index()
         
         fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',
