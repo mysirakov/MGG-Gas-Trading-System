@@ -46,7 +46,8 @@ col1, col2, col3, col4 = st.columns(4)
 
 total_sent = purchases_df['amount_sent_eur'].sum() if not purchases_df.empty and 'amount_sent_eur' in purchases_df.columns else 0
 total_received_supplier = purchases_df['amount_received_eur'].sum() if not purchases_df.empty and 'amount_received_eur' in purchases_df.columns else 0
-total_purchase_cost = (sales_df['quantity_mwh'] * sales_df['purchase_price_eur_mwh']).sum() if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns else 0
+valid_sales = sales_df[(sales_df['quantity_mwh'] > 0) & (sales_df['purchase_price_eur_mwh'] > 0)] if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns else pd.DataFrame()
+total_purchase_cost = (valid_sales['quantity_mwh'] * valid_sales['purchase_price_eur_mwh']).sum() if not valid_sales.empty else 0
 supplier_balance = total_received_supplier - total_purchase_cost
 
 payments_received = payments_df['amount_eur'].sum() if not payments_df.empty and 'amount_eur' in payments_df.columns else 0
@@ -157,6 +158,8 @@ st.header("📋 Detailed Trading Summary")
 
 if not sales_df.empty:
     sales_df_display = sales_df.copy()
+    if 'quantity_mwh' in sales_df_display.columns:
+        sales_df_display = sales_df_display[sales_df_display['quantity_mwh'] > 0]
     if 'contract_date' in sales_df_display.columns:
         sales_df_display = sales_df_display.sort_values('contract_date', ascending=False)
     

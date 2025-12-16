@@ -4,7 +4,7 @@ from database import load_settings, save_settings
 st.set_page_config(page_title="Settings", page_icon="⚙️", layout="wide")
 
 st.title("⚙️ Settings")
-st.markdown("Manage suppliers, buyers, payment methods, and other configuration options")
+st.markdown("Manage suppliers, buyers, and payment methods")
 
 settings = load_settings()
 
@@ -94,41 +94,12 @@ with col2:
             st.rerun()
         elif new_buyer in buyers:
             st.warning("Buyer already exists")
-    
-    st.markdown("---")
-    
-    st.subheader("🏷️ Gas Trading Names")
-    st.markdown("Manage gas trading names for delivery")
-    
-    trading_names = settings.get("gas_trading_names", [])
-    
-    for i, name in enumerate(trading_names):
-        col_a, col_b = st.columns([3, 1])
-        with col_a:
-            st.text(name)
-        with col_b:
-            if st.button("🗑️", key=f"del_trading_{i}"):
-                trading_names.pop(i)
-                settings["gas_trading_names"] = trading_names
-                save_settings(settings)
-                st.rerun()
-    
-    new_trading_name = st.text_input("Add new trading name", key="new_trading")
-    if st.button("Add Trading Name", type="primary", key="add_trading_btn"):
-        if new_trading_name and new_trading_name not in trading_names:
-            trading_names.append(new_trading_name)
-            settings["gas_trading_names"] = trading_names
-            save_settings(settings)
-            st.success(f"Added trading name: {new_trading_name}")
-            st.rerun()
-        elif new_trading_name in trading_names:
-            st.warning("Trading name already exists")
 
 st.markdown("---")
 
 st.subheader("📋 Current Configuration Summary")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric("Suppliers", len(settings.get("suppliers", [])))
@@ -136,8 +107,6 @@ with col2:
     st.metric("Payment Methods", len(settings.get("payment_methods", [])))
 with col3:
     st.metric("Buyers", len(settings.get("buyers", [])))
-with col4:
-    st.metric("Trading Names", len(settings.get("gas_trading_names", [])))
 
 st.markdown("---")
 
@@ -150,10 +119,9 @@ with col1:
     st.caption("This will reset all dropdown options to their default values")
     if st.button("Reset Settings", type="secondary"):
         default_settings = {
-            "suppliers": ["Default Supplier"],
+            "suppliers": ["GPE"],
             "payment_methods": ["Unicredit", "Financial Agent"],
-            "buyers": ["Keler"],
-            "gas_trading_names": ["Default Trading Name"]
+            "buyers": ["Keler"]
         }
         save_settings(default_settings)
         st.success("Settings reset to defaults!")

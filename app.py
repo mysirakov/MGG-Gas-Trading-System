@@ -8,21 +8,22 @@ from database import (
 )
 
 st.set_page_config(
-    page_title="Gas Trading Dashboard",
+    page_title="Dashboard",
     page_icon="⛽",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-st.title("⛽ Gas Trading Financial Dashboard")
+st.title("⛽ Dashboard")
 st.markdown("### Comprehensive Overview of Your Natural Gas Trading Business")
 
 st.sidebar.title("Navigation")
 st.sidebar.markdown("Use the pages in the sidebar to access different features:")
 st.sidebar.markdown("""
-- **📦 Purchases** - Manage gas purchases and supplier payments
+- **📦 Purchases** - View daily gas purchase details
 - **💰 Sales** - Track sales and margins
-- **💳 Payments** - Record payments received
+- **💳 Payments** - Record payments received from buyers
+- **🏦 Seller Balance** - Manage supplier payments and invoices
 - **📈 Analytics** - View P&L and performance charts
 - **⚙️ Settings** - Manage suppliers, buyers, and payment methods
 """)
@@ -66,7 +67,8 @@ col1, col2, col3, col4 = st.columns(4)
 
 total_sent = purchases_df['amount_sent_eur'].sum() if not purchases_df.empty and 'amount_sent_eur' in purchases_df.columns else 0
 total_received_supplier = purchases_df['amount_received_eur'].sum() if not purchases_df.empty and 'amount_received_eur' in purchases_df.columns else 0
-total_purchase_cost = (sales_df['quantity_mwh'] * sales_df['purchase_price_eur_mwh']).sum() if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns else 0
+valid_sales = sales_df[(sales_df['quantity_mwh'] > 0) & (sales_df['purchase_price_eur_mwh'] > 0)] if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns else pd.DataFrame()
+total_purchase_cost = (valid_sales['quantity_mwh'] * valid_sales['purchase_price_eur_mwh']).sum() if not valid_sales.empty else 0
 supplier_balance = total_received_supplier - total_purchase_cost
 
 with col1:

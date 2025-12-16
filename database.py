@@ -52,10 +52,9 @@ def save_invoices(data):
 
 def load_settings():
     default_settings = {
-        "suppliers": ["Default Supplier"],
+        "suppliers": ["GPE"],
         "payment_methods": ["Unicredit", "Financial Agent"],
-        "buyers": ["Keler"],
-        "gas_trading_names": ["Default Trading Name"]
+        "buyers": ["Keler"]
     }
     return load_json("settings.json", default_settings)
 
@@ -67,7 +66,7 @@ def purchases_to_df(purchases):
         return pd.DataFrame(columns=[
             'id', 'payment_date', 'supplier', 'payment_method', 'amount_sent_eur',
             'invoice_number', 'receipt_date', 'amount_received_eur',
-            'price_eur_mwh', 'quantity_mwh', 'gas_trading_name'
+            'price_eur_mwh', 'quantity_mwh'
         ])
     return pd.DataFrame(purchases)
 

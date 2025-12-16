@@ -44,9 +44,75 @@ with col4:
 
 st.markdown("---")
 
-tab1, tab2, tab3 = st.tabs(["📝 Record Payment", "📤 Bulk Upload", "📊 View Payments"])
+tab1, tab2, tab3 = st.tabs(["📊 View Payments", "📝 Record Payment", "📤 Bulk Upload"])
 
 with tab1:
+    st.subheader("All Payments Received")
+    
+    df = payments_to_df(payments)
+    
+    if not df.empty:
+        col1, col2 = st.columns(2)
+        with col1:
+            filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].unique().tolist())
+        with col2:
+            pass
+        
+        filtered_df = df.copy()
+        if filter_buyer:
+            filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
+        
+        display_cols = ['payment_date', 'buyer', 'amount_eur', 'notes']
+        available_cols = [c for c in display_cols if c in filtered_df.columns]
+        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
+        
+        csv = filtered_df.to_csv(index=False)
+        st.download_button("Export to CSV", csv, "payments_export.csv", "text/csv")
+        
+        st.markdown("---")
+        st.subheader("Delete Payment")
+        if len(payments) > 0:
+            payment_options = [f"{p['payment_date']} - {p['buyer']} - €{p['amount_eur']}" for p in payments]
+            selected_payment = st.selectbox("Select payment to delete", options=payment_options)
+            if st.button("Delete Selected", type="secondary"):
+                idx = payment_options.index(selected_payment)
+                payments.pop(idx)
+                save_payments_received(payments)
+                st.success("Payment deleted!")
+                st.rerun()
+    else:
+        st.info("No payments recorded yet. Record your first payment in the 'Record Payment' tab!")
+    
+    st.markdown("---")
+    st.subheader("📊 Sales Payment Status")
+    
+    if not sales_df.empty:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**Outstanding Sales**")
+            has_outstanding = False
+            for sale in sales:
+                if sale.get('payment_status') != 'Paid':
+                    owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
+                    paid = sale.get('amount_paid', 0)
+                    if owed > 0:
+                        has_outstanding = True
+                        st.write(f"📋 {sale['contract_date']} - {sale['buyer']}")
+                        st.write(f"   Revenue: €{sale['total_revenue']:,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}")
+            if not has_outstanding:
+                st.success("All sales fully paid!")
+        
+        with col2:
+            st.markdown("**Payment Summary by Buyer**")
+            if not payments_df.empty:
+                buyer_summary = payments_df.groupby('buyer')['amount_eur'].sum().reset_index()
+                buyer_summary.columns = ['Buyer', 'Total Received (EUR)']
+                st.dataframe(buyer_summary, use_container_width=True, hide_index=True)
+            else:
+                st.info("No payment data yet")
+
+with tab2:
     st.subheader("Record Payment Received")
     
     col1, col2 = st.columns(2)
@@ -161,14 +227,14 @@ with tab1:
                 st.success(f"Payment recorded! Fully allocated €{total_allocated:,.2f} to {len(allocation_data)} sale(s).")
             st.rerun()
 
-with tab2:
+with tab3:
     st.subheader("Bulk Upload Payments")
     st.markdown("Upload a CSV or Excel file with payment data")
     
     with st.expander("📋 Required Columns Format"):
         st.markdown("""
         Your file should contain the following columns:
-        - `payment_date` - Date payment received (YYYY-MM-DD)
+        - `payment_date` - Date payment received (DD/MM/YYYY)
         - `amount_eur` - Amount received in EUR
         - `buyer` - Buyer name
         - `notes` - Optional notes about the payment
@@ -177,7 +243,7 @@ with tab2:
         """)
         
         sample_data = pd.DataFrame({
-            'payment_date': ['2024-11-03'],
+            'payment_date': ['03/11/2024'],
             'amount_eur': [11200],
             'buyer': ['Keler'],
             'notes': ['Settlement for Nov 1-2']
@@ -266,66 +332,3 @@ with tab2:
                 st.rerun()
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")
-
-with tab3:
-    st.subheader("All Payments Received")
-    
-    df = payments_to_df(payments)
-    
-    if not df.empty:
-        col1, col2 = st.columns(2)
-        with col1:
-            filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].unique().tolist())
-        with col2:
-            pass
-        
-        filtered_df = df.copy()
-        if filter_buyer:
-            filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
-        
-        display_cols = ['payment_date', 'buyer', 'amount_eur', 'notes']
-        available_cols = [c for c in display_cols if c in filtered_df.columns]
-        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
-        
-        csv = filtered_df.to_csv(index=False)
-        st.download_button("Export to CSV", csv, "payments_export.csv", "text/csv")
-        
-        st.markdown("---")
-        st.subheader("Delete Payment")
-        if len(payments) > 0:
-            payment_options = [f"{p['payment_date']} - {p['buyer']} - €{p['amount_eur']}" for p in payments]
-            selected_payment = st.selectbox("Select payment to delete", options=payment_options)
-            if st.button("Delete Selected", type="secondary"):
-                idx = payment_options.index(selected_payment)
-                payments.pop(idx)
-                save_payments_received(payments)
-                st.success("Payment deleted!")
-                st.rerun()
-    else:
-        st.info("No payments recorded yet. Record your first payment above!")
-
-st.markdown("---")
-st.subheader("📊 Sales Payment Status")
-
-if not sales_df.empty:
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("**Outstanding Sales**")
-        for sale in sales:
-            if sale.get('payment_status') != 'Paid':
-                owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
-                paid = sale.get('amount_paid', 0)
-                st.write(f"📋 {sale['contract_date']} - {sale['buyer']}")
-                st.write(f"   Revenue: €{sale['total_revenue']:,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}")
-    
-    with col2:
-        st.markdown("**Payment Summary by Buyer**")
-        if not payments_df.empty:
-            buyer_summary = payments_df.groupby('buyer').agg({
-                'amount_eur': ['sum', 'count']
-            }).reset_index()
-            buyer_summary.columns = ['Buyer', 'Total Received (EUR)', 'Number of Payments']
-            st.dataframe(buyer_summary, use_container_width=True, hide_index=True)
-        else:
-            st.info("No payments recorded yet")
