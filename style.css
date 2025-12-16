@@ -119,12 +119,32 @@ div[data-testid="stDataFrame"] {
     border-radius: 16px;
     padding: 1rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    overflow-x: auto;
-    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+div[data-testid="stDataFrame"] > div {
+    overflow-x: auto !important;
+    max-width: 100% !important;
 }
 
 div[data-testid="stDataFrame"] table {
-    min-width: 100%;
+    width: 100% !important;
+    table-layout: auto !important;
+}
+
+/* Fix for dataframe container */
+.stDataFrame {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+}
+
+/* Ensure columns don't overflow */
+div[data-testid="column"] > div {
+    overflow-x: auto !important;
+    max-width: 100% !important;
 }
 
 /* Prevent metric overflow */
@@ -253,12 +273,38 @@ hr {
 /* Fix horizontal scrolling for tables */
 .stDataFrame div[data-testid="stDataFrameResizable"] {
     overflow-x: auto !important;
-    max-width: 100%;
+    overflow-y: auto !important;
+    max-width: 100% !important;
 }
 
 /* Ensure proper column spacing */
 div[data-testid="column"] {
     padding: 0 0.5rem;
+    overflow: hidden !important;
+    max-width: 100% !important;
+}
+
+/* Fix for block container to prevent overflow */
+.main .block-container {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+}
+
+/* Prevent horizontal scroll on main app */
+.stApp {
+    overflow-x: hidden !important;
+}
+
+/* Fix element container overflow */
+.element-container {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+}
+
+/* Constrain all content within viewport */
+section[data-testid="stHorizontalBlock"] > div {
+    max-width: 100% !important;
+    overflow-x: auto !important;
 }
 
 /* Download Button */
