@@ -92,6 +92,18 @@ div[data-testid="stDataFrame"] {
     border-radius: 16px;
     padding: 1rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+div[data-testid="stDataFrame"] table {
+    min-width: 100%;
+}
+
+/* Prevent metric overflow */
+div[data-testid="stHorizontalBlock"] {
+    overflow-x: auto;
+    gap: 1rem;
 }
 
 /* Tabs */
@@ -115,13 +127,14 @@ div[data-testid="stDataFrame"] {
 }
 
 .stTabs [data-baseweb="tab"]:hover {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--accent-blue);
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-purple);
 }
 
 .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
     color: white !important;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 /* Input Fields */
@@ -203,6 +216,22 @@ hr {
 /* Column Dividers */
 .row-widget.stHorizontal > div {
     gap: 1rem;
+}
+
+/* Add spacing between sections */
+.element-container {
+    margin-bottom: 1rem;
+}
+
+/* Fix horizontal scrolling for tables */
+.stDataFrame div[data-testid="stDataFrameResizable"] {
+    overflow-x: auto !important;
+    max-width: 100%;
+}
+
+/* Ensure proper column spacing */
+div[data-testid="column"] {
+    padding: 0 0.5rem;
 }
 
 /* Download Button */
