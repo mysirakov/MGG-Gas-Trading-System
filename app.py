@@ -8,7 +8,7 @@ from database import (
 )
 
 st.set_page_config(
-    page_title="Dashboard",
+    page_title="Gas Trading Dashboard",
     page_icon="⛽",
     layout="wide",
     initial_sidebar_state="expanded"

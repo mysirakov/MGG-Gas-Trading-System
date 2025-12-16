@@ -21,17 +21,27 @@
 [data-theme="light"], 
 .stApp[data-theme="light"],
 body[data-theme="light"] {
-    --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-    --glass-bg: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(148, 163, 184, 0.2);
-    --card-bg: rgba(255, 255, 255, 0.9);
-    --accent-cyan: #0891b2;
-    --accent-blue: #2563eb;
-    --accent-purple: #7c3aed;
-    --accent-green: #059669;
-    --accent-orange: #d97706;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
+    --bg-primary: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%) !important;
+    --glass-bg: rgba(255, 255, 255, 0.95) !important;
+    --glass-border: rgba(203, 213, 225, 0.5) !important;
+    --card-bg: rgba(255, 255, 255, 0.95) !important;
+    --accent-cyan: #0891b2 !important;
+    --accent-blue: #2563eb !important;
+    --accent-purple: #7c3aed !important;
+    --accent-green: #059669 !important;
+    --accent-orange: #d97706 !important;
+    --text-primary: #0f172a !important;
+    --text-secondary: #475569 !important;
+}
+
+/* Force light theme background */
+.stApp[data-theme="light"] {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%) !important;
+}
+
+section[data-testid="stSidebar"][data-theme="light"] {
+    background: rgba(248, 250, 252, 0.98) !important;
+    border-right: 1px solid rgba(203, 213, 225, 0.5) !important;
 }
 
 /* Global Styles */
