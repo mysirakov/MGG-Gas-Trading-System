@@ -497,5 +497,30 @@
     "allocated_amount": 16.0,
     "unallocated_amount": 0.0,
     "notes": "Settlement for 10/11/2025 when we bought from Keler and sold to Keler"
+  },
+  {
+    "id": "20251216082037792112",
+    "payment_date": "2025-12-16",
+    "amount_eur": 3090.0,
+    "buyer": "Keler",
+    "related_sales_dates": [
+      "25/11/2025 - \u20ac2870.00",
+      "26/11/2025 - \u20ac2900.00"
+    ],
+    "allocations": [
+      {
+        "sale_id": "20251215132555221261",
+        "sale_ref": "25/11/2025 - \u20ac2870.00",
+        "amount": 190.0
+      },
+      {
+        "sale_id": "20251215132555221344",
+        "sale_ref": "26/11/2025 - \u20ac2900.00",
+        "amount": 2900.0
+      }
+    ],
+    "allocated_amount": 3090.0,
+    "unallocated_amount": 0.0,
+    "notes": ""
   }
 ]

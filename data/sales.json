@@ -161,8 +161,8 @@
     "total_revenue": 2870.0,
     "total_margin": 37.79999999999979,
     "buyer": "Keler",
-    "amount_paid": 2680.0,
-    "payment_status": "Partial"
+    "amount_paid": 2870.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221344",
@@ -176,8 +176,8 @@
     "total_revenue": 2900.0,
     "total_margin": 37.800000000000146,
     "buyer": "Keler",
-    "amount_paid": 0,
-    "payment_status": "Pending"
+    "amount_paid": 2900.0,
+    "payment_status": "Paid"
   },
   {
     "id": "20251215132555221402",

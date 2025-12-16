@@ -89,115 +89,95 @@ st.markdown("---")
 
 st.header("📈 Performance Charts")
 
-col1, col2 = st.columns(2)
-
-with col1:
-    if not sales_df.empty and 'contract_date' in sales_df.columns:
-        sales_df_chart = sales_df.copy()
-        sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'], dayfirst=True)
-        daily_metrics = sales_df_chart.groupby('contract_date').agg({
-            'total_revenue': 'sum',
-            'total_margin': 'sum',
-            'quantity_mwh': 'sum'
-        }).reset_index()
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=daily_metrics['contract_date'], y=daily_metrics['total_revenue'],
-                                mode='lines+markers', name='Revenue', line=dict(color='steelblue')))
-        fig.add_trace(go.Scatter(x=daily_metrics['contract_date'], y=daily_metrics['total_margin'],
-                                mode='lines+markers', name='Profit', line=dict(color='green')))
-        fig.update_layout(title='Revenue vs Profit Over Time',
-                        xaxis_title='Date', yaxis_title='Amount (EUR)',
-                        hovermode='x unified',
-                        margin=dict(l=50, r=50, t=50, b=50),
-                        modebar_remove=['pan', 'select', 'lasso2d', 'zoomIn', 'zoomOut'])
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    else:
-        st.info("📊 Add sales data to see revenue charts")
-
-with col2:
-    if not sales_df.empty and 'contract_date' in sales_df.columns:
-        sales_df_chart = sales_df.copy()
-        sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'], dayfirst=True)
-        daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
-        
-        fig = px.bar(daily_volume, x='contract_date', y='quantity_mwh',
-                    title='Daily Trading Volume', color_discrete_sequence=['steelblue'])
-        fig.update_layout(xaxis_title='Date', yaxis_title='Volume (MWh)',
-                        margin=dict(l=50, r=50, t=50, b=50),
-                        modebar_remove=['pan', 'select', 'lasso2d', 'zoomIn', 'zoomOut'])
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    else:
-        st.info("📊 Add sales data to see volume charts")
+if not sales_df.empty and 'contract_date' in sales_df.columns:
+    sales_df_chart = sales_df.copy()
+    sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'], dayfirst=True)
+    daily_metrics = sales_df_chart.groupby('contract_date').agg({
+        'total_revenue': 'sum',
+        'total_margin': 'sum',
+        'quantity_mwh': 'sum'
+    }).reset_index()
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=daily_metrics['contract_date'], y=daily_metrics['total_revenue'],
+                            mode='lines+markers', name='Revenue', line=dict(color='steelblue')))
+    fig.add_trace(go.Scatter(x=daily_metrics['contract_date'], y=daily_metrics['total_margin'],
+                            mode='lines+markers', name='Profit', line=dict(color='green')))
+    fig.update_layout(title='Revenue vs Profit Over Time',
+                    xaxis_title='Date', yaxis_title='Amount (EUR)',
+                    hovermode='x unified',
+                    height=400,
+                    margin=dict(l=60, r=40, t=50, b=50))
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    
+    daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
+    
+    fig = px.bar(daily_volume, x='contract_date', y='quantity_mwh',
+                title='Daily Trading Volume', color_discrete_sequence=['steelblue'])
+    fig.update_layout(xaxis_title='Date', yaxis_title='Volume (MWh)',
+                    height=350,
+                    margin=dict(l=60, r=40, t=50, b=50))
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+else:
+    st.info("📊 Add sales data to see charts")
 
 st.markdown("---")
 
 st.header("💰 Financial Summary")
 
-col1, col2 = st.columns(2)
+st.subheader("Cash Position")
+cash_data = {
+    'Category': ['Payments to Suppliers', 'Payments Received', 'Net Cash Flow'],
+    'Amount (EUR)': [f"€{total_sent:,.2f}", f"€{payments_received:,.2f}", f"€{payments_received - total_sent:,.2f}"]
+}
+cash_df = pd.DataFrame(cash_data)
+st.dataframe(cash_df, use_container_width=True, hide_index=True)
 
-with col1:
-    st.subheader("Cash Position")
+st.subheader("P&L Summary")
+if not sales_df.empty:
+    capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
+    transport_cost = (sales_df['cost_transport_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_transport_eur_mwh' in sales_df.columns else 0
+    purchase_cost = (sales_df['purchase_price_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'purchase_price_eur_mwh' in sales_df.columns else 0
     
-    cash_data = {
-        'Category': ['Payments to Suppliers', 'Payments Received', 'Net Cash Flow'],
-        'Amount (EUR)': [total_sent, payments_received, payments_received - total_sent]
+    pnl_data = {
+        'Category': ['Gross Revenue', 'Purchase Costs', 'Capacity Costs', 'Transport Costs', 'Net Profit'],
+        'Amount (EUR)': [f"€{total_revenue:,.2f}", f"-€{purchase_cost:,.2f}", f"-€{capacity_cost:,.2f}", f"-€{transport_cost:,.2f}", f"€{total_margin:,.2f}"]
     }
-    cash_df = pd.DataFrame(cash_data)
-    st.dataframe(cash_df, use_container_width=True, hide_index=True)
-
-with col2:
-    st.subheader("P&L Summary")
-    
-    if not sales_df.empty:
-        capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
-        transport_cost = (sales_df['cost_transport_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_transport_eur_mwh' in sales_df.columns else 0
-        purchase_cost = (sales_df['purchase_price_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'purchase_price_eur_mwh' in sales_df.columns else 0
-        
-        pnl_data = {
-            'Category': ['Gross Revenue', 'Purchase Costs', 'Capacity Costs', 'Transport Costs', 'Net Profit'],
-            'Amount (EUR)': [total_revenue, -purchase_cost, -capacity_cost, -transport_cost, total_margin]
-        }
-        pnl_df = pd.DataFrame(pnl_data)
-        st.dataframe(pnl_df, use_container_width=True, hide_index=True)
-    else:
-        st.info("Add sales data to see P&L summary")
+    pnl_df = pd.DataFrame(pnl_data)
+    st.dataframe(pnl_df, use_container_width=True, hide_index=True)
+else:
+    st.info("Add sales data to see P&L summary")
 
 st.markdown("---")
 
 st.header("📋 Recent Activity")
 
-col1, col2, col3 = st.columns(3)
+st.subheader("Recent Purchases")
+if not purchases_df.empty:
+    recent_purchases = purchases_df.head(5)
+    display_cols = ['payment_date', 'supplier', 'amount_sent_eur']
+    available_cols = [c for c in display_cols if c in recent_purchases.columns]
+    st.dataframe(recent_purchases[available_cols], use_container_width=True, hide_index=True)
+else:
+    st.info("No purchases recorded")
 
-with col1:
-    st.subheader("Recent Purchases")
-    if not purchases_df.empty:
-        recent_purchases = purchases_df.head(5)
-        display_cols = ['payment_date', 'supplier', 'amount_sent_eur']
-        available_cols = [c for c in display_cols if c in recent_purchases.columns]
-        st.dataframe(recent_purchases[available_cols], use_container_width=True, hide_index=True)
-    else:
-        st.info("No purchases recorded")
+st.subheader("Recent Sales")
+if not sales_df.empty:
+    recent_sales = sales_df.head(5)
+    display_cols = ['contract_date', 'buyer', 'total_revenue', 'total_margin']
+    available_cols = [c for c in display_cols if c in recent_sales.columns]
+    st.dataframe(recent_sales[available_cols], use_container_width=True, hide_index=True)
+else:
+    st.info("No sales recorded")
 
-with col2:
-    st.subheader("Recent Sales")
-    if not sales_df.empty:
-        recent_sales = sales_df.head(5)
-        display_cols = ['contract_date', 'buyer', 'total_revenue']
-        available_cols = [c for c in display_cols if c in recent_sales.columns]
-        st.dataframe(recent_sales[available_cols], use_container_width=True, hide_index=True)
-    else:
-        st.info("No sales recorded")
-
-with col3:
-    st.subheader("Recent Payments")
-    if not payments_df.empty:
-        recent_payments = payments_df.head(5)
-        display_cols = ['payment_date', 'buyer', 'amount_eur']
-        available_cols = [c for c in display_cols if c in recent_payments.columns]
-        st.dataframe(recent_payments[available_cols], use_container_width=True, hide_index=True)
-    else:
-        st.info("No payments recorded")
+st.subheader("Recent Payments")
+if not payments_df.empty:
+    recent_payments = payments_df.head(5)
+    display_cols = ['payment_date', 'buyer', 'amount_eur']
+    available_cols = [c for c in display_cols if c in recent_payments.columns]
+    st.dataframe(recent_payments[available_cols], use_container_width=True, hide_index=True)
+else:
+    st.info("No payments recorded")
 
 st.markdown("---")
 
