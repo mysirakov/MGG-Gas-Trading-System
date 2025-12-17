@@ -15,6 +15,13 @@ try:
 except:
     pass
 
+# Theme selector
+try:
+    from theme_manager import theme_selector
+    theme_selector()
+except:
+    pass
+
 st.title("💳 Payment Tracking")
 st.markdown("Track payments received from buyers and reconcile outstanding balances")
 
@@ -55,27 +62,27 @@ tab1, tab2, tab3 = st.tabs(["📊 View Payments", "📝 Record Payment", "📤 B
 
 with tab1:
     st.subheader("All Payments Received")
-    
+
     df = payments_to_df(payments)
-    
+
     if not df.empty:
         col1, col2 = st.columns(2)
         with col1:
             filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].unique().tolist())
         with col2:
             pass
-        
+
         filtered_df = df.copy()
         if filter_buyer:
             filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
-        
+
         display_cols = ['payment_date', 'buyer', 'amount_eur', 'notes']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
         st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
-        
+
         csv = filtered_df.to_csv(index=False)
         st.download_button("Export to CSV", csv, "payments_export.csv", "text/csv")
-        
+
         st.markdown("---")
         st.subheader("Delete Payment")
         if len(payments) > 0:
@@ -89,13 +96,13 @@ with tab1:
                 st.rerun()
     else:
         st.info("No payments recorded yet. Record your first payment in the 'Record Payment' tab!")
-    
+
     st.markdown("---")
     st.subheader("📊 Sales Payment Status")
-    
+
     if not sales_df.empty:
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("**Outstanding Sales**")
             has_outstanding = False
@@ -109,7 +116,7 @@ with tab1:
                         st.write(f"   Revenue: €{sale['total_revenue']:,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}")
             if not has_outstanding:
                 st.success("All sales fully paid!")
-        
+
         with col2:
             st.markdown("**Payment Summary by Buyer**")
             if not payments_df.empty:
@@ -121,38 +128,38 @@ with tab1:
 
 with tab2:
     st.subheader("Record Payment Received")
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         payment_date = st.date_input("Payment Received Date", value=date.today(), key="single_payment_recv_date")
         amount = st.number_input("Amount Received (EUR)", min_value=0.0, step=100.0, key="single_recv_amount")
         buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_recv_buyer")
         notes = st.text_area("Notes", key="single_recv_notes", placeholder="e.g., Settlement for gas days Nov 1-3")
-    
+
     with col2:
         pending_sales = [s for s in sales if s.get('payment_status') != 'Paid']
         pending_sales_sorted = sorted(pending_sales, key=lambda x: x.get('contract_date', ''))
-        
+
         if pending_sales_sorted and amount > 0:
             st.markdown("**Outstanding Sales (oldest first)**")
-            
+
             for sale in pending_sales_sorted[:5]:
                 sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
                 if sale_owed > 0:
                     st.text(f"📋 {sale['contract_date']} - {sale.get('buyer', 'Unknown')} - Owed: €{sale_owed:,.2f}")
-            
+
             if len(pending_sales_sorted) > 5:
                 st.caption(f"...and {len(pending_sales_sorted) - 5} more outstanding sales")
         elif not pending_sales_sorted:
             st.success("No outstanding sales!")
         else:
             st.info("Enter payment amount to see allocation preview")
-    
+
     if amount > 0 and pending_sales_sorted:
         allocation_preview = []
         remaining = amount
-        
+
         for sale in pending_sales_sorted:
             sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
             if sale_owed > 0 and remaining > 0:
@@ -165,27 +172,27 @@ with tab2:
                     'owed': sale_owed
                 })
                 remaining -= alloc_amount
-        
+
         st.markdown("---")
         st.markdown("**Auto-allocation Preview (oldest first)**")
-        
+
         for alloc in allocation_preview:
             status = "Full" if alloc['amount'] >= alloc['owed'] else "Partial"
             st.write(f"✓ {alloc['contract_date']}: €{alloc['amount']:,.2f} ({status})")
-        
+
         total_to_allocate = sum(a['amount'] for a in allocation_preview)
         if remaining > 0:
             st.warning(f"€{remaining:,.2f} will remain unallocated after clearing oldest balances")
         else:
             st.success(f"€{total_to_allocate:,.2f} will be fully allocated to {len(allocation_preview)} sale(s)")
-    
+
     if st.button("Record Payment & Auto-Allocate", type="primary", key="add_payment"):
         if amount <= 0:
             st.error("Please enter a payment amount")
         else:
             allocation_data = []
             remaining = amount
-            
+
             for sale in pending_sales_sorted:
                 sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
                 if sale_owed > 0 and remaining > 0:
@@ -196,10 +203,10 @@ with tab2:
                         'amount': alloc_amount
                     })
                     remaining -= alloc_amount
-            
+
             total_allocated = sum(a['amount'] for a in allocation_data)
             related_sales = [a['sale_ref'] for a in allocation_data]
-            
+
             new_payment = {
                 "id": generate_id(),
                 "payment_date": str(payment_date),
@@ -213,21 +220,21 @@ with tab2:
             }
             payments.append(new_payment)
             save_payments_received(payments)
-            
+
             for alloc in allocation_data:
                 for sale in sales:
                     if sale['id'] == alloc['sale_id']:
                         current_paid = sale.get('amount_paid', 0)
                         sale['amount_paid'] = current_paid + alloc['amount']
-                        
+
                         if sale['amount_paid'] >= sale['total_revenue']:
                             sale['payment_status'] = 'Paid'
                         elif sale['amount_paid'] > 0:
                             sale['payment_status'] = 'Partial'
                         break
-            
+
             save_sales(sales)
-            
+
             if remaining > 0:
                 st.success(f"Payment recorded! Allocated €{total_allocated:,.2f} to {len(allocation_data)} sale(s). €{remaining:,.2f} unallocated.")
             else:
@@ -237,7 +244,7 @@ with tab2:
 with tab3:
     st.subheader("Bulk Upload Payments")
     st.markdown("Upload a CSV or Excel file with payment data")
-    
+
     with st.expander("📋 Required Columns Format"):
         st.markdown("""
         Your file should contain the following columns:
@@ -245,10 +252,10 @@ with tab3:
         - `amount_eur` - Amount received in EUR
         - `buyer` - Buyer name
         - `notes` - Optional notes about the payment
-        
+
         Payments will be automatically allocated to oldest outstanding sales first (FIFO).
         """)
-        
+
         sample_data = pd.DataFrame({
             'payment_date': ['03/11/2024'],
             'amount_eur': [11200],
@@ -256,36 +263,36 @@ with tab3:
             'notes': ['Settlement for Nov 1-2']
         })
         st.dataframe(sample_data)
-        
+
         csv = sample_data.to_csv(index=False)
         st.download_button("Download Template CSV", csv, "payments_template.csv", "text/csv")
-    
+
     uploaded_file = st.file_uploader("Upload Payments File", type=['csv', 'xlsx'], key="bulk_payments")
-    
+
     if uploaded_file:
         try:
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
                 df = pd.read_excel(uploaded_file)
-            
+
             st.subheader("Preview of Uploaded Data")
             st.dataframe(df, use_container_width=True)
-            
+
             if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
                 count = 0
                 total_allocated_all = 0
                 total_unallocated_all = 0
-                
+
                 for _, row in df.iterrows():
                     amount = float(row.get('amount_eur', 0))
-                    
+
                     pending_sales = [s for s in sales if s.get('payment_status') != 'Paid']
                     pending_sales_sorted = sorted(pending_sales, key=lambda x: x.get('contract_date', ''))
-                    
+
                     allocation_data = []
                     remaining = amount
-                    
+
                     for sale in pending_sales_sorted:
                         sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
                         if sale_owed > 0 and remaining > 0:
@@ -296,10 +303,10 @@ with tab3:
                                 'amount': alloc_amount
                             })
                             remaining -= alloc_amount
-                    
+
                     total_allocated = sum(a['amount'] for a in allocation_data)
                     related_sales = [a['sale_ref'] for a in allocation_data]
-                    
+
                     new_payment = {
                         "id": generate_id(),
                         "payment_date": str(row.get('payment_date', '')),
@@ -312,26 +319,26 @@ with tab3:
                         "notes": str(row.get('notes', ''))
                     }
                     payments.append(new_payment)
-                    
+
                     for alloc in allocation_data:
                         for sale in sales:
                             if sale['id'] == alloc['sale_id']:
                                 current_paid = sale.get('amount_paid', 0)
                                 sale['amount_paid'] = current_paid + alloc['amount']
-                                
+
                                 if sale['amount_paid'] >= sale['total_revenue']:
                                     sale['payment_status'] = 'Paid'
                                 elif sale['amount_paid'] > 0:
                                     sale['payment_status'] = 'Partial'
                                 break
-                    
+
                     count += 1
                     total_allocated_all += total_allocated
                     total_unallocated_all += remaining
-                
+
                 save_payments_received(payments)
                 save_sales(sales)
-                
+
                 if total_unallocated_all > 0:
                     st.success(f"Imported {count} payments! Allocated €{total_allocated_all:,.2f}. €{total_unallocated_all:,.2f} unallocated.")
                 else:

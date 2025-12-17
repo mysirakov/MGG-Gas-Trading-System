@@ -18,6 +18,10 @@ st.set_page_config(
 with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+# Theme selector
+from theme_manager import theme_selector
+theme_selector()
+
 st.title("⛽ Dashboard")
 st.markdown("### Comprehensive Overview of Your Natural Gas Trading Business")
 

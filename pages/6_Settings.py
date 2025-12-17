@@ -10,6 +10,13 @@ try:
 except:
     pass
 
+# Theme selector
+try:
+    from theme_manager import theme_selector
+    theme_selector()
+except:
+    pass
+
 st.title("⚙️ Settings")
 st.markdown("Manage suppliers, buyers, and payment methods")
 
