@@ -522,5 +522,24 @@
     "allocated_amount": 3090.0,
     "unallocated_amount": 0.0,
     "notes": ""
+  },
+  {
+    "id": "20251217092700081657",
+    "payment_date": "2025-12-17",
+    "amount_eur": 2990.0,
+    "buyer": "Keler",
+    "related_sales_dates": [
+      "17/12/2025 - \u20ac2990.00"
+    ],
+    "allocations": [
+      {
+        "sale_id": "20251216123815791919",
+        "sale_ref": "17/12/2025 - \u20ac2990.00",
+        "amount": 2990.0
+      }
+    ],
+    "allocated_amount": 2990.0,
+    "unallocated_amount": 0.0,
+    "notes": ""
   }
 ]

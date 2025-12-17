@@ -386,6 +386,21 @@
     "total_revenue": 2990.0,
     "total_margin": 260.4999999999999,
     "buyer": "Keler",
+    "amount_paid": 2990.0,
+    "payment_status": "Paid"
+  },
+  {
+    "id": "20251217113737933947",
+    "contract_date": "18/12/2025",
+    "sales_price_eur_mwh": 31.11,
+    "quantity_mwh": 100.0,
+    "cost_capacity_eur_mwh": 1.283,
+    "cost_transport_eur_mwh": 0.01,
+    "purchase_price_eur_mwh": 27.0,
+    "margin_eur_mwh": 2.8169999999999997,
+    "total_revenue": 3111.0,
+    "total_margin": 281.7,
+    "buyer": "Keler",
     "amount_paid": 0,
     "payment_status": "Pending"
   }
