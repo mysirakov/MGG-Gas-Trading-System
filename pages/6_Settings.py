@@ -34,31 +34,19 @@ with col1:
     
     suppliers = settings.get("suppliers", [])
     
-    st.markdown("""
-        <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        ">
-    """, unsafe_allow_html=True)
+    if suppliers:
+        suppliers_html = "".join([f'''
+            <div style="padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid rgba(148,163,184,0.1);">
+                <span class="material-icons-round" style="color: #3b82f6; font-size: 18px;">store</span>
+                <span style="font-weight: 500; flex: 1;">{supplier}</span>
+            </div>
+        ''' for supplier in suppliers])
+        st.markdown(suppliers_html, unsafe_allow_html=True)
     
     for i, supplier in enumerate(suppliers):
-        col_a, col_b = st.columns([4, 1])
-        with col_a:
-            st.markdown(f"""
-                <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-icons-round" style="color: #3b82f6; font-size: 18px;">store</span>
-                    <span style="font-weight: 500;">{supplier}</span>
-                </div>
-            """, unsafe_allow_html=True)
-        with col_b:
-            if st.button("Delete", key=f"del_supplier_{i}"):
-                delete_supplier(supplier)
-                st.rerun()
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        if st.button(f"Remove {supplier}", key=f"del_supplier_{i}"):
+            delete_supplier(supplier)
+            st.rerun()
     
     new_supplier = st.text_input("Add new supplier", key="new_supplier", placeholder="Enter supplier name")
     if st.button("Add Supplier", type="primary", key="add_supplier_btn"):
@@ -75,31 +63,19 @@ with col1:
     
     payment_methods = settings.get("payment_methods", [])
     
-    st.markdown("""
-        <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        ">
-    """, unsafe_allow_html=True)
+    if payment_methods:
+        methods_html = "".join([f'''
+            <div style="padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid rgba(148,163,184,0.1);">
+                <span class="material-icons-round" style="color: #10b981; font-size: 18px;">account_balance</span>
+                <span style="font-weight: 500; flex: 1;">{method}</span>
+            </div>
+        ''' for method in payment_methods])
+        st.markdown(methods_html, unsafe_allow_html=True)
     
     for i, method in enumerate(payment_methods):
-        col_a, col_b = st.columns([4, 1])
-        with col_a:
-            st.markdown(f"""
-                <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-icons-round" style="color: #10b981; font-size: 18px;">account_balance</span>
-                    <span style="font-weight: 500;">{method}</span>
-                </div>
-            """, unsafe_allow_html=True)
-        with col_b:
-            if st.button("Delete", key=f"del_method_{i}"):
-                delete_payment_method(method)
-                st.rerun()
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        if st.button(f"Remove {method}", key=f"del_method_{i}"):
+            delete_payment_method(method)
+            st.rerun()
     
     new_method = st.text_input("Add new payment method", key="new_method", placeholder="Enter payment method")
     if st.button("Add Payment Method", type="primary", key="add_method_btn"):
@@ -115,31 +91,19 @@ with col2:
     
     buyers = settings.get("buyers", [])
     
-    st.markdown("""
-        <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        ">
-    """, unsafe_allow_html=True)
+    if buyers:
+        buyers_html = "".join([f'''
+            <div style="padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid rgba(148,163,184,0.1);">
+                <span class="material-icons-round" style="color: #f59e0b; font-size: 18px;">person</span>
+                <span style="font-weight: 500; flex: 1;">{buyer}</span>
+            </div>
+        ''' for buyer in buyers])
+        st.markdown(buyers_html, unsafe_allow_html=True)
     
     for i, buyer in enumerate(buyers):
-        col_a, col_b = st.columns([4, 1])
-        with col_a:
-            st.markdown(f"""
-                <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-icons-round" style="color: #f59e0b; font-size: 18px;">person</span>
-                    <span style="font-weight: 500;">{buyer}</span>
-                </div>
-            """, unsafe_allow_html=True)
-        with col_b:
-            if st.button("Delete", key=f"del_buyer_{i}"):
-                delete_buyer(buyer)
-                st.rerun()
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        if st.button(f"Remove {buyer}", key=f"del_buyer_{i}"):
+            delete_buyer(buyer)
+            st.rerun()
     
     new_buyer = st.text_input("Add new buyer", key="new_buyer", placeholder="Enter buyer name")
     if st.button("Add Buyer", type="primary", key="add_buyer_btn"):
