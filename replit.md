@@ -19,7 +19,7 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Architecture
 - **Streamlit Multi-Page Application**: The app uses Streamlit's native multi-page structure with pages stored in the `pages/` directory
 - **Page Structure**:
-  - `app.py` - Main Dashboard with key metrics overview
+  - `Dashboard.py` - Main Dashboard with key metrics overview
   - `pages/1_Purchases.py` - View daily gas purchase details (derived from Sales data)
   - `pages/2_Sales.py` - Sales tracking with margin calculations
   - `pages/3_Payments.py` - Payment reconciliation and tracking from buyers
@@ -28,30 +28,38 @@ Preferred communication style: Simple, everyday language.
   - `pages/6_Settings.py` - Configuration for suppliers, buyers, and payment methods
 - **Tab Ordering**: All pages with tabs show View/Statistics tabs first, followed by entry forms
 
-### Data Storage
-- **JSON File-Based Storage**: All data is persisted as JSON files in a `data/` directory
-- **Data Files**:
-  - `purchases.json` - Purchase transaction records
-  - `sales.json` - Sales transaction records
-  - `payments_received.json` - Payment records from buyers
-  - `invoices.json` - Invoice tracking with partial payment support
-  - `settings.json` - Configuration (suppliers, buyers, payment methods)
+### Data Storage (PostgreSQL)
+- **PostgreSQL Database**: All data is now stored in a Neon PostgreSQL database for reliability and cross-referencing
+- **Database Tables**:
+  - `suppliers` - Supplier entities
+  - `buyers` - Buyer entities
+  - `payment_methods` - Payment method options
+  - `sales` - Sales transaction records with computed columns (margin, total_revenue, purchase_cost)
+  - `supplier_payments` - Payments made to suppliers
+  - `invoices` - Invoice tracking
+  - `payments_received` - Payments received from buyers
+  - `payment_allocations` - Links payments to sales for accurate tracking
 
 ### Data Layer Pattern
-- The `database.py` module provides a simple abstraction layer with:
-  - `load_*` functions to read JSON files (returns empty list if file doesn't exist)
-  - `save_*` functions to write JSON files
-  - `*_to_df` functions to convert JSON data to Pandas DataFrames for analysis
-  - `generate_id` function for creating unique record identifiers
+- The `database.py` module provides PostgreSQL database access:
+  - `get_*` functions to query data from PostgreSQL
+  - `add_*` functions to insert new records
+  - `delete_*` functions to remove records
+  - `*_to_df` functions to convert query results to Pandas DataFrames for analysis
+  - `get_dashboard_metrics()` function for aggregated metrics
 
 ### Key Business Logic
 - **Invoice Tracking**: Supports partial payments on invoices with remaining balance calculation
-- **Margin Calculation**: Sales margin = Sales Price - Purchase Price - Capacity Cost - Transport Cost
-- **Outstanding Receivables**: Calculated by comparing total revenue from sales against payments received
+- **Margin Calculation**: Sales margin = Sales Price - Purchase Price - Capacity Cost - Transport Cost (computed columns in PostgreSQL)
+- **Payment Allocation**: Automatic FIFO allocation of received payments to oldest outstanding sales
+- **Outstanding Receivables**: Calculated from payment_allocations table (total_revenue - allocated amounts)
+- **Supplier Balance**: Amount Received by Supplier - Total Purchase Cost (from sales)
 
-### Known Issues
-- Some sales/purchase records contain inconsistent date formats (both Excel serial numbers like "45937" and date strings like "DD/MM/YYYY"). The system uses dayfirst=True for date parsing.
-- Zero-value rows are filtered out from Analytics and purchase cost calculations
+### Database Schema Features
+- Foreign key relationships between tables for data integrity
+- Computed columns for margin, total_revenue, total_margin, and purchase_cost
+- Unique constraints to prevent duplicate allocations
+- Cascading deletes on payment_allocations when payments are removed
 
 ## External Dependencies
 
@@ -59,10 +67,11 @@ Preferred communication style: Simple, everyday language.
 - **Streamlit** - Web application framework and UI components
 - **Pandas** - Data manipulation and DataFrame operations
 - **Plotly** (Express and Graph Objects) - Interactive charts and visualizations
+- **psycopg2-binary** - PostgreSQL database connector
 
 ### Data Storage
-- **Local File System** - JSON files stored in `data/` directory (no external database)
+- **PostgreSQL (Neon)** - Cloud-hosted PostgreSQL database via DATABASE_URL environment variable
 
 ### No External APIs
 - The application is self-contained with no external API integrations
-- All data is managed locally through JSON file storage
+- All data is managed through the PostgreSQL database
