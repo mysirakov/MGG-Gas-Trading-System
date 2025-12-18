@@ -79,7 +79,7 @@ if not sales_df.empty:
         }).reset_index()
 
         col1, col2 = st.columns(2)
-        
+
         with col1:
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['sales_price_eur_mwh'],
@@ -141,7 +141,7 @@ section_header("account_balance", "P&L Summary")
 
 if not sales_df.empty:
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("##### Revenue Breakdown")
         capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
@@ -235,7 +235,8 @@ with col1:
             font=dict(family='Inter', size=12, color='#64748b'),
             showlegend=False,
             xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+            autosize=True
         )
         fig.update_traces(marker_cornerradius=6)
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -260,7 +261,8 @@ with col2:
             font=dict(family='Inter', size=12, color='#64748b'),
             showlegend=False,
             xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+            autosize=True
         )
         fig.update_traces(marker_cornerradius=6)
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
