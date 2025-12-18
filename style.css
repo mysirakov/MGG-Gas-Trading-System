@@ -284,10 +284,30 @@ div[data-testid="stDataFrame"] tr:hover td {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .stPlotlyChart > div {
     width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.stPlotlyChart .user-select-none {
+    width: 100% !important;
+}
+
+.stPlotlyChart .js-plotly-plot {
+    width: 100% !important;
+}
+
+.stPlotlyChart .plot-container {
+    width: 100% !important;
+}
+
+.stPlotlyChart svg.main-svg {
+    width: 100% !important;
+    height: auto !important;
 }
 
 /* ============= Buttons ============= */
@@ -474,4 +494,11 @@ div[data-testid="stHorizontalBlock"] {
 
 div[data-testid="column"] {
     min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+div[data-testid="column"] > div {
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
