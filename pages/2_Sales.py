@@ -4,8 +4,9 @@ from datetime import datetime, date
 from database import (
     get_sales, add_sale, update_sale, delete_sale, get_settings, sales_to_df
 )
+from components import load_material_icons, page_header, metric_card, section_header
 
-st.set_page_config(page_title="Sales", page_icon="💰", layout="wide")
+st.set_page_config(page_title="Sales", page_icon="📊", layout="wide")
 
 try:
     with open('style.css') as f:
@@ -13,38 +14,36 @@ try:
 except:
     pass
 
-st.title("💰 Sales Management")
-st.markdown("Track natural gas sales, margins, and buyer transactions")
+load_material_icons()
+
+page_header("Sales", "Track natural gas sales, margins, and buyer transactions")
 
 settings = get_settings()
 sales = get_sales()
 
-tab1, tab2, tab3 = st.tabs(["📊 View Sales", "📝 Add Sale", "📤 Bulk Upload"])
+tab1, tab2, tab3 = st.tabs(["View Sales", "Add Sale", "Bulk Upload"])
 
 with tab1:
-    st.subheader("All Sales")
-    
     df = sales_to_df(sales)
     
     if not df.empty:
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            total_revenue = df['total_revenue'].sum()
-            st.metric("Total Revenue", f"€{total_revenue:,.2f}")
-        with col2:
-            total_margin = df['total_margin'].sum()
-            st.metric("Total Margin", f"€{total_margin:,.2f}")
-        with col3:
-            total_quantity = df['quantity_mwh'].sum()
-            st.metric("Total Quantity Sold", f"{total_quantity:,.2f} MWh")
-        with col4:
-            if total_quantity > 0:
-                avg_margin = total_margin / total_quantity
-                st.metric("Avg Margin", f"€{avg_margin:,.2f}/MWh")
-            else:
-                st.metric("Avg Margin", "€0.00/MWh")
+        total_revenue = df['total_revenue'].sum()
+        total_margin = df['total_margin'].sum()
+        total_quantity = df['quantity_mwh'].sum()
+        avg_margin = total_margin / total_quantity if total_quantity > 0 else 0
         
-        st.markdown("---")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.0f}", "blue")
+        with col2:
+            metric_card("trending_up", "Total Margin", f"€{total_margin:,.0f}", "green")
+        with col3:
+            metric_card("bolt", "Quantity Sold", f"{total_quantity:,.0f} MWh", "orange")
+        with col4:
+            metric_card("percent", "Avg Margin", f"€{avg_margin:,.2f}/MWh", "purple")
+        
+        st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         with col1:
@@ -52,8 +51,6 @@ with tab1:
                 filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].dropna().unique().tolist())
             else:
                 filter_buyer = []
-        with col2:
-            pass
         
         filtered_df = df.copy()
         if filter_buyer:
@@ -66,29 +63,48 @@ with tab1:
         
         display_filtered = filtered_df[available_cols].copy()
         if 'contract_date' in display_filtered.columns:
-            display_filtered['contract_date'] = pd.to_datetime(display_filtered['contract_date']).dt.strftime('%d/%m/%Y')
+            display_filtered['contract_date'] = pd.to_datetime(display_filtered['contract_date']).dt.strftime('%b %d, %Y')
         
-        st.dataframe(display_filtered, use_container_width=True, hide_index=True)
+        st.dataframe(display_filtered, use_container_width=True, hide_index=True, height=400)
         
-        csv = filtered_df.to_csv(index=False)
-        st.download_button("Export to CSV", csv, "sales_export.csv", "text/csv")
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            csv = filtered_df.to_csv(index=False)
+            st.download_button("Export", csv, "sales_export.csv", "text/csv")
         
-        st.markdown("---")
-        st.subheader("Delete Sale")
+        st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+        
+        section_header("delete", "Delete Sale")
         if len(sales) > 0:
             sale_options = {f"{s['contract_date']} - {s.get('buyer', 'N/A')} - €{float(s['total_revenue']):.2f}": s['id'] for s in sales}
-            selected_sale = st.selectbox("Select sale to delete", options=list(sale_options.keys()))
-            
-            if st.button("Delete Sale", type="secondary"):
-                sale_id = sale_options[selected_sale]
-                delete_sale(sale_id)
-                st.success("Sale deleted!")
-                st.rerun()
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                selected_sale = st.selectbox("Select sale to delete", options=list(sale_options.keys()), label_visibility="collapsed")
+            with col2:
+                if st.button("Delete", type="secondary"):
+                    sale_id = sale_options[selected_sale]
+                    delete_sale(sale_id)
+                    st.success("Sale deleted!")
+                    st.rerun()
     else:
-        st.info("No sales recorded yet. Add your first sale in the 'Add Sale' tab!")
+        st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 16px;
+                padding: 4rem 2rem;
+                text-align: center;
+                color: #64748b;
+                backdrop-filter: blur(12px);
+            ">
+                <span class="material-icons-round" style="font-size: 56px; opacity: 0.4; color: #3b82f6;">leaderboard</span>
+                <p style="margin: 1.5rem 0 0 0; font-size: 1.1rem; font-weight: 500;">No sales recorded yet</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.7;">Add your first sale in the 'Add Sale' tab!</p>
+            </div>
+        """, unsafe_allow_html=True)
 
 with tab2:
-    st.subheader("Add Single Sale Entry")
+    section_header("add_circle", "Add Single Sale Entry")
     
     col1, col2 = st.columns(2)
     
@@ -107,14 +123,18 @@ with tab2:
     total_revenue = sales_price * quantity_mwh
     total_margin = margin * quantity_mwh
     
-    st.markdown("---")
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+    
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Margin (EUR/MWh)", f"€{margin:,.2f}")
+        metric_card("calculate", "Margin (EUR/MWh)", f"€{margin:,.2f}", "blue")
     with col2:
-        st.metric("Total Revenue", f"€{total_revenue:,.2f}")
+        metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.2f}", "green")
     with col3:
-        st.metric("Total Margin", f"€{total_margin:,.2f}", delta=f"{'Profit' if total_margin > 0 else 'Loss'}")
+        color = "green" if total_margin >= 0 else "red"
+        metric_card("trending_up" if total_margin >= 0 else "trending_down", "Total Margin", f"€{total_margin:,.2f}", color)
+    
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
     
     if st.button("Add Sale", type="primary", key="add_single_sale"):
         add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport)
@@ -122,10 +142,9 @@ with tab2:
         st.rerun()
 
 with tab3:
-    st.subheader("Bulk Upload Sales")
-    st.markdown("Upload a CSV or Excel file with sales data")
+    section_header("upload_file", "Bulk Upload Sales")
     
-    with st.expander("📋 Required Columns Format"):
+    with st.expander("Required Columns Format"):
         st.markdown("""
         Your file should contain the following columns:
         - `contract_date` - Date of contract/delivery (DD/MM/YYYY)
@@ -160,7 +179,7 @@ with tab3:
             else:
                 df = pd.read_excel(uploaded_file)
             
-            st.subheader("Preview of Uploaded Data")
+            st.markdown("##### Preview of Uploaded Data")
             st.dataframe(df, use_container_width=True)
             
             if st.button("Import All Rows", type="primary", key="import_sales"):

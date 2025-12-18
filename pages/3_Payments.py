@@ -5,6 +5,7 @@ from database import (
     get_payments_received, add_payment_received, delete_payment, get_settings, get_sales,
     payments_to_df, sales_to_df, get_unpaid_sales, get_dashboard_metrics
 )
+from components import load_material_icons, page_header, metric_card, section_header
 
 st.set_page_config(page_title="Payments", page_icon="💳", layout="wide")
 
@@ -14,8 +15,9 @@ try:
 except:
     pass
 
-st.title("💳 Payment Tracking")
-st.markdown("Track payments received from buyers and reconcile outstanding balances")
+load_material_icons()
+
+page_header("Payments", "Track payments received from buyers and reconcile outstanding balances")
 
 settings = get_settings()
 payments = get_payments_received()
@@ -33,24 +35,19 @@ unallocated = total_received - total_allocated
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.metric("Total Revenue (from Sales)", f"€{total_revenue:,.2f}")
+    metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.0f}", "blue")
 with col2:
-    st.metric("Total Payments Received", f"€{total_received:,.2f}")
+    metric_card("check_circle", "Received", f"€{total_received:,.0f}", "green")
 with col3:
-    st.metric("Outstanding Receivables", f"€{outstanding:,.2f}", delta=f"{'Owed' if outstanding > 0 else 'Cleared'}")
+    metric_card("receipt_long", "Outstanding", f"€{outstanding:,.0f}", "orange")
 with col4:
-    if unallocated > 0.01:
-        st.metric("Unallocated Payments", f"€{unallocated:,.2f}", delta="Needs allocation")
-    else:
-        st.metric("Unallocated Payments", f"€{max(0, unallocated):,.2f}")
+    metric_card("account_balance", "Unallocated", f"€{max(0, unallocated):,.0f}", "purple")
 
-st.markdown("---")
+st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["📊 View Payments", "📝 Record Payment", "📤 Bulk Upload"])
+tab1, tab2, tab3 = st.tabs(["View Payments", "Record Payment", "Bulk Upload"])
 
 with tab1:
-    st.subheader("All Payments Received")
-
     df = payments_to_df(payments)
 
     if not df.empty:
@@ -70,31 +67,52 @@ with tab1:
         
         display_filtered = filtered_df[available_cols].copy()
         if 'payment_date' in display_filtered.columns:
-            display_filtered['payment_date'] = pd.to_datetime(display_filtered['payment_date']).dt.strftime('%d/%m/%Y')
+            display_filtered['payment_date'] = pd.to_datetime(display_filtered['payment_date']).dt.strftime('%b %d, %Y')
         if 'allocated_amount' not in display_filtered.columns:
             display_filtered['allocated_amount'] = display_filtered['amount_eur']
         display_filtered['unallocated'] = display_filtered['amount_eur'] - display_filtered['allocated_amount']
         
-        st.dataframe(display_filtered, use_container_width=True, hide_index=True)
+        st.dataframe(display_filtered, use_container_width=True, hide_index=True, height=300)
 
-        csv = filtered_df.to_csv(index=False)
-        st.download_button("Export to CSV", csv, "payments_export.csv", "text/csv")
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            csv = filtered_df.to_csv(index=False)
+            st.download_button("Export", csv, "payments_export.csv", "text/csv")
 
-        st.markdown("---")
-        st.subheader("Delete Payment")
+        st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+        
+        section_header("delete", "Delete Payment")
         if len(payments) > 0:
             payment_options = {f"{p['payment_date']} - {p.get('buyer', 'N/A')} - €{float(p['amount_eur']):.2f}": p['id'] for p in payments}
-            selected_payment = st.selectbox("Select payment to delete", options=list(payment_options.keys()))
-            if st.button("Delete Selected", type="secondary"):
-                payment_id = payment_options[selected_payment]
-                delete_payment(payment_id)
-                st.success("Payment deleted!")
-                st.rerun()
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                selected_payment = st.selectbox("Select payment to delete", options=list(payment_options.keys()), label_visibility="collapsed")
+            with col2:
+                if st.button("Delete", type="secondary"):
+                    payment_id = payment_options[selected_payment]
+                    delete_payment(payment_id)
+                    st.success("Payment deleted!")
+                    st.rerun()
     else:
-        st.info("No payments recorded yet. Record your first payment in the 'Record Payment' tab!")
+        st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 16px;
+                padding: 4rem 2rem;
+                text-align: center;
+                color: #64748b;
+                backdrop-filter: blur(12px);
+            ">
+                <span class="material-icons-round" style="font-size: 56px; opacity: 0.4; color: #3b82f6;">payments</span>
+                <p style="margin: 1.5rem 0 0 0; font-size: 1.1rem; font-weight: 500;">No payments recorded yet</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.7;">Record your first payment in the 'Record Payment' tab!</p>
+            </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("📊 Sales Payment Status")
+    st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+    
+    section_header("assignment", "Sales Payment Status")
 
     if not sales_df.empty:
         col1, col2 = st.columns(2)
@@ -106,8 +124,17 @@ with tab1:
                 for sale in unpaid_sales[:10]:
                     owed = float(sale.get('outstanding', 0))
                     paid = float(sale.get('amount_paid', 0))
-                    st.write(f"📋 {sale['contract_date']} - {sale.get('buyer', 'Unknown')}")
-                    st.write(f"   Revenue: €{float(sale['total_revenue']):,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}")
+                    st.markdown(f"""
+                        <div style="padding: 0.75rem; background: rgba(255, 255, 255, 0.5); border-radius: 8px; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="material-icons-round" style="color: #f59e0b; font-size: 18px;">receipt_long</span>
+                                <span style="font-weight: 500;">{sale['contract_date']} - {sale.get('buyer', 'Unknown')}</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+                                Revenue: €{float(sale['total_revenue']):,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
                 if len(unpaid_sales) > 10:
                     st.caption(f"...and {len(unpaid_sales) - 10} more")
             else:
@@ -123,7 +150,7 @@ with tab1:
                 st.info("No payment data yet")
 
 with tab2:
-    st.subheader("Record Payment Received")
+    section_header("add_card", "Record Payment Received")
 
     col1, col2 = st.columns(2)
 
@@ -141,7 +168,12 @@ with tab2:
 
             for sale in unpaid_sales[:5]:
                 sale_owed = float(sale.get('outstanding', 0))
-                st.text(f"📋 {sale['contract_date']} - Owed: €{sale_owed:,.2f}")
+                st.markdown(f"""
+                    <div style="padding: 0.5rem; background: rgba(255, 255, 255, 0.5); border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                        <span class="material-icons-round" style="color: #3b82f6; font-size: 16px; vertical-align: middle;">receipt</span>
+                        {sale['contract_date']} - Owed: €{sale_owed:,.2f}
+                    </div>
+                """, unsafe_allow_html=True)
 
             if len(unpaid_sales) > 5:
                 st.caption(f"...and {len(unpaid_sales) - 5} more outstanding sales")
@@ -165,12 +197,19 @@ with tab2:
                 })
                 remaining -= alloc_amount
 
-        st.markdown("---")
+        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
         st.markdown("**Auto-allocation Preview (oldest first)**")
 
         for alloc in allocation_preview:
             status = "Full" if alloc['amount'] >= alloc['owed'] else "Partial"
-            st.write(f"✓ {alloc['contract_date']}: €{alloc['amount']:,.2f} ({status})")
+            icon = "check_circle" if status == "Full" else "pending"
+            color = "#10b981" if status == "Full" else "#f59e0b"
+            st.markdown(f"""
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span class="material-icons-round" style="color: {color}; font-size: 18px;">{icon}</span>
+                    <span>{alloc['contract_date']}: €{alloc['amount']:,.2f} ({status})</span>
+                </div>
+            """, unsafe_allow_html=True)
 
         total_to_allocate = sum(a['amount'] for a in allocation_preview)
         if remaining > 0:
@@ -178,6 +217,8 @@ with tab2:
         else:
             st.success(f"€{total_to_allocate:,.2f} will be fully allocated to {len(allocation_preview)} sale(s)")
 
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+    
     if st.button("Record Payment & Auto-Allocate", type="primary", key="add_payment"):
         if amount <= 0:
             st.error("Please enter a payment amount")
@@ -187,10 +228,9 @@ with tab2:
             st.rerun()
 
 with tab3:
-    st.subheader("Bulk Upload Payments")
-    st.markdown("Upload a CSV or Excel file with payment data")
+    section_header("upload_file", "Bulk Upload Payments")
 
-    with st.expander("📋 Required Columns Format"):
+    with st.expander("Required Columns Format"):
         st.markdown("""
         Your file should contain the following columns:
         - `payment_date` - Date payment received (DD/MM/YYYY)
@@ -221,7 +261,7 @@ with tab3:
             else:
                 df = pd.read_excel(uploaded_file)
 
-            st.subheader("Preview of Uploaded Data")
+            st.markdown("##### Preview of Uploaded Data")
             st.dataframe(df, use_container_width=True)
 
             if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
