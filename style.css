@@ -1,70 +1,155 @@
-/* Clean Streamlit Theme Enhancements */
+/* Modern Glass-Morphism Design */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+
+* {
+    box-sizing: border-box;
+}
 
 /* Apply Inter font globally */
 html, body, [class*="css"] {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    letter-spacing: 0.01em;
 }
 
-/* Prevent horizontal overflow */
+body {
+    background-color: #f3f4f6;
+}
+
 .stApp {
+    background: linear-gradient(135deg, #f3f4f6 0%, #f0f4f8 100%);
     overflow-x: hidden !important;
 }
 
 .main .block-container {
-    padding: 1.5rem 2rem !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
+    padding: 2.5rem 2rem !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
 }
 
-/* Metric Cards - works with both light and dark mode */
-div[data-testid="metric-container"] {
-    border-radius: 12px;
-    padding: 1rem !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
-}
-
-div[data-testid="metric-container"]:hover {
-    transform: translateY(-2px);
-}
-
-div[data-testid="metric-container"] label {
-    font-size: 0.8rem !important;
-    font-weight: 500 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    font-size: 1.6rem !important;
+/* ============= Header & Title Styling ============= */
+h1, h2, h3 {
+    color: #0f172a !important;
     font-weight: 700 !important;
 }
 
-/* DataFrame/Table Styling - FIXED OVERFLOW */
+h1 {
+    font-size: 2.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+h2 {
+    font-size: 1.875rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.stMarkdown h1, .stMarkdown h2 {
+    letter-spacing: -0.02em;
+}
+
+/* ============= Metric Cards - Glass Morphism ============= */
+div[data-testid="metric-container"] {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 8px 32px rgba(31, 41, 55, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+div[data-testid="metric-container"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+div[data-testid="metric-container"]:hover {
+    transform: translateY(-4px) scale(1.01);
+    background: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 12px 48px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+div[data-testid="metric-container"] label {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em !important;
+    color: #6b7280 !important;
+    margin-bottom: 0.75rem !important;
+}
+
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.2 !important;
+}
+
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    margin-top: 0.5rem !important;
+}
+
+/* ============= Data Frame & Tables ============= */
 div[data-testid="stDataFrame"] {
-    border-radius: 12px;
-    padding: 0.75rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 32px rgba(31, 41, 55, 0.08) !important;
     overflow: hidden !important;
     max-width: 100% !important;
-    width: 100% !important;
+    padding: 0 !important;
 }
 
 div[data-testid="stDataFrame"] > div {
     max-width: 100% !important;
     overflow-x: auto !important;
-    overflow-y: auto !important;
 }
 
-/* Plotly Chart Styling - FIXED OVERFLOW */
+/* Table header styling */
+div[data-testid="stDataFrame"] [role="columnheader"] {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: #4b5563 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em !important;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Table rows */
+div[data-testid="stDataFrame"] tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+    transition: background-color 0.2s ease !important;
+}
+
+div[data-testid="stDataFrame"] tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+/* ============= Plotly Charts ============= */
 .stPlotlyChart {
-    border-radius: 12px;
-    padding: 0.75rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 32px rgba(31, 41, 55, 0.08) !important;
     overflow: hidden !important;
     max-width: 100% !important;
-    width: 100% !important;
 }
 
 .stPlotlyChart > div {
@@ -72,13 +157,196 @@ div[data-testid="stDataFrame"] > div {
     overflow: hidden !important;
 }
 
-/* Ensure chart SVGs don't overflow */
 .js-plotly-plot, .plotly, .plot-container {
     max-width: 100% !important;
-    overflow: hidden !important;
 }
 
-/* Column containers - prevent overflow */
+/* ============= Buttons ============= */
+.stButton > button {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.7rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
+    cursor: pointer !important;
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4) !important;
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* Secondary button style */
+.stButton > button[kind="secondary"] {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: #3b82f6 !important;
+    border: 1.5px solid #3b82f6 !important;
+    box-shadow: none !important;
+}
+
+.stButton > button[kind="secondary"]:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* ============= Input Fields ============= */
+.stTextInput input, 
+.stNumberInput input, 
+.stDateInput input,
+.stSelectbox select,
+.stMultiSelect select,
+.stTextArea textarea {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: 1.5px solid rgba(59, 130, 246, 0.2) !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.95rem !important;
+    color: #1f2937 !important;
+    transition: all 0.2s ease !important;
+}
+
+.stTextInput input:focus, 
+.stNumberInput input:focus, 
+.stDateInput input:focus,
+.stSelectbox select:focus,
+.stTextArea textarea:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* ============= Tabs ============= */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    border-radius: 12px;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.stTabs [data-baseweb="tab"] {
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    color: #6b7280;
+}
+
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    font-weight: 600;
+}
+
+/* ============= Alerts & Info Boxes ============= */
+.stAlert {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-left: 4px solid #3b82f6 !important;
+    border-radius: 12px !important;
+    padding: 1rem 1.5rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.05) !important;
+}
+
+.stAlert > div {
+    color: #1f2937 !important;
+}
+
+/* Info alert */
+.stAlert[data-baseweb="notification"]::before {
+    content: 'ℹ️';
+    margin-right: 0.75rem;
+}
+
+/* ============= Expanders ============= */
+.streamlit-expanderHeader {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.streamlit-expanderHeader:hover {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.streamlit-expanderHeader > summary {
+    color: #0f172a;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.streamlit-expanderContent {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 0 0 10px 10px;
+}
+
+/* ============= Dividers & Separators ============= */
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+    margin: 2rem 0 !important;
+}
+
+/* ============= Download Buttons ============= */
+.stDownloadButton > button {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(37, 99, 235, 0.9) 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.7rem 1.5rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* ============= Markdown Text ============= */
+.stMarkdown {
+    line-height: 1.6;
+}
+
+.stMarkdown p {
+    color: #4b5563;
+    font-weight: 400;
+}
+
+.stMarkdown strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* ============= File Uploader ============= */
+.stFileUploader {
+    border-radius: 12px;
+}
+
+.uploadedFileName {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+/* ============= Multiselect Tags ============= */
+.stMultiSelect [data-baseweb="tag"] {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)) !important;
+    color: #3b82f6 !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+}
+
+/* ============= Columns & Containers ============= */
 div[data-testid="column"] {
     overflow: hidden !important;
     max-width: 100% !important;
@@ -89,79 +357,77 @@ div[data-testid="column"] > div {
     max-width: 100% !important;
 }
 
-/* Horizontal block - prevent overflow */
 div[data-testid="stHorizontalBlock"] {
     overflow: hidden !important;
-    gap: 1rem;
+    gap: 1.5rem !important;
     max-width: 100% !important;
 }
 
-/* Element containers */
 .element-container {
     max-width: 100% !important;
     overflow: hidden !important;
 }
 
-/* Tabs styling */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 4px;
-    border-radius: 10px;
-    padding: 0.4rem;
+/* ============= Sidebar Styling ============= */
+.stSidebar {
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.4) !important;
 }
 
-.stTabs [data-baseweb="tab"] {
-    font-weight: 500;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+.stSidebar .stMarkdown {
+    color: #4b5563;
 }
 
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+/* ============= Scrollbar Styling ============= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-/* Buttons */
-.stButton button {
-    border-radius: 8px !important;
-    padding: 0.6rem 1.5rem !important;
-    font-weight: 600 !important;
-    transition: all 0.2s ease;
-}
-
-.stButton button:hover {
-    transform: translateY(-1px);
-}
-
-/* Input Fields */
-.stTextInput input, .stNumberInput input, .stSelectbox select, .stDateInput input {
-    border-radius: 8px !important;
-    padding: 0.6rem !important;
-}
-
-/* Alerts */
-.stAlert {
+::-webkit-scrollbar-track {
+    background: rgba(59, 130, 246, 0.05);
     border-radius: 10px;
 }
 
-/* Expander */
-.streamlit-expanderHeader {
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.2));
     border-radius: 10px;
 }
 
-/* Horizontal Rule */
-hr {
-    opacity: 0.4;
-    margin: 1.5rem 0 !important;
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.5), rgba(59, 130, 246, 0.4));
 }
 
-/* File Uploader */
-.stFileUploader {
-    border-radius: 10px;
+/* ============= Animations ============= */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Multiselect tags */
-.stMultiSelect [data-baseweb="tag"] {
-    border-radius: 6px;
+.stMetricValue, .stMarkdownContainer {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ============= Utility Classes ============= */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(31, 41, 55, 0.1) !important;
+    padding: 1.5rem !important;
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
