@@ -2,46 +2,34 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, date
 from database import (
-    load_payments_received, save_payments_received, load_settings, load_sales, save_sales,
-    payments_to_df, sales_to_df, generate_id, calculate_outstanding_receivables
+    get_payments_received, add_payment_received, delete_payment, get_settings, get_sales,
+    payments_to_df, sales_to_df, get_unpaid_sales, get_dashboard_metrics
 )
 
 st.set_page_config(page_title="Payments", page_icon="💳", layout="wide")
 
-# Load custom CSS
 try:
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except:
     pass
 
-# Theme selector
-try:
-    from theme_manager import theme_selector
-    theme_selector()
-except:
-    pass
-
 st.title("💳 Payment Tracking")
 st.markdown("Track payments received from buyers and reconcile outstanding balances")
 
-settings = load_settings()
-payments = load_payments_received()
-sales = load_sales()
+settings = get_settings()
+payments = get_payments_received()
+sales = get_sales()
+metrics = get_dashboard_metrics()
 
 sales_df = sales_to_df(sales)
 payments_df = payments_to_df(payments)
 
-total_revenue = sales_df['total_revenue'].sum() if not sales_df.empty and 'total_revenue' in sales_df.columns else 0
-total_received = payments_df['amount_eur'].sum() if not payments_df.empty and 'amount_eur' in payments_df.columns else 0
-
-outstanding_from_sales = 0
-for sale in sales:
-    sale_revenue = sale.get('total_revenue', 0)
-    sale_paid = sale.get('amount_paid', 0)
-    outstanding_from_sales += max(0, sale_revenue - sale_paid)
-
-unallocated_payments = total_received - (total_revenue - outstanding_from_sales)
+total_revenue = metrics['total_revenue']
+total_received = metrics['payments_received']
+total_allocated = metrics['total_allocated']
+outstanding = metrics['outstanding_receivables']
+unallocated = total_received - total_allocated
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -49,12 +37,12 @@ with col1:
 with col2:
     st.metric("Total Payments Received", f"€{total_received:,.2f}")
 with col3:
-    st.metric("Outstanding Receivables", f"€{outstanding_from_sales:,.2f}", delta=f"{'Owed' if outstanding_from_sales > 0 else 'Cleared'}")
+    st.metric("Outstanding Receivables", f"€{outstanding:,.2f}", delta=f"{'Owed' if outstanding > 0 else 'Cleared'}")
 with col4:
-    if unallocated_payments > 0:
-        st.metric("Unallocated Payments", f"€{unallocated_payments:,.2f}", delta="Needs allocation")
+    if unallocated > 0.01:
+        st.metric("Unallocated Payments", f"€{unallocated:,.2f}", delta="Needs allocation")
     else:
-        st.metric("Unallocated Payments", f"€{max(0, unallocated_payments):,.2f}")
+        st.metric("Unallocated Payments", f"€{max(0, unallocated):,.2f}")
 
 st.markdown("---")
 
@@ -68,17 +56,26 @@ with tab1:
     if not df.empty:
         col1, col2 = st.columns(2)
         with col1:
-            filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].unique().tolist())
-        with col2:
-            pass
+            if 'buyer' in df.columns:
+                filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].dropna().unique().tolist())
+            else:
+                filter_buyer = []
 
         filtered_df = df.copy()
         if filter_buyer:
             filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
 
-        display_cols = ['payment_date', 'buyer', 'amount_eur', 'notes']
+        display_cols = ['payment_date', 'buyer', 'amount_eur', 'allocated_amount', 'notes']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
-        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
+        
+        display_filtered = filtered_df[available_cols].copy()
+        if 'payment_date' in display_filtered.columns:
+            display_filtered['payment_date'] = pd.to_datetime(display_filtered['payment_date']).dt.strftime('%d/%m/%Y')
+        if 'allocated_amount' not in display_filtered.columns:
+            display_filtered['allocated_amount'] = display_filtered['amount_eur']
+        display_filtered['unallocated'] = display_filtered['amount_eur'] - display_filtered['allocated_amount']
+        
+        st.dataframe(display_filtered, use_container_width=True, hide_index=True)
 
         csv = filtered_df.to_csv(index=False)
         st.download_button("Export to CSV", csv, "payments_export.csv", "text/csv")
@@ -86,12 +83,11 @@ with tab1:
         st.markdown("---")
         st.subheader("Delete Payment")
         if len(payments) > 0:
-            payment_options = [f"{p['payment_date']} - {p['buyer']} - €{p['amount_eur']}" for p in payments]
-            selected_payment = st.selectbox("Select payment to delete", options=payment_options)
+            payment_options = {f"{p['payment_date']} - {p.get('buyer', 'N/A')} - €{float(p['amount_eur']):.2f}": p['id'] for p in payments}
+            selected_payment = st.selectbox("Select payment to delete", options=list(payment_options.keys()))
             if st.button("Delete Selected", type="secondary"):
-                idx = payment_options.index(selected_payment)
-                payments.pop(idx)
-                save_payments_received(payments)
+                payment_id = payment_options[selected_payment]
+                delete_payment(payment_id)
                 st.success("Payment deleted!")
                 st.rerun()
     else:
@@ -105,21 +101,21 @@ with tab1:
 
         with col1:
             st.markdown("**Outstanding Sales**")
-            has_outstanding = False
-            for sale in sales:
-                if sale.get('payment_status') != 'Paid':
-                    owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
-                    paid = sale.get('amount_paid', 0)
-                    if owed > 0:
-                        has_outstanding = True
-                        st.write(f"📋 {sale['contract_date']} - {sale['buyer']}")
-                        st.write(f"   Revenue: €{sale['total_revenue']:,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}")
-            if not has_outstanding:
+            unpaid_sales = get_unpaid_sales()
+            if unpaid_sales:
+                for sale in unpaid_sales[:10]:
+                    owed = float(sale.get('outstanding', 0))
+                    paid = float(sale.get('amount_paid', 0))
+                    st.write(f"📋 {sale['contract_date']} - {sale.get('buyer', 'Unknown')}")
+                    st.write(f"   Revenue: €{float(sale['total_revenue']):,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}")
+                if len(unpaid_sales) > 10:
+                    st.caption(f"...and {len(unpaid_sales) - 10} more")
+            else:
                 st.success("All sales fully paid!")
 
         with col2:
             st.markdown("**Payment Summary by Buyer**")
-            if not payments_df.empty:
+            if not payments_df.empty and 'buyer' in payments_df.columns:
                 buyer_summary = payments_df.groupby('buyer')['amount_eur'].sum().reset_index()
                 buyer_summary.columns = ['Buyer', 'Total Received (EUR)']
                 st.dataframe(buyer_summary, use_container_width=True, hide_index=True)
@@ -138,36 +134,32 @@ with tab2:
         notes = st.text_area("Notes", key="single_recv_notes", placeholder="e.g., Settlement for gas days Nov 1-3")
 
     with col2:
-        pending_sales = [s for s in sales if s.get('payment_status') != 'Paid']
-        pending_sales_sorted = sorted(pending_sales, key=lambda x: x.get('contract_date', ''))
-
-        if pending_sales_sorted and amount > 0:
+        unpaid_sales = get_unpaid_sales(buyer)
+        
+        if unpaid_sales and amount > 0:
             st.markdown("**Outstanding Sales (oldest first)**")
 
-            for sale in pending_sales_sorted[:5]:
-                sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
-                if sale_owed > 0:
-                    st.text(f"📋 {sale['contract_date']} - {sale.get('buyer', 'Unknown')} - Owed: €{sale_owed:,.2f}")
+            for sale in unpaid_sales[:5]:
+                sale_owed = float(sale.get('outstanding', 0))
+                st.text(f"📋 {sale['contract_date']} - Owed: €{sale_owed:,.2f}")
 
-            if len(pending_sales_sorted) > 5:
-                st.caption(f"...and {len(pending_sales_sorted) - 5} more outstanding sales")
-        elif not pending_sales_sorted:
-            st.success("No outstanding sales!")
+            if len(unpaid_sales) > 5:
+                st.caption(f"...and {len(unpaid_sales) - 5} more outstanding sales")
+        elif not unpaid_sales:
+            st.success("No outstanding sales for this buyer!")
         else:
             st.info("Enter payment amount to see allocation preview")
 
-    if amount > 0 and pending_sales_sorted:
+    if amount > 0 and unpaid_sales:
         allocation_preview = []
         remaining = amount
 
-        for sale in pending_sales_sorted:
-            sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
+        for sale in unpaid_sales:
+            sale_owed = float(sale.get('outstanding', 0))
             if sale_owed > 0 and remaining > 0:
                 alloc_amount = min(remaining, sale_owed)
                 allocation_preview.append({
-                    'sale_id': sale['id'],
-                    'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
-                    'contract_date': sale['contract_date'],
+                    'contract_date': str(sale['contract_date']),
                     'amount': alloc_amount,
                     'owed': sale_owed
                 })
@@ -190,55 +182,8 @@ with tab2:
         if amount <= 0:
             st.error("Please enter a payment amount")
         else:
-            allocation_data = []
-            remaining = amount
-
-            for sale in pending_sales_sorted:
-                sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
-                if sale_owed > 0 and remaining > 0:
-                    alloc_amount = min(remaining, sale_owed)
-                    allocation_data.append({
-                        'sale_id': sale['id'],
-                        'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
-                        'amount': alloc_amount
-                    })
-                    remaining -= alloc_amount
-
-            total_allocated = sum(a['amount'] for a in allocation_data)
-            related_sales = [a['sale_ref'] for a in allocation_data]
-
-            new_payment = {
-                "id": generate_id(),
-                "payment_date": str(payment_date),
-                "amount_eur": amount,
-                "buyer": buyer,
-                "related_sales_dates": related_sales,
-                "allocations": allocation_data,
-                "allocated_amount": total_allocated,
-                "unallocated_amount": remaining,
-                "notes": notes
-            }
-            payments.append(new_payment)
-            save_payments_received(payments)
-
-            for alloc in allocation_data:
-                for sale in sales:
-                    if sale['id'] == alloc['sale_id']:
-                        current_paid = sale.get('amount_paid', 0)
-                        sale['amount_paid'] = current_paid + alloc['amount']
-
-                        if sale['amount_paid'] >= sale['total_revenue']:
-                            sale['payment_status'] = 'Paid'
-                        elif sale['amount_paid'] > 0:
-                            sale['payment_status'] = 'Partial'
-                        break
-
-            save_sales(sales)
-
-            if remaining > 0:
-                st.success(f"Payment recorded! Allocated €{total_allocated:,.2f} to {len(allocation_data)} sale(s). €{remaining:,.2f} unallocated.")
-            else:
-                st.success(f"Payment recorded! Fully allocated €{total_allocated:,.2f} to {len(allocation_data)} sale(s).")
+            add_payment_received(payment_date, buyer, amount, notes)
+            st.success("Payment recorded and allocated!")
             st.rerun()
 
 with tab3:
@@ -281,68 +226,22 @@ with tab3:
 
             if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
                 count = 0
-                total_allocated_all = 0
-                total_unallocated_all = 0
-
                 for _, row in df.iterrows():
-                    amount = float(row.get('amount_eur', 0))
-
-                    pending_sales = [s for s in sales if s.get('payment_status') != 'Paid']
-                    pending_sales_sorted = sorted(pending_sales, key=lambda x: x.get('contract_date', ''))
-
-                    allocation_data = []
-                    remaining = amount
-
-                    for sale in pending_sales_sorted:
-                        sale_owed = sale.get('total_revenue', 0) - sale.get('amount_paid', 0)
-                        if sale_owed > 0 and remaining > 0:
-                            alloc_amount = min(remaining, sale_owed)
-                            allocation_data.append({
-                                'sale_id': sale['id'],
-                                'sale_ref': f"{sale['contract_date']} - €{sale['total_revenue']:.2f}",
-                                'amount': alloc_amount
-                            })
-                            remaining -= alloc_amount
-
-                    total_allocated = sum(a['amount'] for a in allocation_data)
-                    related_sales = [a['sale_ref'] for a in allocation_data]
-
-                    new_payment = {
-                        "id": generate_id(),
-                        "payment_date": str(row.get('payment_date', '')),
-                        "amount_eur": amount,
-                        "buyer": str(row.get('buyer', settings['buyers'][0])),
-                        "related_sales_dates": related_sales,
-                        "allocations": allocation_data,
-                        "allocated_amount": total_allocated,
-                        "unallocated_amount": remaining,
-                        "notes": str(row.get('notes', ''))
-                    }
-                    payments.append(new_payment)
-
-                    for alloc in allocation_data:
-                        for sale in sales:
-                            if sale['id'] == alloc['sale_id']:
-                                current_paid = sale.get('amount_paid', 0)
-                                sale['amount_paid'] = current_paid + alloc['amount']
-
-                                if sale['amount_paid'] >= sale['total_revenue']:
-                                    sale['payment_status'] = 'Paid'
-                                elif sale['amount_paid'] > 0:
-                                    sale['payment_status'] = 'Partial'
-                                break
-
+                    payment_date_str = str(row.get('payment_date', ''))
+                    try:
+                        payment_date = pd.to_datetime(payment_date_str, dayfirst=True).date()
+                    except:
+                        payment_date = date.today()
+                    
+                    add_payment_received(
+                        payment_date,
+                        str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
+                        float(row.get('amount_eur', 0)),
+                        str(row.get('notes', ''))
+                    )
                     count += 1
-                    total_allocated_all += total_allocated
-                    total_unallocated_all += remaining
 
-                save_payments_received(payments)
-                save_sales(sales)
-
-                if total_unallocated_all > 0:
-                    st.success(f"Imported {count} payments! Allocated €{total_allocated_all:,.2f}. €{total_unallocated_all:,.2f} unallocated.")
-                else:
-                    st.success(f"Imported {count} payments! Fully allocated €{total_allocated_all:,.2f} to outstanding sales.")
+                st.success(f"Imported {count} payments with auto-allocation!")
                 st.rerun()
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")

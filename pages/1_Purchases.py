@@ -1,27 +1,19 @@
 import streamlit as st
 import pandas as pd
-from database import load_sales, sales_to_df
+from database import get_sales, sales_to_df
 
 st.set_page_config(page_title="Purchases", page_icon="📦", layout="wide")
 
-# Load custom CSS
 try:
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except:
     pass
 
-# Theme selector
-try:
-    from theme_manager import theme_selector
-    theme_selector()
-except:
-    pass
-
 st.title("📦 Daily Gas Purchases")
 st.markdown("View daily gas purchase details calculated from sales data")
 
-sales = load_sales()
+sales = get_sales()
 sales_df = sales_to_df(sales)
 
 if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns:
@@ -54,15 +46,12 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
         st.header("📋 Daily Purchase Details")
         st.markdown("Purchase cost is calculated as: **Quantity (MWh) × Purchase Price (EUR/MWh)**")
 
-        display_df = valid_df[['contract_date', 'quantity_mwh', 'purchase_price_eur_mwh']].copy()
-        display_df['purchase_cost'] = display_df['quantity_mwh'] * display_df['purchase_price_eur_mwh']
+        display_df = valid_df[['contract_date', 'quantity_mwh', 'purchase_price_eur_mwh', 'purchase_cost']].copy()
         display_df.columns = ['Contract Date', 'Quantity (MWh)', 'Purchase Price (EUR/MWh)', 'Purchase Cost (EUR)']
 
         if 'Contract Date' in display_df.columns:
             try:
-                display_df['Contract Date'] = pd.to_datetime(display_df['Contract Date'], dayfirst=True)
-                display_df = display_df.sort_values('Contract Date', ascending=False)
-                display_df['Contract Date'] = display_df['Contract Date'].dt.strftime('%d/%m/%Y')
+                display_df['Contract Date'] = pd.to_datetime(display_df['Contract Date']).dt.strftime('%d/%m/%Y')
             except:
                 pass
 
@@ -87,7 +76,7 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
 
         chart_df = valid_df[['contract_date', 'purchase_price_eur_mwh']].copy()
         try:
-            chart_df['contract_date'] = pd.to_datetime(chart_df['contract_date'], dayfirst=True)
+            chart_df['contract_date'] = pd.to_datetime(chart_df['contract_date'])
             chart_df = chart_df.sort_values('contract_date')
 
             import plotly.express as px

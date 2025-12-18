@@ -2,38 +2,22 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, date
 from database import (
-    load_sales, save_sales, load_settings, load_purchases,
-    sales_to_df, purchases_to_df, generate_id
+    get_sales, add_sale, update_sale, delete_sale, get_settings, sales_to_df
 )
 
 st.set_page_config(page_title="Sales", page_icon="💰", layout="wide")
 
-# Load custom CSS
 try:
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except:
     pass
 
-# Theme selector
-try:
-    from theme_manager import theme_selector
-    theme_selector()
-except:
-    pass
-
 st.title("💰 Sales Management")
 st.markdown("Track natural gas sales, margins, and buyer transactions")
 
-settings = load_settings()
-sales = load_sales()
-purchases = load_purchases()
-
-purchases_df = purchases_to_df(purchases)
-if not purchases_df.empty and 'quantity_mwh' in purchases_df.columns:
-    avg_purchase_price = float((purchases_df['price_eur_mwh'] * purchases_df['quantity_mwh']).sum() / purchases_df['quantity_mwh'].sum()) if purchases_df['quantity_mwh'].sum() > 0 else 0.0
-else:
-    avg_purchase_price = 0.0
+settings = get_settings()
+sales = get_sales()
 
 tab1, tab2, tab3 = st.tabs(["📊 View Sales", "📝 Add Sale", "📤 Bulk Upload"])
 
@@ -64,48 +48,42 @@ with tab1:
         
         col1, col2 = st.columns(2)
         with col1:
-            filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].unique().tolist())
+            if 'buyer' in df.columns:
+                filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].dropna().unique().tolist())
+            else:
+                filter_buyer = []
         with col2:
-            filter_status = st.multiselect("Filter by Payment Status", options=df['payment_status'].unique().tolist())
+            pass
         
         filtered_df = df.copy()
         if filter_buyer:
             filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
-        if filter_status:
-            filtered_df = filtered_df[filtered_df['payment_status'].isin(filter_status)]
         
         display_cols = ['contract_date', 'buyer', 'quantity_mwh', 'sales_price_eur_mwh', 
                        'purchase_price_eur_mwh', 'cost_capacity_eur_mwh', 'cost_transport_eur_mwh',
-                       'margin_eur_mwh', 'total_revenue', 'total_margin', 'payment_status']
+                       'margin_eur_mwh', 'total_revenue', 'total_margin', 'amount_paid']
         available_cols = [col for col in display_cols if col in filtered_df.columns]
         
-        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
+        display_filtered = filtered_df[available_cols].copy()
+        if 'contract_date' in display_filtered.columns:
+            display_filtered['contract_date'] = pd.to_datetime(display_filtered['contract_date']).dt.strftime('%d/%m/%Y')
+        
+        st.dataframe(display_filtered, use_container_width=True, hide_index=True)
         
         csv = filtered_df.to_csv(index=False)
         st.download_button("Export to CSV", csv, "sales_export.csv", "text/csv")
         
         st.markdown("---")
-        st.subheader("Update Payment Status")
+        st.subheader("Delete Sale")
         if len(sales) > 0:
-            sale_options = [f"{s['contract_date']} - {s['buyer']} - €{s['total_revenue']:.2f}" for s in sales]
-            selected_sale = st.selectbox("Select sale to update", options=sale_options)
-            new_status = st.selectbox("New Status", options=["Pending", "Partial", "Paid"])
+            sale_options = {f"{s['contract_date']} - {s.get('buyer', 'N/A')} - €{float(s['total_revenue']):.2f}": s['id'] for s in sales}
+            selected_sale = st.selectbox("Select sale to delete", options=list(sale_options.keys()))
             
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Update Status", type="primary"):
-                    idx = sale_options.index(selected_sale)
-                    sales[idx]['payment_status'] = new_status
-                    save_sales(sales)
-                    st.success("Status updated!")
-                    st.rerun()
-            with col2:
-                if st.button("Delete Sale", type="secondary"):
-                    idx = sale_options.index(selected_sale)
-                    sales.pop(idx)
-                    save_sales(sales)
-                    st.success("Sale deleted!")
-                    st.rerun()
+            if st.button("Delete Sale", type="secondary"):
+                sale_id = sale_options[selected_sale]
+                delete_sale(sale_id)
+                st.success("Sale deleted!")
+                st.rerun()
     else:
         st.info("No sales recorded yet. Add your first sale in the 'Add Sale' tab!")
 
@@ -121,7 +99,7 @@ with tab2:
         buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_buyer")
     
     with col2:
-        purchase_price = st.number_input("Purchase Price (EUR/MWh)", min_value=0.0, step=0.01, value=avg_purchase_price, key="single_purchase_price", help="The cost at which gas was purchased")
+        purchase_price = st.number_input("Purchase Price (EUR/MWh)", min_value=0.0, step=0.01, key="single_purchase_price", help="The cost at which gas was purchased")
         cost_capacity = st.number_input("Cost of Capacity (EUR/MWh)", min_value=0.0, step=0.01, key="single_capacity")
         cost_transport = st.number_input("Cost of Transport (EUR/MWh)", min_value=0.0, step=0.01, key="single_transport")
     
@@ -139,23 +117,7 @@ with tab2:
         st.metric("Total Margin", f"€{total_margin:,.2f}", delta=f"{'Profit' if total_margin > 0 else 'Loss'}")
     
     if st.button("Add Sale", type="primary", key="add_single_sale"):
-        new_sale = {
-            "id": generate_id(),
-            "contract_date": contract_date.strftime("%d/%m/%Y"),
-            "sales_price_eur_mwh": sales_price,
-            "quantity_mwh": quantity_mwh,
-            "cost_capacity_eur_mwh": cost_capacity,
-            "cost_transport_eur_mwh": cost_transport,
-            "purchase_price_eur_mwh": purchase_price,
-            "margin_eur_mwh": margin,
-            "total_revenue": total_revenue,
-            "total_margin": total_margin,
-            "buyer": buyer,
-            "amount_paid": 0,
-            "payment_status": "Pending"
-        }
-        sales.append(new_sale)
-        save_sales(sales)
+        add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport)
         st.success("Sale added successfully!")
         st.rerun()
 
@@ -204,33 +166,23 @@ with tab3:
             if st.button("Import All Rows", type="primary", key="import_sales"):
                 count = 0
                 for _, row in df.iterrows():
-                    sales_price = float(row.get('sales_price_eur_mwh', 0))
-                    purchase_price = float(row.get('purchase_price_eur_mwh', 0))
-                    cost_capacity = float(row.get('cost_capacity_eur_mwh', 0))
-                    cost_transport = float(row.get('cost_transport_eur_mwh', 0))
-                    quantity = float(row.get('quantity_mwh', 0))
+                    contract_date_str = str(row.get('contract_date', ''))
+                    try:
+                        contract_date = pd.to_datetime(contract_date_str, dayfirst=True).date()
+                    except:
+                        contract_date = date.today()
                     
-                    margin = sales_price - purchase_price - cost_capacity - cost_transport
-                    
-                    new_sale = {
-                        "id": generate_id(),
-                        "contract_date": str(row.get('contract_date', '')),
-                        "sales_price_eur_mwh": sales_price,
-                        "quantity_mwh": quantity,
-                        "cost_capacity_eur_mwh": cost_capacity,
-                        "cost_transport_eur_mwh": cost_transport,
-                        "purchase_price_eur_mwh": purchase_price,
-                        "margin_eur_mwh": margin,
-                        "total_revenue": sales_price * quantity,
-                        "total_margin": margin * quantity,
-                        "buyer": str(row.get('buyer', settings['buyers'][0])),
-                        "amount_paid": 0,
-                        "payment_status": "Pending"
-                    }
-                    sales.append(new_sale)
+                    add_sale(
+                        contract_date,
+                        str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
+                        float(row.get('quantity_mwh', 0)),
+                        float(row.get('sales_price_eur_mwh', 0)),
+                        float(row.get('purchase_price_eur_mwh', 0)),
+                        float(row.get('cost_capacity_eur_mwh', 0)),
+                        float(row.get('cost_transport_eur_mwh', 0))
+                    )
                     count += 1
                 
-                save_sales(sales)
                 st.success(f"Successfully imported {count} sales!")
                 st.rerun()
         except Exception as e:

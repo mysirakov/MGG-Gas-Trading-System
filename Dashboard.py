@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from database import (
-    load_purchases, load_sales, load_payments_received, load_settings,
-    purchases_to_df, sales_to_df, payments_to_df
+    get_sales, get_supplier_payments, get_payments_received, get_settings,
+    get_dashboard_metrics, sales_to_df, payments_to_df, supplier_payments_to_df
 )
 
 st.set_page_config(
@@ -14,13 +14,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Load custom CSS
-with open('style.css') as f:
-    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
-# Theme selector
-from theme_manager import theme_selector
-theme_selector()
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
 
 st.title("⛽ Dashboard")
 st.markdown("### Comprehensive Overview of Your Natural Gas Trading Business")
@@ -36,12 +34,12 @@ st.sidebar.markdown("""
 - **⚙️ Settings** - Manage suppliers, buyers, and payment methods
 """)
 
-purchases = load_purchases()
-sales = load_sales()
-payments = load_payments_received()
-settings = load_settings()
+metrics = get_dashboard_metrics()
+sales = get_sales()
+purchases = get_supplier_payments()
+payments = get_payments_received()
 
-purchases_df = purchases_to_df(purchases)
+purchases_df = supplier_payments_to_df(purchases)
 sales_df = sales_to_df(sales)
 payments_df = payments_to_df(payments)
 
@@ -49,16 +47,10 @@ st.header("📊 Key Metrics Overview")
 
 col1, col2, col3, col4 = st.columns(4)
 
-total_revenue = sales_df['total_revenue'].sum() if not sales_df.empty and 'total_revenue' in sales_df.columns else 0
-total_margin = sales_df['total_margin'].sum() if not sales_df.empty and 'total_margin' in sales_df.columns else 0
-total_quantity_sold = sales_df['quantity_mwh'].sum() if not sales_df.empty and 'quantity_mwh' in sales_df.columns else 0
-payments_received = payments_df['amount_eur'].sum() if not payments_df.empty and 'amount_eur' in payments_df.columns else 0
-
-outstanding_from_sales = 0
-for sale in sales:
-    sale_revenue = sale.get('total_revenue', 0)
-    sale_paid = sale.get('amount_paid', 0)
-    outstanding_from_sales += max(0, sale_revenue - sale_paid)
+total_revenue = metrics['total_revenue']
+total_margin = metrics['total_margin']
+total_quantity_sold = metrics['total_quantity']
+outstanding = metrics['outstanding_receivables']
 
 with col1:
     st.metric("💵 Total Revenue", f"€{total_revenue:,.2f}")
@@ -67,17 +59,15 @@ with col2:
 with col3:
     st.metric("⚡ Quantity Traded", f"{total_quantity_sold:,.0f} MWh")
 with col4:
-    st.metric("📋 Outstanding", f"€{outstanding_from_sales:,.2f}")
+    st.metric("📋 Outstanding", f"€{outstanding:,.2f}")
 
 st.markdown("---")
 
 col1, col2, col3, col4 = st.columns(4)
 
-total_sent = purchases_df['amount_sent_eur'].sum() if not purchases_df.empty and 'amount_sent_eur' in purchases_df.columns else 0
-total_received_supplier = purchases_df['amount_received_eur'].sum() if not purchases_df.empty and 'amount_received_eur' in purchases_df.columns else 0
-valid_sales = sales_df[(sales_df['quantity_mwh'] > 0) & (sales_df['purchase_price_eur_mwh'] > 0)] if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns else pd.DataFrame()
-total_purchase_cost = (valid_sales['quantity_mwh'] * valid_sales['purchase_price_eur_mwh']).sum() if not valid_sales.empty else 0
-supplier_balance = total_received_supplier - total_purchase_cost
+total_sent = metrics['total_sent_to_suppliers']
+supplier_balance = metrics['supplier_balance']
+payments_received = metrics['payments_received']
 
 with col1:
     st.metric("💳 Paid to Suppliers", f"€{total_sent:,.2f}")
@@ -95,7 +85,7 @@ st.header("📈 Performance Charts")
 
 if not sales_df.empty and 'contract_date' in sales_df.columns:
     sales_df_chart = sales_df.copy()
-    sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'], format='mixed', dayfirst=True)
+    sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'])
     daily_metrics = sales_df_chart.groupby('contract_date').agg({
         'total_revenue': 'sum',
         'total_margin': 'sum',
@@ -141,7 +131,7 @@ st.subheader("P&L Summary")
 if not sales_df.empty:
     capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
     transport_cost = (sales_df['cost_transport_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_transport_eur_mwh' in sales_df.columns else 0
-    purchase_cost = (sales_df['purchase_price_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'purchase_price_eur_mwh' in sales_df.columns else 0
+    purchase_cost = metrics['total_purchase_cost']
     
     pnl_data = {
         'Category': ['Gross Revenue', 'Purchase Costs', 'Capacity Costs', 'Transport Costs', 'Net Profit'],
@@ -156,30 +146,39 @@ st.markdown("---")
 
 st.header("📋 Recent Activity")
 
-st.subheader("Recent Purchases")
+st.subheader("Recent Supplier Payments")
 if not purchases_df.empty:
     recent_purchases = purchases_df.head(5)
     display_cols = ['payment_date', 'supplier', 'amount_sent_eur']
     available_cols = [c for c in display_cols if c in recent_purchases.columns]
-    st.dataframe(recent_purchases[available_cols], use_container_width=True, hide_index=True)
+    display_df = recent_purchases[available_cols].copy()
+    if 'payment_date' in display_df.columns:
+        display_df['payment_date'] = pd.to_datetime(display_df['payment_date']).dt.strftime('%d/%m/%Y')
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
 else:
-    st.info("No purchases recorded")
+    st.info("No supplier payments recorded")
 
 st.subheader("Recent Sales")
 if not sales_df.empty:
     recent_sales = sales_df.head(5)
     display_cols = ['contract_date', 'buyer', 'total_revenue', 'total_margin']
     available_cols = [c for c in display_cols if c in recent_sales.columns]
-    st.dataframe(recent_sales[available_cols], use_container_width=True, hide_index=True)
+    display_df = recent_sales[available_cols].copy()
+    if 'contract_date' in display_df.columns:
+        display_df['contract_date'] = pd.to_datetime(display_df['contract_date']).dt.strftime('%d/%m/%Y')
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
 else:
     st.info("No sales recorded")
 
-st.subheader("Recent Payments")
+st.subheader("Recent Payments Received")
 if not payments_df.empty:
     recent_payments = payments_df.head(5)
     display_cols = ['payment_date', 'buyer', 'amount_eur']
     available_cols = [c for c in display_cols if c in recent_payments.columns]
-    st.dataframe(recent_payments[available_cols], use_container_width=True, hide_index=True)
+    display_df = recent_payments[available_cols].copy()
+    if 'payment_date' in display_df.columns:
+        display_df['payment_date'] = pd.to_datetime(display_df['payment_date']).dt.strftime('%d/%m/%Y')
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
 else:
     st.info("No payments recorded")
 
@@ -190,8 +189,8 @@ st.header("🔔 Alerts & Status")
 col1, col2 = st.columns(2)
 
 with col1:
-    if outstanding_from_sales > 0:
-        st.warning(f"⚠️ Outstanding receivables: €{outstanding_from_sales:,.2f}")
+    if outstanding > 0:
+        st.warning(f"⚠️ Outstanding receivables: €{outstanding:,.2f}")
     else:
         st.success("✅ All receivables collected")
 
@@ -203,9 +202,5 @@ with col2:
     else:
         st.success(f"✅ Healthy supplier balance: €{supplier_balance:,.2f}")
 
-pending_sales = len([s for s in sales if s.get('payment_status') == 'Pending']) if sales else 0
-if pending_sales > 0:
-    st.info(f"📋 {pending_sales} sales pending payment")
-
 st.markdown("---")
-st.caption("Gas Trading Financial Dashboard | Built with Streamlit")
+st.caption("Gas Trading Financial Dashboard | Built with Streamlit | Data stored in PostgreSQL")

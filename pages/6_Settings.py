@@ -1,26 +1,18 @@
 import streamlit as st
-from database import load_settings, save_settings
+from database import get_settings, add_supplier, add_buyer, add_payment_method, delete_supplier, delete_buyer, delete_payment_method
 
 st.set_page_config(page_title="Settings", page_icon="⚙️", layout="wide")
 
-# Load custom CSS
 try:
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except:
     pass
 
-# Theme selector
-try:
-    from theme_manager import theme_selector
-    theme_selector()
-except:
-    pass
-
 st.title("⚙️ Settings")
 st.markdown("Manage suppliers, buyers, and payment methods")
 
-settings = load_settings()
+settings = get_settings()
 
 col1, col2 = st.columns(2)
 
@@ -36,17 +28,13 @@ with col1:
             st.text(supplier)
         with col_b:
             if st.button("🗑️", key=f"del_supplier_{i}"):
-                suppliers.pop(i)
-                settings["suppliers"] = suppliers
-                save_settings(settings)
+                delete_supplier(supplier)
                 st.rerun()
     
     new_supplier = st.text_input("Add new supplier", key="new_supplier")
     if st.button("Add Supplier", type="primary", key="add_supplier_btn"):
         if new_supplier and new_supplier not in suppliers:
-            suppliers.append(new_supplier)
-            settings["suppliers"] = suppliers
-            save_settings(settings)
+            add_supplier(new_supplier)
             st.success(f"Added supplier: {new_supplier}")
             st.rerun()
         elif new_supplier in suppliers:
@@ -65,17 +53,13 @@ with col1:
             st.text(method)
         with col_b:
             if st.button("🗑️", key=f"del_method_{i}"):
-                payment_methods.pop(i)
-                settings["payment_methods"] = payment_methods
-                save_settings(settings)
+                delete_payment_method(method)
                 st.rerun()
     
     new_method = st.text_input("Add new payment method", key="new_method")
     if st.button("Add Payment Method", type="primary", key="add_method_btn"):
         if new_method and new_method not in payment_methods:
-            payment_methods.append(new_method)
-            settings["payment_methods"] = payment_methods
-            save_settings(settings)
+            add_payment_method(new_method)
             st.success(f"Added payment method: {new_method}")
             st.rerun()
         elif new_method in payment_methods:
@@ -93,17 +77,13 @@ with col2:
             st.text(buyer)
         with col_b:
             if st.button("🗑️", key=f"del_buyer_{i}"):
-                buyers.pop(i)
-                settings["buyers"] = buyers
-                save_settings(settings)
+                delete_buyer(buyer)
                 st.rerun()
     
     new_buyer = st.text_input("Add new buyer", key="new_buyer")
     if st.button("Add Buyer", type="primary", key="add_buyer_btn"):
         if new_buyer and new_buyer not in buyers:
-            buyers.append(new_buyer)
-            settings["buyers"] = buyers
-            save_settings(settings)
+            add_buyer(new_buyer)
             st.success(f"Added buyer: {new_buyer}")
             st.rerun()
         elif new_buyer in buyers:
@@ -124,26 +104,5 @@ with col3:
 
 st.markdown("---")
 
-st.subheader("⚠️ Data Management")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("**Reset Settings to Default**")
-    st.caption("This will reset all dropdown options to their default values")
-    if st.button("Reset Settings", type="secondary"):
-        default_settings = {
-            "suppliers": ["GPE"],
-            "payment_methods": ["Unicredit", "Financial Agent"],
-            "buyers": ["Keler"]
-        }
-        save_settings(default_settings)
-        st.success("Settings reset to defaults!")
-        st.rerun()
-
-with col2:
-    st.markdown("**Export Configuration**")
-    st.caption("Download current settings as JSON")
-    import json
-    settings_json = json.dumps(settings, indent=2)
-    st.download_button("Download Settings", settings_json, "settings.json", "application/json")
+st.subheader("📊 Database Info")
+st.info("Data is now stored in PostgreSQL database for better reliability and cross-referencing.")
