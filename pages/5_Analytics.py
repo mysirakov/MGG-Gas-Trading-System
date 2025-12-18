@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import altair as alt
 from datetime import datetime
 from database import (
     get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
@@ -80,7 +79,7 @@ if not sales_df.empty:
         }).reset_index()
 
         col1, col2 = st.columns(2)
-
+        
         with col1:
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['sales_price_eur_mwh'],
@@ -142,7 +141,7 @@ section_header("account_balance", "P&L Summary")
 
 if not sales_df.empty:
     col1, col2 = st.columns(2)
-
+    
     with col1:
         st.markdown("##### Revenue Breakdown")
         capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
@@ -225,13 +224,21 @@ with col1:
         purchases_df_copy['payment_date'] = pd.to_datetime(purchases_df_copy['payment_date'])
         outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum().reset_index()
 
-        chart = alt.Chart(outflow_daily).mark_bar(color='#ef4444').encode(
-            x=alt.X('payment_date:T', title='Date'),
-            y=alt.Y('amount_sent_eur:Q', title='Amount (EUR)'),
-            tooltip=['payment_date:T', alt.Tooltip('amount_sent_eur:Q', format=',.2f', title='Amount')]
-        ).properties(height=280).interactive()
-
-        st.altair_chart(chart, use_container_width=True)
+        fig = px.bar(outflow_daily, x='payment_date', y='amount_sent_eur',
+                    color_discrete_sequence=['#ef4444'])
+        fig.update_layout(
+            xaxis_title='Date', yaxis_title='Amount (EUR)',
+            height=300,
+            margin=dict(l=40, r=20, t=20, b=40),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter', size=12, color='#64748b'),
+            showlegend=False,
+            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+        )
+        fig.update_traces(marker_cornerradius=6)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("Add purchase data to see cash outflows")
 
@@ -242,13 +249,21 @@ with col2:
         payments_df_copy['payment_date'] = pd.to_datetime(payments_df_copy['payment_date'])
         inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum().reset_index()
 
-        chart = alt.Chart(inflow_daily).mark_bar(color='#10b981').encode(
-            x=alt.X('payment_date:T', title='Date'),
-            y=alt.Y('amount_eur:Q', title='Amount (EUR)'),
-            tooltip=['payment_date:T', alt.Tooltip('amount_eur:Q', format=',.2f', title='Amount')]
-        ).properties(height=280).interactive()
-
-        st.altair_chart(chart, use_container_width=True)
+        fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',
+                    color_discrete_sequence=['#10b981'])
+        fig.update_layout(
+            xaxis_title='Date', yaxis_title='Amount (EUR)',
+            height=300,
+            margin=dict(l=40, r=20, t=20, b=40),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter', size=12, color='#64748b'),
+            showlegend=False,
+            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+        )
+        fig.update_traces(marker_cornerradius=6)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("Add payment data to see cash inflows")
 
