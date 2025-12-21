@@ -78,47 +78,43 @@ if not sales_df.empty:
             'margin_eur_mwh': 'mean'
         }).reset_index()
 
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['sales_price_eur_mwh'],
-                                    mode='lines+markers', name='Sales Price', line=dict(color='#10b981', width=3)))
-            fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['purchase_price_eur_mwh'],
-                                    mode='lines+markers', name='Purchase Price', line=dict(color='#ef4444', width=3)))
-            fig.update_layout(
-                title=dict(text='Sales vs Purchase Price', font=dict(size=16, color='#1e293b')),
-                xaxis_title='Date', yaxis_title='Price (EUR/MWh)',
-                hovermode='x unified',
-                height=350,
-                margin=dict(l=40, r=20, t=50, b=40),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter', size=12, color='#64748b'),
-                legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-                xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-                yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-            )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['sales_price_eur_mwh'],
+                                mode='lines+markers', name='Sales Price', line=dict(color='#10b981', width=3)))
+        fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['purchase_price_eur_mwh'],
+                                mode='lines+markers', name='Purchase Price', line=dict(color='#ef4444', width=3)))
+        fig.update_layout(
+            title=dict(text='Sales vs Purchase Price', font=dict(size=16, color='#1e293b')),
+            xaxis_title='Date', yaxis_title='Price (EUR/MWh)',
+            hovermode='x unified',
+            height=350,
+            margin=dict(l=40, r=20, t=50, b=40),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter', size=12, color='#64748b'),
+            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+        )
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-        with col2:
-            fig = go.Figure()
-            colors = ['#10b981' if x >= 0 else '#ef4444' for x in sales_daily['margin_eur_mwh']]
-            fig.add_trace(go.Bar(x=sales_daily['contract_date'], y=sales_daily['margin_eur_mwh'],
-                                name='Margin', marker_color=colors))
-            fig.update_layout(
-                title=dict(text='Daily Margin per MWh', font=dict(size=16, color='#1e293b')),
-                xaxis_title='Date', yaxis_title='Margin (EUR/MWh)',
-                height=350,
-                margin=dict(l=40, r=20, t=50, b=40),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter', size=12, color='#64748b'),
-                xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-                yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-            )
-            fig.update_traces(marker_cornerradius=6)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        fig = go.Figure()
+        colors = ['#10b981' if x >= 0 else '#ef4444' for x in sales_daily['margin_eur_mwh']]
+        fig.add_trace(go.Bar(x=sales_daily['contract_date'], y=sales_daily['margin_eur_mwh'],
+                            name='Margin', marker_color=colors))
+        fig.update_layout(
+            title=dict(text='Daily Margin per MWh', font=dict(size=16, color='#1e293b')),
+            xaxis_title='Date', yaxis_title='Margin (EUR/MWh)',
+            height=350,
+            margin=dict(l=40, r=20, t=50, b=40),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter', size=12, color='#64748b'),
+            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+        )
+        fig.update_traces(marker_cornerradius=6)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.markdown("""
         <div style="
@@ -215,57 +211,53 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("swap_horiz", "Cash Flow Analysis")
 
-col1, col2 = st.columns(2)
+st.markdown("##### Cash Outflows (to Suppliers)")
+if not purchases_df.empty and 'payment_date' in purchases_df.columns:
+    purchases_df_copy = purchases_df.copy()
+    purchases_df_copy['payment_date'] = pd.to_datetime(purchases_df_copy['payment_date'])
+    outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum().reset_index()
 
-with col1:
-    st.markdown("##### Cash Outflows (to Suppliers)")
-    if not purchases_df.empty and 'payment_date' in purchases_df.columns:
-        purchases_df_copy = purchases_df.copy()
-        purchases_df_copy['payment_date'] = pd.to_datetime(purchases_df_copy['payment_date'])
-        outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum().reset_index()
+    fig = px.bar(outflow_daily, x='payment_date', y='amount_sent_eur',
+                color_discrete_sequence=['#ef4444'])
+    fig.update_layout(
+        xaxis_title='Date', yaxis_title='Amount (EUR)',
+        height=300,
+        margin=dict(l=40, r=20, t=20, b=40),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter', size=12, color='#64748b'),
+        showlegend=False,
+        xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+        yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+    )
+    fig.update_traces(marker_cornerradius=6)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+else:
+    st.info("Add purchase data to see cash outflows")
 
-        fig = px.bar(outflow_daily, x='payment_date', y='amount_sent_eur',
-                    color_discrete_sequence=['#ef4444'])
-        fig.update_layout(
-            xaxis_title='Date', yaxis_title='Amount (EUR)',
-            height=300,
-            margin=dict(l=40, r=20, t=20, b=40),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12, color='#64748b'),
-            showlegend=False,
-            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-        )
-        fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    else:
-        st.info("Add purchase data to see cash outflows")
+st.markdown("##### Cash Inflows (from Buyers)")
+if not payments_df.empty and 'payment_date' in payments_df.columns:
+    payments_df_copy = payments_df.copy()
+    payments_df_copy['payment_date'] = pd.to_datetime(payments_df_copy['payment_date'])
+    inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum().reset_index()
 
-with col2:
-    st.markdown("##### Cash Inflows (from Buyers)")
-    if not payments_df.empty and 'payment_date' in payments_df.columns:
-        payments_df_copy = payments_df.copy()
-        payments_df_copy['payment_date'] = pd.to_datetime(payments_df_copy['payment_date'])
-        inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum().reset_index()
-
-        fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',
-                    color_discrete_sequence=['#10b981'])
-        fig.update_layout(
-            xaxis_title='Date', yaxis_title='Amount (EUR)',
-            height=300,
-            margin=dict(l=40, r=20, t=20, b=40),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12, color='#64748b'),
-            showlegend=False,
-            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-        )
-        fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    else:
-        st.info("Add payment data to see cash inflows")
+    fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',
+                color_discrete_sequence=['#10b981'])
+    fig.update_layout(
+        xaxis_title='Date', yaxis_title='Amount (EUR)',
+        height=300,
+        margin=dict(l=40, r=20, t=20, b=40),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter', size=12, color='#64748b'),
+        showlegend=False,
+        xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
+        yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
+    )
+    fig.update_traces(marker_cornerradius=6)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+else:
+    st.info("Add payment data to see cash inflows")
 
 st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
