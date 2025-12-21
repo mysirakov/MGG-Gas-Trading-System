@@ -91,8 +91,9 @@ if not sales_df.empty:
                 title=dict(text='Sales vs Purchase Price', font=dict(size=16, color='#1e293b')),
                 xaxis_title='Date', yaxis_title='Price (EUR/MWh)',
                 hovermode='x unified',
-                height=400,
-                margin=dict(l=50, r=50, t=60, b=50),
+                height=450,
+                autosize=False,
+                margin=dict(l=60, r=40, t=80, b=60),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter', size=12, color='#64748b'),
@@ -100,7 +101,7 @@ if not sales_df.empty:
                 xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
                 yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
             )
-            st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
         with col2:
             fig = go.Figure()
@@ -110,8 +111,9 @@ if not sales_df.empty:
             fig.update_layout(
                 title=dict(text='Daily Margin per MWh', font=dict(size=16, color='#1e293b')),
                 xaxis_title='Date', yaxis_title='Margin (EUR/MWh)',
-                height=400,
-                margin=dict(l=50, r=50, t=60, b=50),
+                height=450,
+                autosize=False,
+                margin=dict(l=60, r=40, t=80, b=60),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter', size=12, color='#64748b'),
@@ -119,7 +121,7 @@ if not sales_df.empty:
                 yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
             )
             fig.update_traces(marker_cornerradius=6)
-            st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.markdown("""
         <div style="
@@ -170,13 +172,14 @@ if not sales_df.empty:
             fig = px.pie(values=cost_values, names=cost_labels, 
                         color_discrete_sequence=['#3b82f6', '#10b981', '#f59e0b'])
             fig.update_layout(
-                height=400, 
-                margin=dict(l=20, r=20, t=40, b=20),
+                height=450,
+                autosize=False,
+                margin=dict(l=40, r=40, t=60, b=40),
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter', size=12)
             )
             fig.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.info("Add sales data to see P&L breakdown")
 
@@ -199,8 +202,9 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
     fig.update_layout(
         title=dict(text='Daily Trading Volume', font=dict(size=16, color='#1e293b')),
         xaxis_title='Date', yaxis_title='Volume (MWh)',
-        height=400,
-        margin=dict(l=50, r=50, t=60, b=50),
+        height=450,
+        autosize=False,
+        margin=dict(l=60, r=40, t=80, b=60),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12, color='#64748b'),
@@ -208,7 +212,7 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
         yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
     )
     fig.update_traces(marker_cornerradius=6)
-    st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'responsive': True})
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.info("Add sales data to see volume charts")
 
@@ -229,8 +233,9 @@ with col1:
                     color_discrete_sequence=['#ef4444'])
         fig.update_layout(
             xaxis_title='Date', yaxis_title='Amount (EUR)',
-            height=350,
-            margin=dict(l=50, r=50, t=40, b=50),
+            height=400,
+            autosize=False,
+            margin=dict(l=60, r=40, t=60, b=60),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(family='Inter', size=12, color='#64748b'),
@@ -239,7 +244,7 @@ with col1:
             yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("Add purchase data to see cash outflows")
 
@@ -254,8 +259,9 @@ with col2:
                     color_discrete_sequence=['#10b981'])
         fig.update_layout(
             xaxis_title='Date', yaxis_title='Amount (EUR)',
-            height=350,
-            margin=dict(l=50, r=50, t=40, b=50),
+            height=400,
+            autosize=False,
+            margin=dict(l=60, r=40, t=60, b=60),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(family='Inter', size=12, color='#64748b'),
@@ -264,7 +270,7 @@ with col2:
             yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, width='stretch', config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("Add payment data to see cash inflows")
 

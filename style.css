@@ -284,13 +284,13 @@ div[data-testid="stDataFrame"] tr:hover td {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     max-width: 100% !important;
     width: 100% !important;
 }
 
 .stPlotlyChart > div {
-    overflow: hidden !important;
+    overflow: visible !important;
     max-width: 100% !important;
     width: 100% !important;
 }
@@ -299,18 +299,7 @@ div[data-testid="stDataFrame"] tr:hover td {
 .stPlotlyChart .plotly {
     max-width: 100% !important;
     width: 100% !important;
-    overflow: hidden !important;
-}
-
-.stPlotlyChart .plotly .main-svg {
-    max-width: 100% !important;
-    width: 100% !important;
-}
-
-.stPlotlyChart svg {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
+    overflow: visible !important;
 }
 
 /* ============= Buttons ============= */
@@ -496,7 +485,7 @@ div[data-testid="stHorizontalBlock"] {
 }
 
 div[data-testid="column"] {
-    overflow: hidden !important;
+    overflow: visible !important;
     max-width: 100% !important;
     min-width: 0 !important;
 }
@@ -504,7 +493,7 @@ div[data-testid="column"] {
 div[data-testid="column"] > div {
     max-width: 100% !important;
     width: 100% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 div[data-testid="stHorizontalBlock"] > div {
