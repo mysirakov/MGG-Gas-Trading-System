@@ -1,16 +1,16 @@
 
     import streamlit as st
-    import pandas as pd
-    import plotly.express as px
-    import plotly.graph_objects as go
-    from datetime import datetime
-    from database import (
-        get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
-        sales_to_df, payments_to_df, supplier_payments_to_df
-    )
-    from components import load_material_icons, page_header, metric_card, section_header
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
+from database import (
+    get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
+    sales_to_df, payments_to_df, supplier_payments_to_df
+)
+from components import load_material_icons, page_header, metric_card, section_header
 
-    st.set_page_config(page_title="Analytics", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Analytics", page_icon="📈", layout="wide")
 
     try:
         with open('style.css') as f:
