@@ -284,22 +284,29 @@ div[data-testid="stDataFrame"] tr:hover td {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
+    position: relative !important;
 }
 
 .stPlotlyChart > div {
-    overflow: visible !important;
+    overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
 }
 
 .stPlotlyChart .js-plotly-plot,
-.stPlotlyChart .plotly {
+.stPlotlyChart .plotly,
+.stPlotlyChart .main-svg {
     max-width: 100% !important;
     width: 100% !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+}
+
+/* Ensure plotly doesn't create scrollable containers */
+.stPlotlyChart .plotly .scrollbox {
+    overflow: hidden !important;
 }
 
 /* ============= Buttons ============= */
