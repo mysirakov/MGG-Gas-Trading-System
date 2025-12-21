@@ -112,9 +112,10 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
             font=dict(family='Inter', size=12, color='#64748b'),
             legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
             xaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)')
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
+            autosize=True
         )
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig, config={'displayModeBar': False, 'responsive': True})
     
     with col2:
         daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
@@ -136,10 +137,11 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
             font=dict(family='Inter', size=12, color='#64748b'),
             showlegend=False,
             xaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)')
+            yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
+            autosize=True
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig, config={'displayModeBar': False, 'responsive': True})
 else:
     st.markdown("""
         <div style="
