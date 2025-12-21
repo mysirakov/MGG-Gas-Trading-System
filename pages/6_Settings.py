@@ -36,10 +36,10 @@ with col1:
     
     st.markdown("""
         <div style="
-            background: rgb(59, 130, 246);
-            border: 1px solid rgb(59, 130, 246);
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 12px;
-            padding: 0.1rem;
+            padding: 1rem;
             margin-bottom: 1rem;
         ">
     """, unsafe_allow_html=True)

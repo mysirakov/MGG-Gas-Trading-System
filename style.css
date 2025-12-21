@@ -287,7 +287,6 @@ div[data-testid="stDataFrame"] tr:hover td {
     overflow: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
-    position: relative !important;
 }
 
 .stPlotlyChart > div {
@@ -297,16 +296,21 @@ div[data-testid="stDataFrame"] tr:hover td {
 }
 
 .stPlotlyChart .js-plotly-plot,
-.stPlotlyChart .plotly,
-.stPlotlyChart .main-svg {
+.stPlotlyChart .plotly {
     max-width: 100% !important;
     width: 100% !important;
     overflow: hidden !important;
 }
 
-/* Ensure plotly doesn't create scrollable containers */
-.stPlotlyChart .plotly .scrollbox {
-    overflow: hidden !important;
+.stPlotlyChart .plotly .main-svg {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.stPlotlyChart svg {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
 }
 
 /* ============= Buttons ============= */
@@ -492,7 +496,7 @@ div[data-testid="stHorizontalBlock"] {
 }
 
 div[data-testid="column"] {
-    overflow: visible !important;
+    overflow: hidden !important;
     max-width: 100% !important;
     min-width: 0 !important;
 }
@@ -500,7 +504,7 @@ div[data-testid="column"] {
 div[data-testid="column"] > div {
     max-width: 100% !important;
     width: 100% !important;
-    overflow: visible !important;
+    overflow: hidden !important;
 }
 
 div[data-testid="stHorizontalBlock"] > div {
