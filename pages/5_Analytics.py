@@ -1,5 +1,5 @@
 
-    import streamlit as st
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -12,65 +12,65 @@ from components import load_material_icons, page_header, metric_card, section_he
 
 st.set_page_config(page_title="Analytics", page_icon="📈", layout="wide")
 
-    try:
-        with open('style.css') as f:
-            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    except:
-        pass
+try:
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except:
+    pass
 
-    load_material_icons()
+load_material_icons()
 
-    page_header("Analytics", "Comprehensive P&L analysis, trading performance, and financial metrics")
+page_header("Analytics", "Comprehensive P&L analysis, trading performance, and financial metrics")
 
-    sales = get_sales()
-    purchases = get_supplier_payments()
-    payments = get_payments_received()
-    metrics = get_dashboard_metrics()
+sales = get_sales()
+purchases = get_supplier_payments()
+payments = get_payments_received()
+metrics = get_dashboard_metrics()
 
-    purchases_df = supplier_payments_to_df(purchases)
-    sales_df = sales_to_df(sales)
-    payments_df = payments_to_df(payments)
+purchases_df = supplier_payments_to_df(purchases)
+sales_df = sales_to_df(sales)
+payments_df = payments_to_df(payments)
 
-    total_revenue = metrics['total_revenue']
-    total_margin = metrics['total_margin']
-    total_quantity_sold = metrics['total_quantity']
-    margin_pct = (total_margin / total_revenue * 100) if total_revenue > 0 else 0
+total_revenue = metrics['total_revenue']
+total_margin = metrics['total_margin']
+total_quantity_sold = metrics['total_quantity']
+margin_pct = (total_margin / total_revenue * 100) if total_revenue > 0 else 0
 
-    col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.0f}", "blue")
-    with col2:
-        metric_card("trending_up", "Total Profit", f"€{total_margin:,.0f}", "green")
-    with col3:
-        metric_card("percent", "Profit Margin", f"{margin_pct:.1f}%", "purple")
-    with col4:
-        metric_card("bolt", "Quantity Traded", f"{total_quantity_sold:,.0f} MWh", "orange")
+with col1:
+    metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.0f}", "blue")
+with col2:
+    metric_card("trending_up", "Total Profit", f"€{total_margin:,.0f}", "green")
+with col3:
+    metric_card("percent", "Profit Margin", f"{margin_pct:.1f}%", "purple")
+with col4:
+    metric_card("bolt", "Quantity Traded", f"{total_quantity_sold:,.0f} MWh", "orange")
 
-    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
-    total_sent = metrics['total_sent_to_suppliers']
-    supplier_balance = metrics['supplier_balance']
-    payments_received = metrics['payments_received']
-    outstanding = metrics['outstanding_receivables']
+total_sent = metrics['total_sent_to_suppliers']
+supplier_balance = metrics['supplier_balance']
+payments_received = metrics['payments_received']
+outstanding = metrics['outstanding_receivables']
 
-    col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        metric_card("account_balance_wallet", "Paid to Suppliers", f"€{total_sent:,.0f}", "teal")
-    with col2:
-        metric_card("savings", "Supplier Balance", f"€{supplier_balance:,.0f}", "blue")
-    with col3:
-        metric_card("check_circle", "Payments Received", f"€{payments_received:,.0f}", "green")
-    with col4:
-        metric_card("receipt_long", "Outstanding", f"€{outstanding:,.0f}", "orange")
+with col1:
+    metric_card("account_balance_wallet", "Paid to Suppliers", f"€{total_sent:,.0f}", "teal")
+with col2:
+    metric_card("savings", "Supplier Balance", f"€{supplier_balance:,.0f}", "blue")
+with col3:
+    metric_card("check_circle", "Payments Received", f"€{payments_received:,.0f}", "green")
+with col4:
+    metric_card("receipt_long", "Outstanding", f"€{outstanding:,.0f}", "orange")
 
-    st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
-    section_header("show_chart", "Price Analysis")
+section_header("show_chart", "Price Analysis")
 
     if not sales_df.empty:
-        if 'contract_date' in sales_df.columns:
+    if 'contract_date' in sales_df.columns:
             sales_df_copy = sales_df.copy()
             sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'])
             sales_daily = sales_df_copy.groupby('contract_date').agg({
