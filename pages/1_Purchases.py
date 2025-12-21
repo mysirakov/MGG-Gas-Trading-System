@@ -41,25 +41,6 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
             metric_card("schedule", "Transactions:", f"{num_transactions} Orders", "orange")
 
         st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
-
-        st.markdown("""
-            <div style="
-                background: rgba(255, 255, 255, 0.7);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                border-radius: 16px;
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-                overflow: hidden;
-            ">
-                <div style="
-                    padding: 1.25rem 1.5rem;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 0.75rem;
-                ">
-        """, unsafe_allow_html=True)
         
         col_btn1, col_btn2, col_spacer = st.columns([1, 1, 4])
         with col_btn1:
