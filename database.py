@@ -137,9 +137,9 @@ def get_or_create_supplier(cur, name):
     cur.execute('SELECT id FROM suppliers WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result['id']
     cur.execute('INSERT INTO suppliers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def get_or_create_buyer(cur, name):
     if not name:
@@ -147,9 +147,9 @@ def get_or_create_buyer(cur, name):
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result['id']
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def get_or_create_payment_method(cur, name):
     if not name:
@@ -157,9 +157,9 @@ def get_or_create_payment_method(cur, name):
     cur.execute('SELECT id FROM payment_methods WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result['id']
     cur.execute('INSERT INTO payment_methods (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     if not invoice_number:
@@ -167,12 +167,12 @@ def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     cur.execute('SELECT id FROM invoices WHERE invoice_number = %s', (invoice_number,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result['id']
     cur.execute('''
         INSERT INTO invoices (invoice_number, supplier_id, total_amount) 
         VALUES (%s, %s, %s) RETURNING id
     ''', (invoice_number, supplier_id, total_amount or 0))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def migrate_json_to_postgres():
     conn = get_db_connection()
@@ -309,7 +309,7 @@ def get_sales():
 
 def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
     cur.execute('''
         INSERT INTO sales (
@@ -317,7 +317,7 @@ def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_pric
             purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh
         ) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost))
-    sale_id = cur.fetchone()[0]
+    sale_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()
@@ -325,7 +325,7 @@ def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_pric
 
 def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
     cur.execute('''
         UPDATE sales SET
@@ -461,7 +461,7 @@ def get_supplier_payments():
 
 def add_supplier_payment(payment_date, supplier_name, payment_method_name, amount_sent, invoice_number, receipt_date=None, amount_received=None):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     supplier_id = get_or_create_supplier(cur, supplier_name)
     payment_method_id = get_or_create_payment_method(cur, payment_method_name)
     invoice_id = get_or_create_invoice(cur, invoice_number, supplier_id, amount_sent) if invoice_number else None
@@ -472,7 +472,7 @@ def add_supplier_payment(payment_date, supplier_name, payment_method_name, amoun
             invoice_id, receipt_date, amount_received_eur
         ) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (payment_date, supplier_id, payment_method_id, amount_sent, invoice_id, receipt_date, amount_received))
-    payment_id = cur.fetchone()[0]
+    payment_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()

@@ -31,19 +31,19 @@ col1, col2 = st.columns(2)
 
 with col1:
     section_header("business", "Suppliers")
-    
+
     suppliers = settings.get("suppliers", [])
-    
+
     st.markdown("""
         <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgb(59, 130, 246);
+            border: 1px solid rgb(59, 130, 246);
             border-radius: 12px;
-            padding: 1rem;
+            padding: 0.1rem;
             margin-bottom: 1rem;
         ">
     """, unsafe_allow_html=True)
-    
+
     for i, supplier in enumerate(suppliers):
         col_a, col_b = st.columns([4, 1])
         with col_a:
@@ -57,9 +57,9 @@ with col1:
             if st.button("Delete", key=f"del_supplier_{i}"):
                 delete_supplier(supplier)
                 st.rerun()
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     new_supplier = st.text_input("Add new supplier", key="new_supplier", placeholder="Enter supplier name")
     if st.button("Add Supplier", type="primary", key="add_supplier_btn"):
         if new_supplier and new_supplier not in suppliers:
@@ -68,23 +68,23 @@ with col1:
             st.rerun()
         elif new_supplier in suppliers:
             st.warning("Supplier already exists")
-    
+
     st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
-    
+
     section_header("credit_card", "Payment Methods")
-    
+
     payment_methods = settings.get("payment_methods", [])
-    
+
     st.markdown("""
         <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgb(59, 130, 246);
+            border: 1px solid rgb(59, 130, 246);
             border-radius: 12px;
-            padding: 1rem;
+            padding: 0.1rem;
             margin-bottom: 1rem;
         ">
     """, unsafe_allow_html=True)
-    
+
     for i, method in enumerate(payment_methods):
         col_a, col_b = st.columns([4, 1])
         with col_a:
@@ -98,9 +98,9 @@ with col1:
             if st.button("Delete", key=f"del_method_{i}"):
                 delete_payment_method(method)
                 st.rerun()
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     new_method = st.text_input("Add new payment method", key="new_method", placeholder="Enter payment method")
     if st.button("Add Payment Method", type="primary", key="add_method_btn"):
         if new_method and new_method not in payment_methods:
@@ -112,19 +112,19 @@ with col1:
 
 with col2:
     section_header("groups", "Buyers")
-    
+
     buyers = settings.get("buyers", [])
-    
+
     st.markdown("""
         <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgb(59, 130, 246);
+            border: 1px solid rgb(59, 130, 246);
             border-radius: 12px;
-            padding: 1rem;
+            padding: 0.1rem;
             margin-bottom: 1rem;
         ">
     """, unsafe_allow_html=True)
-    
+
     for i, buyer in enumerate(buyers):
         col_a, col_b = st.columns([4, 1])
         with col_a:
@@ -138,9 +138,9 @@ with col2:
             if st.button("Delete", key=f"del_buyer_{i}"):
                 delete_buyer(buyer)
                 st.rerun()
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     new_buyer = st.text_input("Add new buyer", key="new_buyer", placeholder="Enter buyer name")
     if st.button("Add Buyer", type="primary", key="add_buyer_btn"):
         if new_buyer and new_buyer not in buyers:
