@@ -30,18 +30,21 @@ payments_df = payments_to_df(payments)
 total_revenue = metrics['total_revenue']
 total_received = metrics['payments_received']
 total_allocated = metrics['total_allocated']
+keler_purchase_cost = metrics.get('keler_purchase_cost', 0)
 outstanding = metrics['outstanding_receivables']
 unallocated = total_received - total_allocated
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.0f}", "blue")
 with col2:
     metric_card("check_circle", "Received", f"€{total_received:,.0f}", "green")
 with col3:
-    metric_card("receipt_long", "Outstanding", f"€{outstanding:,.0f}", "orange")
+    metric_card("swap_horiz", "Keler Offset", f"€{keler_purchase_cost:,.0f}", "purple")
 with col4:
-    metric_card("account_balance", "Unallocated", f"€{max(0, unallocated):,.0f}", "purple")
+    metric_card("receipt_long", "Outstanding", f"€{outstanding:,.0f}", "orange")
+with col5:
+    metric_card("account_balance", "Unallocated", f"€{max(0, unallocated):,.0f}", "blue")
 
 st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 

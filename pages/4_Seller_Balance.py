@@ -29,7 +29,7 @@ metrics = get_dashboard_metrics()
 purchases_df = supplier_payments_to_df(purchases)
 sales_df = sales_to_df(sales)
 
-total_purchase_cost = metrics['total_purchase_cost']
+gpe_purchase_cost = metrics['gpe_purchase_cost']
 total_received_by_supplier = metrics['total_received_by_suppliers']
 supplier_balance = metrics['supplier_balance']
 
@@ -38,7 +38,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     metric_card("account_balance_wallet", "Received by Supplier", f"€{total_received_by_supplier:,.0f}", "blue")
 with col2:
-    metric_card("shopping_cart", "Total Purchase Cost", f"€{total_purchase_cost:,.0f}", "orange")
+    metric_card("shopping_cart", "GPE Purchase Cost", f"€{gpe_purchase_cost:,.0f}", "orange")
 with col3:
     color = "green" if supplier_balance >= 0 else "red"
     metric_card("savings", "Supplier Balance", f"€{supplier_balance:,.0f}", color)
@@ -61,8 +61,8 @@ with tab1:
             balance_data.append({
                 'Supplier': supplier,
                 'Amount Received (EUR)': amount_received,
-                'Purchase Cost (EUR)': total_purchase_cost,
-                'Available Balance (EUR)': amount_received - total_purchase_cost
+                'Purchase Cost (EUR)': gpe_purchase_cost,
+                'Available Balance (EUR)': amount_received - gpe_purchase_cost
             })
         
         balance_df = pd.DataFrame(balance_data)

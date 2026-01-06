@@ -56,7 +56,7 @@ with tab1:
         if filter_buyer:
             filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
         
-        display_cols = ['contract_date', 'buyer', 'quantity_mwh', 'sales_price_eur_mwh', 
+        display_cols = ['contract_date', 'buyer', 'supplier', 'quantity_mwh', 'sales_price_eur_mwh', 
                        'purchase_price_eur_mwh', 'cost_capacity_eur_mwh', 'cost_transport_eur_mwh',
                        'margin_eur_mwh', 'total_revenue', 'total_margin', 'amount_paid']
         available_cols = [col for col in display_cols if col in filtered_df.columns]
@@ -115,6 +115,7 @@ with tab2:
         buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_buyer")
     
     with col2:
+        supplier = st.selectbox("Supplier", options=settings.get("suppliers", ["GPE"]), key="single_supplier", help="Select the supplier for this purchase")
         purchase_price = st.number_input("Purchase Price (EUR/MWh)", min_value=0.0, step=0.01, key="single_purchase_price", help="The cost at which gas was purchased")
         cost_capacity = st.number_input("Cost of Capacity (EUR/MWh)", min_value=0.0, step=0.01, key="single_capacity")
         cost_transport = st.number_input("Cost of Transport (EUR/MWh)", min_value=0.0, step=0.01, key="single_transport")
@@ -137,7 +138,7 @@ with tab2:
     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
     
     if st.button("Add Sale", type="primary", key="add_single_sale"):
-        add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport)
+        add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport, supplier)
         st.success("Sale added successfully!")
         st.rerun()
 

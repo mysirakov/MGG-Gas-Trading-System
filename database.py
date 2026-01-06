@@ -628,6 +628,22 @@ def get_dashboard_metrics():
     cur.execute('SELECT COALESCE(SUM(total_revenue), 0) as total_revenue, COALESCE(SUM(total_margin), 0) as total_margin, COALESCE(SUM(quantity_mwh), 0) as total_quantity, COALESCE(SUM(purchase_cost), 0) as total_purchase_cost FROM sales')
     sales_metrics = cur.fetchone()
     
+    cur.execute('''
+        SELECT COALESCE(SUM(s.purchase_cost), 0) as gpe_purchase_cost
+        FROM sales s
+        LEFT JOIN suppliers sup ON s.supplier_id = sup.id
+        WHERE sup.name = 'GPE' OR s.supplier_id IS NULL
+    ''')
+    gpe_purchase_cost = float(cur.fetchone()['gpe_purchase_cost'])
+    
+    cur.execute('''
+        SELECT COALESCE(SUM(s.purchase_cost), 0) as keler_purchase_cost
+        FROM sales s
+        LEFT JOIN suppliers sup ON s.supplier_id = sup.id
+        WHERE sup.name = 'Keler'
+    ''')
+    keler_purchase_cost = float(cur.fetchone()['keler_purchase_cost'])
+    
     cur.execute('SELECT COALESCE(SUM(amount_eur), 0) as total_received FROM payments_received')
     payments_received = cur.fetchone()['total_received']
     
@@ -637,8 +653,8 @@ def get_dashboard_metrics():
     cur.execute('SELECT COALESCE(SUM(amount), 0) as total_allocated FROM payment_allocations')
     total_allocated = cur.fetchone()['total_allocated']
     
-    outstanding = float(sales_metrics['total_revenue']) - float(total_allocated)
-    supplier_balance = float(supplier_metrics['total_supplier_received']) - float(sales_metrics['total_purchase_cost'])
+    outstanding = float(sales_metrics['total_revenue']) - float(total_allocated) - keler_purchase_cost
+    supplier_balance = float(supplier_metrics['total_supplier_received']) - gpe_purchase_cost
     
     cur.close()
     conn.close()
@@ -648,6 +664,8 @@ def get_dashboard_metrics():
         'total_margin': float(sales_metrics['total_margin']),
         'total_quantity': float(sales_metrics['total_quantity']),
         'total_purchase_cost': float(sales_metrics['total_purchase_cost']),
+        'gpe_purchase_cost': gpe_purchase_cost,
+        'keler_purchase_cost': keler_purchase_cost,
         'payments_received': float(payments_received),
         'total_sent_to_suppliers': float(supplier_metrics['total_sent']),
         'total_received_by_suppliers': float(supplier_metrics['total_supplier_received']),
