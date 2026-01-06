@@ -296,10 +296,11 @@ def get_sales():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('''
-        SELECT s.*, b.name as buyer,
+        SELECT s.*, b.name as buyer, sup.name as supplier,
             COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as amount_paid
         FROM sales s
         LEFT JOIN buyers b ON s.buyer_id = b.id
+        LEFT JOIN suppliers sup ON s.supplier_id = sup.id
         ORDER BY s.contract_date DESC
     ''')
     sales = cur.fetchall()
@@ -307,32 +308,34 @@ def get_sales():
     conn.close()
     return [dict(s) for s in sales]
 
-def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost):
+def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
+    supplier_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
     cur.execute('''
         INSERT INTO sales (
             contract_date, buyer_id, quantity_mwh, sales_price_eur_mwh,
-            purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost))
+            purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id))
     sale_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()
     return sale_id
 
-def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost):
+def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
+    supplier_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
     cur.execute('''
         UPDATE sales SET
             contract_date = %s, buyer_id = %s, quantity_mwh = %s, sales_price_eur_mwh = %s,
-            purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s
+            purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s, supplier_id = %s
         WHERE id = %s
-    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, sale_id))
+    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, sale_id))
     conn.commit()
     cur.close()
     conn.close()
