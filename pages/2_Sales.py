@@ -58,7 +58,7 @@ with tab1:
         
         display_cols = ['contract_date', 'buyer', 'supplier', 'quantity_mwh', 'sales_price_eur_mwh', 
                        'purchase_price_eur_mwh', 'cost_capacity_eur_mwh', 'cost_transport_eur_mwh',
-                       'margin_eur_mwh', 'total_revenue', 'total_margin', 'amount_paid']
+                       'cost_customs_eur_mwh', 'margin_eur_mwh', 'total_revenue', 'total_margin', 'amount_paid']
         available_cols = [col for col in display_cols if col in filtered_df.columns]
         
         display_filtered = filtered_df[available_cols].copy()
@@ -119,8 +119,9 @@ with tab2:
         purchase_price = st.number_input("Purchase Price (EUR/MWh)", min_value=0.0, step=0.01, key="single_purchase_price", help="The cost at which gas was purchased")
         cost_capacity = st.number_input("Cost of Capacity (EUR/MWh)", min_value=0.0, step=0.01, key="single_capacity")
         cost_transport = st.number_input("Cost of Transport (EUR/MWh)", min_value=0.0, step=0.01, key="single_transport")
+        cost_customs = st.number_input("Cost of Customs (EUR/MWh)", min_value=0.0, step=0.01, key="single_customs", help="Customs expense per MWh")
     
-    margin = sales_price - purchase_price - cost_capacity - cost_transport
+    margin = sales_price - purchase_price - cost_capacity - cost_transport - cost_customs
     total_revenue = sales_price * quantity_mwh
     total_margin = margin * quantity_mwh
     
@@ -138,7 +139,7 @@ with tab2:
     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
     
     if st.button("Add Sale", type="primary", key="add_single_sale"):
-        add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport, supplier)
+        add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport, supplier, cost_customs)
         st.success("Sale added successfully!")
         st.rerun()
 
@@ -153,8 +154,10 @@ with tab3:
         - `quantity_mwh` - Quantity in MWh
         - `cost_capacity_eur_mwh` - Cost of capacity in EUR per MWh
         - `cost_transport_eur_mwh` - Cost of transport in EUR per MWh
+        - `cost_customs_eur_mwh` - Cost of customs in EUR per MWh
         - `purchase_price_eur_mwh` - Purchase price in EUR per MWh
         - `buyer` - Buyer name
+        - `supplier` - Supplier name (optional, defaults to GPE)
         """)
         
         sample_data = pd.DataFrame({
@@ -163,8 +166,10 @@ with tab3:
             'quantity_mwh': [280],
             'cost_capacity_eur_mwh': [0.50],
             'cost_transport_eur_mwh': [0.30],
+            'cost_customs_eur_mwh': [0.10],
             'purchase_price_eur_mwh': [35.50],
-            'buyer': ['Keler']
+            'buyer': ['Keler'],
+            'supplier': ['GPE']
         })
         st.dataframe(sample_data)
         
@@ -199,7 +204,9 @@ with tab3:
                         float(row.get('sales_price_eur_mwh', 0)),
                         float(row.get('purchase_price_eur_mwh', 0)),
                         float(row.get('cost_capacity_eur_mwh', 0)),
-                        float(row.get('cost_transport_eur_mwh', 0))
+                        float(row.get('cost_transport_eur_mwh', 0)),
+                        str(row.get('supplier', settings['suppliers'][0] if settings['suppliers'] else 'GPE')),
+                        float(row.get('cost_customs_eur_mwh', 0))
                     )
                     count += 1
                 

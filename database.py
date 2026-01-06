@@ -308,7 +308,7 @@ def get_sales():
     conn.close()
     return [dict(s) for s in sales]
 
-def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None):
+def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
@@ -316,16 +316,16 @@ def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_pric
     cur.execute('''
         INSERT INTO sales (
             contract_date, buyer_id, quantity_mwh, sales_price_eur_mwh,
-            purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
-    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id))
+            purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id, cost_customs_eur_mwh
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, customs_cost))
     sale_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()
     return sale_id
 
-def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None):
+def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
@@ -333,9 +333,9 @@ def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, p
     cur.execute('''
         UPDATE sales SET
             contract_date = %s, buyer_id = %s, quantity_mwh = %s, sales_price_eur_mwh = %s,
-            purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s, supplier_id = %s
+            purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s, supplier_id = %s, cost_customs_eur_mwh = %s
         WHERE id = %s
-    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, sale_id))
+    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, customs_cost, sale_id))
     conn.commit()
     cur.close()
     conn.close()
@@ -590,7 +590,7 @@ def sales_to_df(sales=None):
         return pd.DataFrame()
     df = pd.DataFrame(sales)
     numeric_cols = ['quantity_mwh', 'sales_price_eur_mwh', 'purchase_price_eur_mwh', 
-                   'cost_capacity_eur_mwh', 'cost_transport_eur_mwh', 'margin_eur_mwh',
+                   'cost_capacity_eur_mwh', 'cost_transport_eur_mwh', 'cost_customs_eur_mwh', 'margin_eur_mwh',
                    'total_revenue', 'total_margin', 'purchase_cost', 'amount_paid']
     for col in numeric_cols:
         if col in df.columns:
