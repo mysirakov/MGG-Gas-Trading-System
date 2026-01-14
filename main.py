@@ -17,6 +17,22 @@ templates = Jinja2Templates(directory="templates")
 
 # Routes
 
+@app.get("/Dashboard", response_class=RedirectResponse)
+async def dashboard_redirect():
+    return RedirectResponse(url="/", status_code=308)
+
+@app.get("/Seller_Balance", response_class=RedirectResponse)
+async def seller_balance_redirect():
+    return RedirectResponse(url="/balance", status_code=308)
+
+@app.get("/Add_Sale", response_class=RedirectResponse)
+async def add_sale_redirect():
+    return RedirectResponse(url="/sales", status_code=308)
+
+@app.get("/Add_Purchase", response_class=RedirectResponse)
+async def add_purchase_redirect():
+    return RedirectResponse(url="/purchases", status_code=308)
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     metrics = database.get_dashboard_metrics()
