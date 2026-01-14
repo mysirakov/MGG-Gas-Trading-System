@@ -5,47 +5,7 @@
       "src": "Dashboard.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.9",
-        "includeFiles": [
-          "Dashboard.py",
-          "components.py",
-          "database.py",
-          "theme_manager.py",
-          "style.css",
-          "requirements.txt",
-          "pages/*.py",
-          ".streamlit/config.toml"
-        ],
-        "excludeFiles": [
-          "uv.lock",
-          "pyproject.toml",
-          "attached_assets/**",
-          "data/**",
-          "temp_csv/**",
-          ".git/**",
-          "node_modules/**",
-          "import_csv.py",
-          "main.py",
-          "replit.md",
-          "README.md",
-          "docs/**",
-          "tests/**",
-          "__pycache__/**",
-          "*.pyc",
-          "*.pyo",
-          "*.pyd",
-          "*.png",
-          "*.jpg",
-          "*.jpeg",
-          "*.csv",
-          "*.xlsx",
-          "*.pdf",
-          ".env*",
-          ".vscode/**",
-          ".idea/**",
-          ".orchids/**",
-          "scripts/**"
-        ]
+        "runtime": "python3.12"
       }
     }
   ],
