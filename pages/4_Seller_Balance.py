@@ -6,7 +6,7 @@ from database import (
     get_sales, get_settings, get_invoices, get_dashboard_metrics,
     supplier_payments_to_df, sales_to_df
 )
-from components import load_material_icons, page_header, metric_card, section_header
+from components import load_material_icons, page_header, metric_card, section_header, empty_state
 
 st.set_page_config(page_title="Seller Balance", page_icon="🏦", layout="wide")
 
@@ -77,20 +77,7 @@ with tab1:
             hide_index=True
         )
     else:
-        st.markdown("""
-            <div style="
-                background: rgba(255, 255, 255, 0.7);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                border-radius: 16px;
-                padding: 3rem 2rem;
-                text-align: center;
-                color: #64748b;
-                backdrop-filter: blur(12px);
-            ">
-                <span class="material-icons-round" style="font-size: 48px; opacity: 0.4; color: #3b82f6;">account_balance</span>
-                <p style="margin: 1rem 0 0 0;">No payment data available. Add payments to see supplier balances.</p>
-            </div>
-        """, unsafe_allow_html=True)
+        empty_state("account_balance", "No payment data available. Add payments to see supplier balances.")
     
     st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
     
@@ -245,17 +232,4 @@ with tab4:
             available_cols = [c for c in display_cols if c in inv_df.columns]
             st.dataframe(inv_df[available_cols], use_container_width=True, hide_index=True)
     else:
-        st.markdown("""
-            <div style="
-                background: rgba(255, 255, 255, 0.7);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                border-radius: 16px;
-                padding: 3rem 2rem;
-                text-align: center;
-                color: #64748b;
-                backdrop-filter: blur(12px);
-            ">
-                <span class="material-icons-round" style="font-size: 48px; opacity: 0.4; color: #3b82f6;">receipt_long</span>
-                <p style="margin: 1rem 0 0 0;">No invoices recorded yet. Invoices are created when you add payments with invoice numbers.</p>
-            </div>
-        """, unsafe_allow_html=True)
+        empty_state("receipt_long", "No invoices recorded yet. Invoices are created when you add payments with invoice numbers.")

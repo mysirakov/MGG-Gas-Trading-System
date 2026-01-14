@@ -6,7 +6,7 @@ from database import (
     get_sales, get_supplier_payments, get_payments_received,
     get_dashboard_metrics, sales_to_df, payments_to_df, supplier_payments_to_df
 )
-from components import load_material_icons, page_header, metric_card, section_header
+from components import load_material_icons, page_header, metric_card, section_header, empty_state
 
 st.set_page_config(
     page_title="Gas Trading Dashboard",
@@ -142,20 +142,9 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
         )
         fig.update_traces(marker_cornerradius=6)
         st.plotly_chart(fig, config={'displayModeBar': False, 'responsive': True})
-else:
-    st.markdown("""
-        <div style="
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 16px;
-            padding: 3rem;
-            text-align: center;
-            color: #64748b;
-        ">
-            <span class="material-icons-round" style="font-size: 48px; opacity: 0.5;">insert_chart</span>
-            <p style="margin: 1rem 0 0 0;">Add sales data to see performance charts</p>
-        </div>
-    """, unsafe_allow_html=True)
+    else:
+        empty_state("insert_chart", "Add sales data to see performance charts")
+
 
 st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 

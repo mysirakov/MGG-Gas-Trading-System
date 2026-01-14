@@ -5,7 +5,7 @@ from database import (
     get_payments_received, add_payment_received, delete_payment, get_settings, get_sales,
     payments_to_df, sales_to_df, get_unpaid_sales, get_dashboard_metrics
 )
-from components import load_material_icons, page_header, metric_card, section_header
+from components import load_material_icons, page_header, metric_card, section_header, empty_state
 
 st.set_page_config(page_title="Payments", page_icon="💳", layout="wide")
 
@@ -97,21 +97,7 @@ with tab1:
                     st.success("Payment deleted!")
                     st.rerun()
     else:
-        st.markdown("""
-            <div style="
-                background: rgba(255, 255, 255, 0.7);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                border-radius: 16px;
-                padding: 4rem 2rem;
-                text-align: center;
-                color: #64748b;
-                backdrop-filter: blur(12px);
-            ">
-                <span class="material-icons-round" style="font-size: 56px; opacity: 0.4; color: #3b82f6;">payments</span>
-                <p style="margin: 1.5rem 0 0 0; font-size: 1.1rem; font-weight: 500;">No payments recorded yet</p>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.7;">Record your first payment in the 'Record Payment' tab!</p>
-            </div>
-        """, unsafe_allow_html=True)
+        empty_state("payments", "No payments recorded yet")
 
     st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
     
@@ -128,12 +114,12 @@ with tab1:
                     owed = float(sale.get('outstanding', 0))
                     paid = float(sale.get('amount_paid', 0))
                     st.markdown(f"""
-                        <div style="padding: 0.75rem; background: rgba(255, 255, 255, 0.5); border-radius: 8px; margin-bottom: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span class="material-icons-round" style="color: #f59e0b; font-size: 18px;">receipt_long</span>
-                                <span style="font-weight: 500;">{sale['contract_date']} - {sale.get('buyer', 'Unknown')}</span>
+                        <div class="list-item-card">
+                            <div class="list-item-header warning">
+                                <span class="material-icons-round">receipt_long</span>
+                                <span class="list-item-title">{sale['contract_date']} - {sale.get('buyer', 'Unknown')}</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+                            <div class="list-item-details">
                                 Revenue: €{float(sale['total_revenue']):,.2f} | Paid: €{paid:,.2f} | Owed: €{owed:,.2f}
                             </div>
                         </div>
@@ -172,9 +158,14 @@ with tab2:
             for sale in unpaid_sales[:5]:
                 sale_owed = float(sale.get('outstanding', 0))
                 st.markdown(f"""
-                    <div style="padding: 0.5rem; background: rgba(255, 255, 255, 0.5); border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                        <span class="material-icons-round" style="color: #3b82f6; font-size: 16px; vertical-align: middle;">receipt</span>
-                        {sale['contract_date']} - Owed: €{sale_owed:,.2f}
+                    <div class="list-item-card">
+                        <div class="list-item-header primary">
+                            <span class="material-icons-round">receipt</span>
+                            <span class="list-item-title">{sale['contract_date']}</span>
+                        </div>
+                        <div class="list-item-details">
+                            Owed: €{sale_owed:,.2f}
+                        </div>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -206,11 +197,16 @@ with tab2:
         for alloc in allocation_preview:
             status = "Full" if alloc['amount'] >= alloc['owed'] else "Partial"
             icon = "check_circle" if status == "Full" else "pending"
-            color = "#10b981" if status == "Full" else "#f59e0b"
+            cls = "success" if status == "Full" else "warning"
             st.markdown(f"""
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                    <span class="material-icons-round" style="color: {color}; font-size: 18px;">{icon}</span>
-                    <span>{alloc['contract_date']}: €{alloc['amount']:,.2f} ({status})</span>
+                <div class="list-item-card">
+                    <div class="list-item-header {cls}">
+                        <span class="material-icons-round">{icon}</span>
+                        <span class="list-item-title">{alloc['contract_date']}</span>
+                    </div>
+                    <div class="list-item-details">
+                        Allocated: €{alloc['amount']:,.2f} ({status})
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
 

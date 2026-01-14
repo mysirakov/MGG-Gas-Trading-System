@@ -4,7 +4,7 @@ from datetime import datetime, date
 from database import (
     get_sales, add_sale, update_sale, delete_sale, get_settings, sales_to_df
 )
-from components import load_material_icons, page_header, metric_card, section_header
+from components import load_material_icons, page_header, metric_card, section_header, empty_state
 
 st.set_page_config(page_title="Sales", page_icon="📊", layout="wide")
 
@@ -87,21 +87,7 @@ with tab1:
                     st.success("Sale deleted!")
                     st.rerun()
     else:
-        st.markdown("""
-            <div style="
-                background: rgba(255, 255, 255, 0.7);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                border-radius: 16px;
-                padding: 4rem 2rem;
-                text-align: center;
-                color: #64748b;
-                backdrop-filter: blur(12px);
-            ">
-                <span class="material-icons-round" style="font-size: 56px; opacity: 0.4; color: #3b82f6;">leaderboard</span>
-                <p style="margin: 1.5rem 0 0 0; font-size: 1.1rem; font-weight: 500;">No sales recorded yet</p>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.7;">Add your first sale in the 'Add Sale' tab!</p>
-            </div>
-        """, unsafe_allow_html=True)
+        empty_state("leaderboard", "No sales recorded yet")
 
 with tab2:
     section_header("add_circle", "Add Single Sale Entry")

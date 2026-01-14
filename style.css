@@ -106,19 +106,24 @@ html, body, [class*="css"] {
 }
 
 /* ============= Page Headers ============= */
-h1 {
+.header-container {
+    margin-bottom: 2rem;
+}
+
+.page-title {
     font-size: 2.25rem !important;
     font-weight: 700 !important;
     color: #0f172a !important;
-    margin-bottom: 0.25rem !important;
+    margin: 0 !important;
     letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
 }
 
 .page-subtitle {
     font-size: 1.1rem !important;
     color: #64748b !important;
     font-weight: 400 !important;
-    margin-bottom: 2rem !important;
+    margin: 0.5rem 0 0 0 !important;
 }
 
 /* ============= Custom Metric Cards ============= */
@@ -134,6 +139,7 @@ h1 {
     align-items: center;
     gap: 1.25rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
 }
 
 .metric-card:hover {
@@ -151,25 +157,12 @@ h1 {
     flex-shrink: 0;
 }
 
-.metric-icon.blue {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.metric-icon.green {
-    background: #d1fae5;
-    color: #059669;
-}
-
-.metric-icon.orange {
-    background: #fed7aa;
-    color: #ea580c;
-}
-
-.metric-icon.purple {
-    background: #e9d5ff;
-    color: #9333ea;
-}
+.metric-icon.blue { background: #dbeafe; color: #2563eb; }
+.metric-icon.green { background: #d1fae5; color: #059669; }
+.metric-icon.orange { background: #fed7aa; color: #ea580c; }
+.metric-icon.purple { background: #e9d5ff; color: #9333ea; }
+.metric-icon.red { background: #fee2e2; color: #dc2626; }
+.metric-icon.teal { background: #ccfbf1; color: #0d9488; }
 
 .metric-icon .material-icons-round {
     font-size: 28px;
@@ -177,13 +170,14 @@ h1 {
 
 .metric-content {
     flex: 1;
+    min-width: 0; /* Prevents overflow */
 }
 
 .metric-label {
     font-size: 0.875rem;
     font-weight: 500;
     color: #64748b;
-    margin-bottom: 0.25rem;
+    margin: 0 !important;
 }
 
 .metric-value {
@@ -191,6 +185,68 @@ h1 {
     font-weight: 700;
     color: #0f172a;
     line-height: 1.2;
+    margin: 0.25rem 0 0 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============= Info Cards ============= */
+.info-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    padding: 1.25rem;
+    backdrop-filter: blur(8px);
+    height: 100%;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.info-header .material-icons-round {
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.info-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.info-value {
+    margin: 0 !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.info-subtitle {
+    margin: 0.25rem 0 0 0 !important;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+/* ============= Empty State ============= */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #94a3b8;
+}
+
+.empty-state .material-icons-round {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 1rem 0 0 0 !important;
+    font-size: 1rem;
 }
 
 /* ============= Glass Panel Container ============= */
@@ -210,7 +266,7 @@ div[data-testid="metric-container"] {
     background: var(--glass-bg) !important;
     border: 1px solid var(--glass-border) !important;
     border-radius: 16px !important;
-    padding: 0.5rem 1.5rem!important;
+    padding: 1rem 1.5rem !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
@@ -244,35 +300,6 @@ div[data-testid="stDataFrame"] {
     -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
     overflow: hidden !important;
-    padding: 0 !important;
-}
-
-div[data-testid="stDataFrame"] > div {
-    border-radius: 16px !important;
-}
-
-/* Table headers */
-div[data-testid="stDataFrame"] th {
-    background: rgba(255, 255, 255, 0.5) !important;
-    color: #475569 !important;
-    font-weight: 600 !important;
-    font-size: 0.8rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.03em !important;
-    padding: 1rem !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Table rows */
-div[data-testid="stDataFrame"] td {
-    color: #334155 !important;
-    font-size: 0.9rem !important;
-    padding: 1rem !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-div[data-testid="stDataFrame"] tr:hover td {
-    background: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* ============= Plotly Charts ============= */
@@ -280,38 +307,10 @@ div[data-testid="stDataFrame"] tr:hover td {
     background: var(--glass-bg) !important;
     border: 1px solid var(--glass-border) !important;
     border-radius: 16px !important;
-    padding: 0.5rem 1.5rem!important;
+    padding: 1.5rem !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-    overflow: hidden !important;
-    max-width: 100% !important;
-    width: 100% !important;
-}
-
-.stPlotlyChart > div {
-    overflow: hidden !important;
-    max-width: 100% !important;
-    width: 100% !important;
-}
-
-.stPlotlyChart .js-plotly-plot,
-.stPlotlyChart .plotly {
-    max-width: 100% !important;
-    width: 100% !important;
-    overflow: hidden !important;
-}
-
-.stPlotlyChart .plotly .main-svg {
-    max-width: 100% !important;
-    width: 100% !important;
-    position: fixed;
-}
-
-.stPlotlyChart svg {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
 }
 
 /* ============= Buttons ============= */
@@ -324,7 +323,7 @@ div[data-testid="stDataFrame"] tr:hover td {
     font-weight: 500 !important;
     font-size: 0.875rem !important;
     transition: all 0.2s ease !important;
-    backdrop-filter: blur(8px) !important;
+    width: auto !important;
 }
 
 .stButton > button:hover {
@@ -332,89 +331,10 @@ div[data-testid="stDataFrame"] tr:hover td {
     color: #1e293b !important;
 }
 
-/* Primary button */
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
     color: white !important;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
-}
-
-.stButton > button[kind="primary"]:hover {
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
-    transform: translateY(-1px);
-}
-
-/* ============= Tabs ============= */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 0.5rem;
-    background: transparent;
-    border-bottom: none !important;
-    padding: 0.5rem;
-}
-
-.stTabs [data-baseweb="tab"] {
-    background: transparent !important;
-    color: #64748b !important;
-    font-weight: 500 !important;
-    padding: 0.75rem 1.5rem !important;
-    border-radius: 10px !important;
-    border: none !important;
-}
-
-.stTabs [aria-selected="true"] {
-    background: var(--glass-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    color: var(--primary) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-}
-
-/* ============= Input Fields ============= */
-.stTextInput input,
-.stNumberInput input,
-.stDateInput input,
-.stSelectbox > div > div,
-.stMultiSelect > div > div {
-    background: rgba(255, 255, 255, 0.8) !important;
-    border: 1.5px solid #e2e8f0 !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 1rem !important;
-    color: #1e293b !important;
-    font-size: 0.9rem !important;
-    transition: all 0.2s ease !important;
-}
-
-.stTextInput input:focus,
-.stNumberInput input:focus,
-.stDateInput input:focus {
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-}
-
-/* ============= Alerts ============= */
-.stAlert {
-    background: var(--glass-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 12px !important;
-    backdrop-filter: blur(12px) !important;
-}
-
-/* ============= Expanders ============= */
-.streamlit-expanderHeader {
-    background: var(--glass-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 12px !important;
-    padding: 1rem !important;
-    color: #1e293b !important;
-    font-weight: 600 !important;
-}
-
-/* ============= Dividers ============= */
-hr {
-    border: none !important;
-    height: 1px !important;
-    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent) !important;
-    margin: 2rem 0 !important;
 }
 
 /* ============= Section Headers ============= */
@@ -422,7 +342,7 @@ hr {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    margin: 1.5rem 0 1rem 0;
     color: #1e293b;
     font-weight: 600;
     font-size: 1.1rem;
@@ -444,71 +364,157 @@ hr {
     font-weight: 500;
 }
 
-.status-badge.success {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.status-badge.warning {
-    background: #fef3c7;
-    color: #b45309;
-}
-
-.status-badge.error {
-    background: #fee2e2;
-    color: #dc2626;
-}
+.status-badge.success { background: #dcfce7; color: #15803d; }
+.status-badge.warning { background: #fef3c7; color: #b45309; }
+.status-badge.error { background: #fee2e2; color: #dc2626; }
 
 .status-badge .material-icons-round {
     font-size: 14px;
 }
 
+/* ============= List Item Cards ============= */
+.list-item-card {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.list-item-card:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.list-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.list-item-header .material-icons-round {
+    font-size: 18px;
+}
+
+.list-item-header.warning .material-icons-round { color: #f59e0b; }
+.list-item-header.primary .material-icons-round { color: #3b82f6; }
+.list-item-header.success .material-icons-round { color: #10b981; }
+
+.list-item-title {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.list-item-details {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+/* ============= Summary Blocks ============= */
+.summary-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+/* ============= RESPONSIVE DESIGN ============= */
+
+/* Tablet (Small Desktop) */
+@media screen and (max-width: 1024px) {
+    .main .block-container {
+        padding: 1.5rem 1.5rem !important;
+    }
+    
+    .metric-card {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Mobile */
+@media screen and (max-width: 768px) {
+    .main .block-container {
+        padding: 1rem 1rem !important;
+    }
+    
+    .page-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+        gap: 0.75rem;
+        /* Allow stacking if very small */
+    }
+    
+    .metric-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .metric-icon .material-icons-round {
+        font-size: 24px;
+    }
+    
+    .metric-value {
+        font-size: 1.15rem;
+        white-space: normal; /* Allow wrap on mobile if needed */
+        word-break: break-all;
+    }
+    
+    /* Force Streamlit columns to stack better on mobile */
+    div[data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    div[data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    
+    /* Charts need to be taller on mobile when stacked */
+    .stPlotlyChart {
+        height: 300px !important;
+        padding: 1rem !important;
+    }
+}
+
+/* Extra Small Devices */
+@media screen and (max-width: 480px) {
+    .metric-card {
+        flex-direction: row; /* Keep row but maybe stack internally */
+    }
+    
+    .metric-value {
+        font-size: 1.1rem;
+    }
+    
+    .stButton > button {
+        width: 100% !important;
+    }
+}
+
 /* ============= Hide Streamlit Branding ============= */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-
-/* ============= Scrollbar ============= */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.3);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.5);
-}
-
-/* ============= Column Gap Fix ============= */
-div[data-testid="stHorizontalBlock"] {
-    gap: 1.5rem !important;
-}
+header {visibility: hidden;}
 
 /* ============= Prevent Overflow ============= */
 .stApp, .main, .block-container {
     overflow-x: hidden !important;
-}
-
-div[data-testid="column"] {
-    overflow: hidden !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-}
-
-div[data-testid="column"] > div {
-    max-width: 100% !important;
-    width: 100% !important;
-    overflow: hidden !important;
-}
-
-div[data-testid="stHorizontalBlock"] > div {
-    min-width: 0 !important;
-    flex-shrink: 1 !important;
 }
