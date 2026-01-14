@@ -70,10 +70,10 @@ with tab1:
                 'Available Balance': f"€{amount_received - purchase_cost:,.2f}"
             })
         
-          st.dataframe(
-              balance_data,
-              width="stretch"
-          )
+        st.dataframe(
+            balance_data,
+            width="stretch"
+        )
 
     else:
         empty_state("account_balance", "No payment data available. Add payments to see supplier balances.")

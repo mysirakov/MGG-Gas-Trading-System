@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 3000
 
 # Run Streamlit
-CMD ["streamlit", "run", "main.py", "--server.port=3000", "--server.address=0.0.0.0", "--server.headless=true"]
+CMD ["streamlit", "run", "Dashboard.py", "--server.port=3000", "--server.address=0.0.0.0", "--server.headless=true"]
