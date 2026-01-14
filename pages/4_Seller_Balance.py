@@ -70,11 +70,11 @@ with tab1:
                 'Available Balance': f"€{amount_received - purchase_cost:,.2f}"
             })
         
-        st.dataframe(
-            balance_data,
-            width="stretch",
-            hide_index=True
-        )
+          st.dataframe(
+              balance_data,
+              width="stretch"
+          )
+
     else:
         empty_state("account_balance", "No payment data available. Add payments to see supplier balances.")
     
@@ -101,7 +101,7 @@ with tab1:
                     row[col] = val
             history_display.append(row)
             
-        st.dataframe(history_display, width="stretch", hide_index=True, height=300)
+        st.dataframe(history_display, width="stretch", height=300)
         
         st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
         
@@ -247,7 +247,7 @@ with tab4:
             row['paid_amount'] = f"€{float(row['paid_amount'] or 0):,.2f}"
             inv_display.append(row)
             
-        st.dataframe(inv_display, width="stretch", hide_index=True)
+        st.dataframe(inv_display, width="stretch")
     else:
         empty_state("receipt_long", "No invoices recorded yet. Invoices are created when you add payments with invoice numbers.")
 

@@ -88,7 +88,7 @@ with tab1:
             new_row['unallocated'] = amt - alloc
             display_filtered.append(new_row)
             
-        st.dataframe(display_filtered, width="stretch", hide_index=True, height=300)
+        st.dataframe(display_filtered, width="stretch", height=300)
 
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -158,7 +158,7 @@ with tab1:
                     buyer_sum[b] += float(row.get('amount_eur', 0))
                 
                 buyer_summary_data = [{'Buyer': b, 'Total Received (EUR)': amt} for b, amt in buyer_sum.items()]
-                st.dataframe(buyer_summary_data, width="stretch", hide_index=True)
+                st.dataframe(buyer_summary_data, width="stretch")
             else:
                 st.info("No payment data yet")
 

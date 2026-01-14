@@ -76,7 +76,7 @@ with tab1:
                     new_row[col] = val
             display_filtered.append(new_row)
             
-        st.dataframe(display_filtered, width="stretch", hide_index=True, height=400)
+        st.dataframe(display_filtered, width="stretch", height=400)
         
         col1, col2 = st.columns([1, 4])
         with col1:

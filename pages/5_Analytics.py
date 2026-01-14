@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from datetime import date, datetime
 from database import (
     get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
@@ -106,12 +107,16 @@ if sales_data:
     with col1:
         st.markdown("##### Sales vs Purchase Price")
         if chart_data:
-            st.line_chart(chart_data, x='date', y=['Sales Price', 'Purchase Price'], color=["#10b981", "#ef4444"])
+            df_chart = pd.DataFrame(chart_data)
+            df_chart.set_index('date', inplace=True)
+            st.line_chart(df_chart)
 
     with col2:
         st.markdown("##### Daily Margin per MWh")
         if margin_data:
-            st.bar_chart(margin_data, x='date', y='Margin', color="#10b981")
+            df_margin = pd.DataFrame(margin_data)
+            df_margin.set_index('date', inplace=True)
+            st.bar_chart(df_margin)
 else:
     empty_state("insert_chart", "Add sales data to see price analysis charts")
 
@@ -135,7 +140,7 @@ if sales_data:
             {'Category': 'Purchase Costs', 'Amount': f"-€{purchase_cost_total:,.2f}"},
             {'Category': 'Net Profit', 'Amount': f"€{total_margin:,.2f}"}
         ]
-        st.dataframe(pnl_display, width="stretch", hide_index=True)
+        st.dataframe(pnl_display)
 
     with col2:
         st.markdown("##### Cost Distribution")
@@ -147,7 +152,9 @@ if sales_data:
             for label, val in zip(cost_labels, cost_values):
                 distribution.append({'Cost Category': label, 'Amount': val})
             
-            st.bar_chart(distribution, x='Cost Category', y='Amount', color="#3b82f6")
+            df_dist = pd.DataFrame(distribution)
+            df_dist.set_index('Cost Category', inplace=True)
+            st.bar_chart(df_dist)
 else:
     st.info("Add sales data to see P&L breakdown")
 
@@ -167,7 +174,9 @@ if sales_data:
         volume_dict[d] = volume_dict.get(d, 0) + float(s.get('quantity_mwh', 0) or 0)
     
     volume_chart = [{'date': d, 'Quantity (MWh)': v} for d, v in sorted(volume_dict.items())]
-    st.bar_chart(volume_chart, x='date', y='Quantity (MWh)', color='#3b82f6')
+    df_vol = pd.DataFrame(volume_chart)
+    df_vol.set_index('date', inplace=True)
+    st.bar_chart(df_vol)
 else:
     st.info("Add sales data to see volume charts")
 
@@ -190,7 +199,9 @@ with col1:
             outflow_dict[d] = outflow_dict.get(d, 0) + float(p.get('amount_sent_eur', 0) or 0)
         
         outflow_chart = [{'date': d, 'Amount Sent': v} for d, v in sorted(outflow_dict.items())]
-        st.bar_chart(outflow_chart, x='date', y='Amount Sent', color='#ef4444')
+        df_out = pd.DataFrame(outflow_chart)
+        df_out.set_index('date', inplace=True)
+        st.bar_chart(df_out)
     else:
         st.info("Add purchase data to see cash outflows")
 
@@ -207,7 +218,9 @@ with col2:
             inflow_dict[d] = inflow_dict.get(d, 0) + float(p.get('amount_eur', 0) or 0)
             
         inflow_chart = [{'date': d, 'Amount Received': v} for d, v in sorted(inflow_dict.items())]
-        st.bar_chart(inflow_chart, x='date', y='Amount Received', color='#10b981')
+        df_in = pd.DataFrame(inflow_chart)
+        df_in.set_index('date', inplace=True)
+        st.bar_chart(df_in)
     else:
         st.info("Add payment data to see cash inflows")
 
@@ -236,7 +249,7 @@ if sales_data:
                 row[col] = val
         summary_display.append(row)
 
-    st.dataframe(summary_display, width='stretch', hide_index=True, height=300)
+    st.dataframe(summary_display)
 
     # Simple CSV export
     import io

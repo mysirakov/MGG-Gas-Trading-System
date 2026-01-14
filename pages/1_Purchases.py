@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import csv
 import io
 from datetime import datetime
@@ -85,7 +86,6 @@ if sales_df and any(row.get('quantity_mwh', 0) > 0 for row in sales_df):
         st.dataframe(
             display_data,
             width="stretch",
-            hide_index=True,
             height=400
         )
         
@@ -118,8 +118,12 @@ if sales_df and any(row.get('quantity_mwh', 0) > 0 for row in sales_df):
         
         try:
             chart_data.sort(key=lambda x: x['contract_date'] if x['contract_date'] else datetime.min.date())
-            st.line_chart(chart_data, x='contract_date', y='purchase_price_eur_mwh', color="#3b82f6")
+            df_chart = pd.DataFrame(chart_data)
+            df_chart.set_index('contract_date', inplace=True)
+            st.line_chart(df_chart)
         except Exception as e:
             st.info("Unable to display price trend chart")
+else:
+    empty_state("inventory_2", "No purchase data available")
 else:
     empty_state("inventory_2", "No purchase data available")

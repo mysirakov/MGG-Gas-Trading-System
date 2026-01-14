@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from datetime import datetime
 from database import (
     initialize_database_system, get_sales, get_supplier_payments, get_payments_received,
@@ -104,7 +105,9 @@ if sales:
         
         st.markdown("##### Revenue vs Profit Over Time")
         if chart_data:
-            st.line_chart(chart_data, x='date', y=['Revenue', 'Profit'], color=["#3b82f6", "#10b981"])
+            df_chart = pd.DataFrame(chart_data)
+            df_chart.set_index('date', inplace=True)
+            st.line_chart(df_chart)
     
     with col2:
         # Group by date for bar chart
@@ -132,7 +135,9 @@ if sales:
             
         st.markdown("##### Daily Trading Volume")
         if volume_data:
-            st.bar_chart(volume_data, x='date', y='quantity_mwh', color="#3b82f6")
+            df_vol = pd.DataFrame(volume_data)
+            df_vol.set_index('date', inplace=True)
+            st.bar_chart(df_vol)
 else:
     empty_state("insert_chart", "Add sales data to see performance charts")
 
@@ -150,7 +155,7 @@ with col1:
         {'Category': 'Payments Received', 'Amount': f"€{payments_received:,.2f}"},
         {'Category': 'Net Cash Flow', 'Amount': f"€{payments_received - total_sent:,.2f}"}
     ]
-    st.dataframe(cash_data, width="stretch", hide_index=True)
+    st.dataframe(cash_data)
 
 with col2:
     st.markdown("##### P&L Summary")
@@ -166,7 +171,7 @@ with col2:
             {'Category': 'Transport Costs', 'Amount': f"-€{transport_cost:,.2f}"},
             {'Category': 'Net Profit', 'Amount': f"€{total_margin:,.2f}"}
         ]
-        st.dataframe(pnl_data, width="stretch", hide_index=True)
+        st.dataframe(pnl_data)
     else:
         st.info("Add sales data to see P&L summary")
 

@@ -5,7 +5,7 @@
       "src": "Dashboard.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.9",
+        "runtime": "python3.12",
         "includeFiles": [
           "Dashboard.py",
           "components.py",
@@ -33,7 +33,8 @@
           "docs/**",
           "*.png",
           "*.jpg",
-          "*.csv"
+          "*.csv",
+          "main.py"
         ]
       }
     }
