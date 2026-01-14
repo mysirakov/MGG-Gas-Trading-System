@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "Dashboard.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "excludeFiles": "{attached_assets/**,.git/**,temp_csv/**,data/**,uv.lock,pyproject.toml}"
+      }
     }
   ],
   "routes": [

@@ -1,0 +1,13 @@
+.git
+attached_assets
+temp_csv
+data
+uv.lock
+pyproject.toml
+main.py
+replit.md
+package.json
+node_modules
+.orchids
+.replit
+.streamlit/config.toml
