@@ -118,7 +118,7 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
             yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
             autosize=True
         )
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig)
     
     with col2:
         daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
@@ -144,7 +144,7 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
             autosize=True
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig)
 else:
     empty_state("insert_chart", "Add sales data to see performance charts")
 
@@ -161,7 +161,7 @@ with col1:
         'Category': ['Payments to Suppliers', 'Payments Received', 'Net Cash Flow'],
         'Amount': [f"€{total_sent:,.2f}", f"€{payments_received:,.2f}", f"€{payments_received - total_sent:,.2f}"]
     }
-    st.dataframe(pd.DataFrame(cash_data), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(cash_data), width="stretch", hide_index=True)
 
 with col2:
     st.markdown("##### P&L Summary")
@@ -174,7 +174,7 @@ with col2:
             'Category': ['Gross Revenue', 'Purchase Costs', 'Capacity Costs', 'Transport Costs', 'Net Profit'],
             'Amount': [f"€{total_revenue:,.2f}", f"-€{purchase_cost:,.2f}", f"-€{capacity_cost:,.2f}", f"-€{transport_cost:,.2f}", f"€{total_margin:,.2f}"]
         }
-        st.dataframe(pd.DataFrame(pnl_data), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(pnl_data), width="stretch", hide_index=True)
     else:
         st.info("Add sales data to see P&L summary")
 

@@ -75,7 +75,7 @@ with tab1:
             display_filtered['allocated_amount'] = display_filtered['amount_eur']
         display_filtered['unallocated'] = display_filtered['amount_eur'] - display_filtered['allocated_amount']
         
-        st.dataframe(display_filtered, use_container_width=True, hide_index=True, height=300)
+        st.dataframe(display_filtered, width="stretch", hide_index=True, height=300)
 
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -134,7 +134,7 @@ with tab1:
             if not payments_df.empty and 'buyer' in payments_df.columns:
                 buyer_summary = payments_df.groupby('buyer')['amount_eur'].sum().reset_index()
                 buyer_summary.columns = ['Buyer', 'Total Received (EUR)']
-                st.dataframe(buyer_summary, use_container_width=True, hide_index=True)
+                st.dataframe(buyer_summary, width="stretch", hide_index=True)
             else:
                 st.info("No payment data yet")
 
@@ -261,7 +261,7 @@ with tab3:
                 df = pd.read_excel(uploaded_file)
 
             st.markdown("##### Preview of Uploaded Data")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
 
             if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
                 count = 0

@@ -65,7 +65,7 @@ with tab1:
         if 'contract_date' in display_filtered.columns:
             display_filtered['contract_date'] = pd.to_datetime(display_filtered['contract_date']).dt.strftime('%b %d, %Y')
         
-        st.dataframe(display_filtered, use_container_width=True, hide_index=True, height=400)
+        st.dataframe(display_filtered, width="stretch", hide_index=True, height=400)
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -172,7 +172,7 @@ with tab3:
                 df = pd.read_excel(uploaded_file)
             
             st.markdown("##### Preview of Uploaded Data")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             if st.button("Import All Rows", type="primary", key="import_sales"):
                 count = 0

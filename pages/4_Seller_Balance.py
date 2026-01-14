@@ -76,7 +76,7 @@ with tab1:
                 'Purchase Cost (EUR)': '€{:,.2f}',
                 'Available Balance (EUR)': '€{:,.2f}'
             }),
-            use_container_width=True,
+            width="stretch",
             hide_index=True
         )
     else:
@@ -94,7 +94,7 @@ with tab1:
         if 'payment_date' in display_df.columns:
             display_df['payment_date'] = pd.to_datetime(display_df['payment_date']).dt.strftime('%b %d, %Y')
         
-        st.dataframe(display_df, use_container_width=True, hide_index=True, height=300)
+        st.dataframe(display_df, width="stretch", hide_index=True, height=300)
         
         st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
         
@@ -178,7 +178,7 @@ with tab3:
                 df = pd.read_excel(uploaded_file)
             
             st.markdown("##### Preview of Uploaded Data")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             if st.button("Import All Rows", type="primary", key="import_payments"):
                 count = 0
@@ -233,6 +233,6 @@ with tab4:
             
             display_cols = ['invoice_number', 'supplier', 'total_amount', 'paid_amount', 'status']
             available_cols = [c for c in display_cols if c in inv_df.columns]
-            st.dataframe(inv_df[available_cols], use_container_width=True, hide_index=True)
+            st.dataframe(inv_df[available_cols], width="stretch", hide_index=True)
     else:
         empty_state("receipt_long", "No invoices recorded yet. Invoices are created when you add payments with invoice numbers.")

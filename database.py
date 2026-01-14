@@ -14,7 +14,6 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
-@st.cache_resource
 def initialize_database_system():
     init_database()
     migrate_json_to_postgres()

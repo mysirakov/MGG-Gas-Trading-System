@@ -100,7 +100,7 @@ if not sales_df.empty:
                 xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
                 yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
             )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
         with col2:
             fig = go.Figure()
@@ -119,7 +119,7 @@ if not sales_df.empty:
                 yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
             )
             fig.update_traces(marker_cornerradius=6)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     empty_state("insert_chart", "Add sales data to see price analysis charts")
 
@@ -146,7 +146,7 @@ if not sales_df.empty:
                 f"€{total_margin:,.2f}"
             ]
         }
-        st.dataframe(pd.DataFrame(pnl_data), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(pnl_data), width="stretch", hide_index=True)
 
     with col2:
         st.markdown("##### Cost Distribution")
@@ -163,7 +163,7 @@ if not sales_df.empty:
                 font=dict(family='Inter', size=12)
             )
             fig.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.info("Add sales data to see P&L breakdown")
 
@@ -195,7 +195,7 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
         yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
     )
     fig.update_traces(marker_cornerradius=6)
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 else:
     st.info("Add sales data to see volume charts")
 
@@ -226,7 +226,7 @@ with col1:
             yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("Add purchase data to see cash outflows")
 
@@ -251,7 +251,7 @@ with col2:
             yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("Add payment data to see cash inflows")
 

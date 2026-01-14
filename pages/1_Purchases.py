@@ -75,7 +75,7 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
                 'Price per MWh': '€{:,.2f}',
                 'Total Cost': '€{:,.0f}'
             }),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=400
         )
@@ -122,7 +122,7 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
                 yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
                 autosize=True
             )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         except Exception as e:
             st.info("Unable to display price trend chart")
     else:
