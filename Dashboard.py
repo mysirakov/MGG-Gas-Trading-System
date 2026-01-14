@@ -24,23 +24,33 @@ except:
 
 load_material_icons()
 
-metrics = get_dashboard_metrics()
-sales = get_sales()
-purchases = get_supplier_payments()
-payments = get_payments_received()
+# Fetch data with error handling and default values
+try:
+    metrics = get_dashboard_metrics()
+except Exception as e:
+    st.error(f"Error fetching metrics: {e}")
+    metrics = {
+        'total_revenue': 0.0, 'total_margin': 0.0, 'total_quantity': 0.0, 
+        'outstanding_receivables': 0.0, 'total_sent_to_suppliers': 0.0,
+        'supplier_balance': 0.0, 'payments_received': 0.0
+    }
 
-purchases_df = supplier_payments_to_df(purchases)
+try:
+    sales = get_sales()
+except Exception as e:
+    st.error(f"Error fetching sales: {e}")
+    sales = []
+
 sales_df = sales_to_df(sales)
-payments_df = payments_to_df(payments)
 
 page_header("Dashboard", "Comprehensive Overview of Your Natural Gas Trading Business")
 
 col1, col2, col3, col4 = st.columns(4)
 
-total_revenue = metrics['total_revenue']
-total_margin = metrics['total_margin']
-total_quantity_sold = metrics['total_quantity']
-outstanding = metrics['outstanding_receivables']
+total_revenue = metrics.get('total_revenue', 0.0)
+total_margin = metrics.get('total_margin', 0.0)
+total_quantity_sold = metrics.get('total_quantity', 0.0)
+outstanding = metrics.get('outstanding_receivables', 0.0)
 
 with col1:
     metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.2f}", "blue")
@@ -55,9 +65,9 @@ st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
 
-total_sent = metrics['total_sent_to_suppliers']
-supplier_balance = metrics['supplier_balance']
-payments_received = metrics['payments_received']
+total_sent = metrics.get('total_sent_to_suppliers', 0.0)
+supplier_balance = metrics.get('supplier_balance', 0.0)
+payments_received = metrics.get('payments_received', 0.0)
 margin_pct = (total_margin / total_revenue * 100) if total_revenue > 0 else 0
 
 with col1:
@@ -83,7 +93,7 @@ if sales:
             d = row['contract_date']
             if isinstance(d, str):
                 try:
-                    d = datetime.strptime(d, '%Y-%m-%d').date()
+                    d = datetime.strptime(d.split('T')[0] if 'T' in d else d, '%Y-%m-%d').date()
                 except:
                     pass
             
@@ -133,7 +143,7 @@ if sales:
             d = row['contract_date']
             if isinstance(d, str):
                 try:
-                    d = datetime.strptime(d, '%Y-%m-%d').date()
+                    d = datetime.strptime(d.split('T')[0] if 'T' in d else d, '%Y-%m-%d').date()
                 except:
                     pass
             
@@ -190,7 +200,7 @@ with col2:
     if sales_df:
         capacity_cost = sum(row.get('cost_capacity_eur_mwh', 0) * row.get('quantity_mwh', 0) for row in sales_df)
         transport_cost = sum(row.get('cost_transport_eur_mwh', 0) * row.get('quantity_mwh', 0) for row in sales_df)
-        purchase_cost = metrics['total_purchase_cost']
+        purchase_cost = metrics.get('total_purchase_cost', 0.0)
         
         pnl_data = [
             {'Category': 'Gross Revenue', 'Amount': f"€{total_revenue:,.2f}"},

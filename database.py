@@ -2,6 +2,7 @@ import os
 import json
 import pg8000
 from datetime import datetime
+from decimal import Decimal
 from dotenv import load_dotenv
 import streamlit as st
 from urllib.parse import urlparse
@@ -10,18 +11,8 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-@st.cache_resource
-def get_db_pool():
-    url = urlparse(DATABASE_URL)
-    return pg8000.connect(
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port or 5432,
-        database=url.path[1:]
-    )
-
 def get_db_connection():
+    """Create a new database connection with pg8000."""
     url = urlparse(DATABASE_URL)
     return pg8000.connect(
         user=url.username,
@@ -57,11 +48,26 @@ class DictCursor:
     def __getattr__(self, name):
         return getattr(self.cur, name)
 
+def sanitize_data(data):
+    """Convert Decimal and other non-JSON serializable types to float/string."""
+    if isinstance(data, list):
+        return [sanitize_data(i) for i in data]
+    if isinstance(data, dict):
+        return {k: sanitize_data(v) for k, v in data.items()}
+    if isinstance(data, Decimal):
+        return float(data)
+    if isinstance(data, datetime):
+        return data.isoformat()
+    return data
+
 def initialize_database_system():
     if 'db_initialized' not in st.session_state:
-        init_database()
-        migrate_json_to_postgres()
-        st.session_state.db_initialized = True
+        try:
+            init_database()
+            migrate_json_to_postgres()
+            st.session_state.db_initialized = True
+        except Exception as e:
+            st.error(f"Failed to initialize database: {e}")
     return True
 
 def init_database():
@@ -185,6 +191,8 @@ def init_database():
 def parse_date(date_str):
     if not date_str or str(date_str).lower() == 'nan':
         return None
+    if isinstance(date_str, (datetime, datetime.date)):
+        return date_str
     if isinstance(date_str, str):
         for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']:
             try:
@@ -194,181 +202,112 @@ def parse_date(date_str):
     return None
 
 def get_or_create_supplier(cur, name):
-    if not name:
-        return None
+    if not name: return None
     cur.execute('SELECT id FROM suppliers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result:
-        return result[0] if isinstance(result, tuple) else result['id']
+    if result: return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO suppliers (name) VALUES (%s) RETURNING id', (name,))
     result = cur.fetchone()
     return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_buyer(cur, name):
-    if not name:
-        return None
+    if not name: return None
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result:
-        return result[0] if isinstance(result, tuple) else result['id']
+    if result: return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
     result = cur.fetchone()
     return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_payment_method(cur, name):
-    if not name:
-        return None
+    if not name: return None
     cur.execute('SELECT id FROM payment_methods WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result:
-        return result[0] if isinstance(result, tuple) else result['id']
+    if result: return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO payment_methods (name) VALUES (%s) RETURNING id', (name,))
     result = cur.fetchone()
     return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
-    if not invoice_number:
-        return None
+    if not invoice_number: return None
     cur.execute('SELECT id FROM invoices WHERE invoice_number = %s', (invoice_number,))
     result = cur.fetchone()
-    if result:
-        return result[0] if isinstance(result, tuple) else result['id']
-    cur.execute('''
-        INSERT INTO invoices (invoice_number, supplier_id, total_amount) 
-        VALUES (%s, %s, %s) RETURNING id
-    ''', (invoice_number, supplier_id, total_amount or 0))
+    if result: return result[0] if isinstance(result, tuple) else result['id']
+    cur.execute('INSERT INTO invoices (invoice_number, supplier_id, total_amount) VALUES (%s, %s, %s) RETURNING id', (invoice_number, supplier_id, total_amount or 0))
     result = cur.fetchone()
     return result[0] if isinstance(result, tuple) else result['id']
 
 def migrate_json_to_postgres():
     conn = get_db_connection()
     cur = DictCursor(conn)
-    
     cur.execute('SELECT COUNT(*) FROM sales')
-    result = cur.fetchone()
-    if result and result['count'] > 0:
-        cur.close()
-        conn.close()
-        return "Data already migrated"
+    if cur.fetchone()['count'] > 0:
+        cur.close(); conn.close()
+        return
     
     try:
-        with open('data/settings.json', 'r') as f:
-            settings = json.load(f)
-    except:
-        settings = {'suppliers': [], 'buyers': [], 'payment_methods': []}
+        with open('data/settings.json', 'r') as f: settings = json.load(f)
+    except: settings = {}
     
-    for supplier in settings.get('suppliers', []):
-        get_or_create_supplier(cur, supplier)
-    for buyer in settings.get('buyers', []):
-        get_or_create_buyer(cur, buyer)
-    for method in settings.get('payment_methods', []):
-        get_or_create_payment_method(cur, method)
+    for s in settings.get('suppliers', []): get_or_create_supplier(cur, s)
+    for b in settings.get('buyers', []): get_or_create_buyer(cur, b)
+    for m in settings.get('payment_methods', []): get_or_create_payment_method(cur, m)
     
     old_to_new_sale_ids = {}
     try:
-        with open('data/sales.json', 'r') as f:
-            sales = json.load(f)
-    except:
-        sales = []
+        with open('data/sales.json', 'r') as f: sales = json.load(f)
+    except: sales = []
     
     for sale in sales:
-        buyer_id = get_or_create_buyer(cur, sale.get('buyer'))
-        supplier_id = get_or_create_supplier(cur, sale.get('supplier', 'GPE'))
-        contract_date = parse_date(sale.get('contract_date'))
-        
+        b_id = get_or_create_buyer(cur, sale.get('buyer'))
+        s_id = get_or_create_supplier(cur, sale.get('supplier', 'GPE'))
         cur.execute('''
-            INSERT INTO sales (
-                contract_date, buyer_id, supplier_id, quantity_mwh, sales_price_eur_mwh,
-                purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, 
-                cost_customs_eur_mwh, old_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
-        ''', (
-            contract_date,
-            buyer_id,
-            supplier_id,
-            sale.get('quantity_mwh', 0),
-            sale.get('sales_price_eur_mwh', 0),
-            sale.get('purchase_price_eur_mwh', 0),
-            sale.get('cost_capacity_eur_mwh', 0),
-            sale.get('cost_transport_eur_mwh', 0),
-            sale.get('cost_customs_eur_mwh', 0),
-            sale.get('id')
-        ))
-        result = cur.fetchone()
-        if result:
-            new_id = result['id']
-            old_to_new_sale_ids[sale.get('id')] = new_id
+            INSERT INTO sales (contract_date, buyer_id, supplier_id, quantity_mwh, sales_price_eur_mwh,
+            purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, cost_customs_eur_mwh, old_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+        ''', (parse_date(sale.get('contract_date')), b_id, s_id, sale.get('quantity_mwh', 0), sale.get('sales_price_eur_mwh', 0),
+              sale.get('purchase_price_eur_mwh', 0), sale.get('cost_capacity_eur_mwh', 0), sale.get('cost_transport_eur_mwh', 0),
+              sale.get('cost_customs_eur_mwh', 0), sale.get('id')))
+        res = cur.fetchone()
+        if res: old_to_new_sale_ids[sale.get('id')] = res['id']
     
     try:
-        with open('data/purchases.json', 'r') as f:
-            purchases = json.load(f)
-    except:
-        purchases = []
-    
-    for purchase in purchases:
-        supplier_id = get_or_create_supplier(cur, purchase.get('supplier'))
-        payment_method_id = get_or_create_payment_method(cur, purchase.get('payment_method'))
-        invoice_id = get_or_create_invoice(cur, purchase.get('invoice_number'), supplier_id, purchase.get('amount_sent_eur'))
-        
+        with open('data/purchases.json', 'r') as f: purchases = json.load(f)
+    except: purchases = []
+    for p in purchases:
+        s_id = get_or_create_supplier(cur, p.get('supplier'))
+        pm_id = get_or_create_payment_method(cur, p.get('payment_method'))
+        inv_id = get_or_create_invoice(cur, p.get('invoice_number'), s_id, p.get('amount_sent_eur'))
         cur.execute('''
-            INSERT INTO supplier_payments (
-                payment_date, supplier_id, payment_method_id, amount_sent_eur,
-                invoice_id, receipt_date, amount_received_eur, old_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (
-            parse_date(purchase.get('payment_date')),
-            supplier_id,
-            payment_method_id,
-            purchase.get('amount_sent_eur', 0),
-            invoice_id,
-            parse_date(purchase.get('receipt_date')),
-            purchase.get('amount_received_eur', 0),
-            purchase.get('id')
-        ))
+            INSERT INTO supplier_payments (payment_date, supplier_id, payment_method_id, amount_sent_eur,
+            invoice_id, receipt_date, amount_received_eur, old_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (parse_date(p.get('payment_date')), s_id, pm_id, p.get('amount_sent_eur', 0), inv_id, 
+              parse_date(p.get('receipt_date')), p.get('amount_received_eur', 0), p.get('id')))
     
     try:
-        with open('data/payments_received.json', 'r') as f:
-            payments = json.load(f)
-    except:
-        payments = []
+        with open('data/payments_received.json', 'r') as f: payments = json.load(f)
+    except: payments = []
+    for pay in payments:
+        b_id = get_or_create_buyer(cur, pay.get('buyer'))
+        cur.execute('INSERT INTO payments_received (payment_date, buyer_id, amount_eur, notes, old_id) VALUES (%s, %s, %s, %s, %s) RETURNING id',
+                    (parse_date(pay.get('payment_date')), b_id, pay.get('amount_eur', 0), pay.get('notes', ''), pay.get('id')))
+        res = cur.fetchone()
+        if res:
+            p_id = res['id']
+            for alloc in pay.get('allocations', []):
+                s_id = old_to_new_sale_ids.get(alloc.get('sale_id'))
+                if s_id:
+                    cur.execute('INSERT INTO payment_allocations (payment_id, sale_id, amount) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING',
+                                (p_id, s_id, alloc.get('amount', 0)))
     
-    for payment in payments:
-        buyer_id = get_or_create_buyer(cur, payment.get('buyer'))
-        notes = payment.get('notes', '')
-        if notes == 'nan':
-            notes = ''
-        
-        cur.execute('''
-            INSERT INTO payments_received (payment_date, buyer_id, amount_eur, notes, old_id)
-            VALUES (%s, %s, %s, %s, %s) RETURNING id
-        ''', (
-            parse_date(payment.get('payment_date')),
-            buyer_id,
-            payment.get('amount_eur', 0),
-            notes,
-            payment.get('id')
-        ))
-        result = cur.fetchone()
-        if result:
-            new_payment_id = result['id']
-            for alloc in payment.get('allocations', []):
-                old_sale_id = alloc.get('sale_id')
-                new_sale_id = old_to_new_sale_ids.get(old_sale_id)
-                if new_sale_id:
-                    cur.execute('''
-                        INSERT INTO payment_allocations (payment_id, sale_id, amount)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (payment_id, sale_id) DO UPDATE SET amount = payment_allocations.amount + EXCLUDED.amount
-                    ''', (new_payment_id, new_sale_id, alloc.get('amount', 0)))
-    
-    conn.commit()
-    cur.close()
-    conn.close()
-    return "Migration complete"
+    conn.commit(); cur.close(); conn.close()
+
+def clear_db_cache():
+    st.cache_data.clear()
 
 @st.cache_data(show_spinner=False)
 def get_sales():
-    conn = get_db_pool()
+    conn = get_db_connection()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT s.*, b.name as buyer, sup.name as supplier,
@@ -378,60 +317,13 @@ def get_sales():
         LEFT JOIN suppliers sup ON s.supplier_id = sup.id
         ORDER BY s.contract_date DESC
     ''')
-    sales = cur.fetchall()
-    cur.close()
-    return [dict(s) for s in sales]
-
-def clear_db_cache():
-    st.cache_data.clear()
-
-def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
-    conn = get_db_connection()
-    cur = DictCursor(conn)
-    buyer_id = get_or_create_buyer(cur, buyer_name)
-    supplier_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
-    cur.execute('''
-        INSERT INTO sales (
-            contract_date, buyer_id, quantity_mwh, sales_price_eur_mwh,
-            purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id, cost_customs_eur_mwh
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
-    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, customs_cost))
-    result = cur.fetchone()
-    sale_id = result['id'] if result else None
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
-    return sale_id
-
-def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
-    conn = get_db_connection()
-    cur = DictCursor(conn)
-    buyer_id = get_or_create_buyer(cur, buyer_name)
-    supplier_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
-    cur.execute('''
-        UPDATE sales SET
-            contract_date = %s, buyer_id = %s, quantity_mwh = %s, sales_price_eur_mwh = %s,
-            purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s, supplier_id = %s, cost_customs_eur_mwh = %s
-        WHERE id = %s
-    ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, customs_cost, sale_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
-
-def delete_sale(sale_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM sales WHERE id = %s', (sale_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
+    res = cur.fetchall()
+    cur.close(); conn.close()
+    return sanitize_data(res)
 
 @st.cache_data(show_spinner=False)
 def get_payments_received():
-    conn = get_db_pool()
+    conn = get_db_connection()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT p.*, b.name as buyer,
@@ -440,102 +332,13 @@ def get_payments_received():
         LEFT JOIN buyers b ON p.buyer_id = b.id
         ORDER BY p.payment_date DESC
     ''')
-    payments = cur.fetchall()
-    cur.close()
-    return [dict(p) for p in payments]
-
-@st.cache_data(show_spinner=False)
-def get_payment_allocations(payment_id):
-    conn = get_db_pool()
-    cur = DictCursor(conn)
-    cur.execute('''
-        SELECT pa.*, s.contract_date, s.total_revenue
-        FROM payment_allocations pa
-        JOIN sales s ON pa.sale_id = s.id
-        WHERE pa.payment_id = %s
-    ''', (payment_id,))
-    allocations = cur.fetchall()
-    cur.close()
-    return [dict(a) for a in allocations]
-
-@st.cache_data(show_spinner=False)
-def get_unpaid_sales(buyer_name=None):
-    conn = get_db_pool()
-    cur = DictCursor(conn)
-    query = '''
-        SELECT s.*, b.name as buyer,
-            s.total_revenue - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as outstanding
-        FROM sales s
-        LEFT JOIN buyers b ON s.buyer_id = b.id
-        WHERE s.total_revenue > COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0)
-    '''
-    params = []
-    if buyer_name:
-        query += ' AND b.name = %s'
-        params.append(buyer_name)
-    query += ' ORDER BY s.contract_date ASC'
-    cur.execute(query, params)
-    sales = cur.fetchall()
-    cur.close()
-    return [dict(s) for s in sales]
-
-def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
-    conn = get_db_connection()
-    cur = DictCursor(conn)
-    buyer_id = get_or_create_buyer(cur, buyer_name)
-    
-    cur.execute('''
-        INSERT INTO payments_received (payment_date, buyer_id, amount_eur, notes)
-        VALUES (%s, %s, %s, %s) RETURNING id
-    ''', (payment_date, buyer_id, amount_eur, notes))
-    result = cur.fetchone()
-    if not result:
-        conn.close()
-        return None
-    payment_id = result['id']
-    
-    cur.execute('''
-        SELECT s.id, s.total_revenue,
-            s.total_revenue - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as outstanding
-        FROM sales s
-        LEFT JOIN buyers b ON s.buyer_id = b.id
-        WHERE b.name = %s
-        AND s.total_revenue > COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0)
-        ORDER BY s.contract_date ASC
-    ''', (buyer_name,))
-    unpaid_sales = cur.fetchall()
-    
-    remaining = float(amount_eur)
-    for sale in unpaid_sales:
-        if remaining <= 0:
-            break
-        outstanding = float(sale['outstanding'])
-        alloc_amount = min(remaining, outstanding)
-        if alloc_amount > 0:
-            cur.execute('''
-                INSERT INTO payment_allocations (payment_id, sale_id, amount)
-                VALUES (%s, %s, %s)
-            ''', (payment_id, sale['id'], alloc_amount))
-            remaining -= alloc_amount
-    
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
-    return payment_id
-
-def delete_payment(payment_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM payments_received WHERE id = %s', (payment_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
+    res = cur.fetchall()
+    cur.close(); conn.close()
+    return sanitize_data(res)
 
 @st.cache_data(show_spinner=False)
 def get_supplier_payments():
-    conn = get_db_pool()
+    conn = get_db_connection()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT sp.*, s.name as supplier, pm.name as payment_method, i.invoice_number
@@ -545,273 +348,172 @@ def get_supplier_payments():
         LEFT JOIN invoices i ON sp.invoice_id = i.id
         ORDER BY sp.payment_date DESC
     ''')
-    payments = cur.fetchall()
-    cur.close()
-    return [dict(p) for p in payments]
+    res = cur.fetchall()
+    cur.close(); conn.close()
+    return sanitize_data(res)
+
+@st.cache_data(show_spinner=False)
+def get_dashboard_metrics():
+    conn = get_db_connection()
+    cur = DictCursor(conn)
+    
+    cur.execute('SELECT COALESCE(SUM(total_revenue), 0) as r, COALESCE(SUM(total_margin), 0) as m, COALESCE(SUM(quantity_mwh), 0) as q, COALESCE(SUM(purchase_cost), 0) as p FROM sales')
+    s_m = cur.fetchone()
+    
+    cur.execute('SELECT sup.name, COALESCE(SUM(s.purchase_cost), 0) as c FROM sales s LEFT JOIN suppliers sup ON s.supplier_id = sup.id GROUP BY sup.name')
+    s_c = {r['name'] if r['name'] else 'Unknown': float(r['c']) for r in cur.fetchall()}
+    
+    cur.execute('SELECT COALESCE(SUM(amount_eur), 0) as t FROM payments_received')
+    p_r = cur.fetchone()['t']
+    
+    cur.execute('SELECT COALESCE(SUM(amount_sent_eur), 0) as s, COALESCE(SUM(amount_received_eur), 0) as r FROM supplier_payments')
+    sup_m = cur.fetchone()
+    
+    cur.execute('SELECT COALESCE(SUM(amount), 0) as a FROM payment_allocations')
+    t_a = cur.fetchone()['a']
+    
+    g_c = s_c.get('GPE', 0); k_c = s_c.get('Keler', 0)
+    out = float(s_m['r']) - float(t_a) - k_c
+    bal = float(sup_m['r']) - g_c
+    
+    cur.close(); conn.close()
+    return sanitize_data({
+        'total_revenue': s_m['r'], 'total_margin': s_m['m'], 'total_quantity': s_m['q'], 'total_purchase_cost': s_m['p'],
+        'gpe_purchase_cost': g_c, 'keler_purchase_cost': k_c, 'supplier_costs': s_c, 'payments_received': p_r,
+        'total_sent_to_suppliers': sup_m['s'], 'total_received_by_suppliers': sup_m['r'], 'supplier_balance': bal,
+        'outstanding_receivables': out, 'total_allocated': t_a
+    })
+
+@st.cache_data(show_spinner=False)
+def get_settings():
+    conn = get_db_connection()
+    cur = DictCursor(conn)
+    cur.execute('SELECT name FROM suppliers ORDER BY name'); sups = [r['name'] for r in cur.fetchall()]
+    cur.execute('SELECT name FROM buyers ORDER BY name'); buys = [r['name'] for r in cur.fetchall()]
+    cur.execute('SELECT name FROM payment_methods ORDER BY name'); pms = [r['name'] for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return {'suppliers': sups, 'buyers': buys, 'payment_methods': pms}
+
+def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
+    conn = get_db_connection()
+    cur = DictCursor(conn)
+    b_id = get_or_create_buyer(cur, buyer_name)
+    s_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
+    cur.execute('''
+        INSERT INTO sales (contract_date, buyer_id, quantity_mwh, sales_price_eur_mwh, purchase_price_eur_mwh,
+        cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id, cost_customs_eur_mwh)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (contract_date, b_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, s_id, customs_cost))
+    res = cur.fetchone(); s_id = res['id'] if res else None
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+    return s_id
+
+def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
+    conn = get_db_connection()
+    cur = DictCursor(conn)
+    b_id = get_or_create_buyer(cur, buyer_name)
+    s_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
+    cur.execute('''
+        UPDATE sales SET contract_date = %s, buyer_id = %s, quantity_mwh = %s, sales_price_eur_mwh = %s,
+        purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s, supplier_id = %s, cost_customs_eur_mwh = %s
+        WHERE id = %s
+    ''', (contract_date, b_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, s_id, customs_cost, sale_id))
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+
+def delete_sale(sale_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM sales WHERE id = %s', (sale_id,))
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+
+def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
+    conn = get_db_connection()
+    cur = DictCursor(conn)
+    b_id = get_or_create_buyer(cur, buyer_name)
+    cur.execute('INSERT INTO payments_received (payment_date, buyer_id, amount_eur, notes) VALUES (%s, %s, %s, %s) RETURNING id',
+                (payment_date, b_id, amount_eur, notes))
+    res = cur.fetchone()
+    if not res: conn.close(); return None
+    p_id = res['id']
+    cur.execute('''
+        SELECT s.id, s.total_revenue - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as out
+        FROM sales s JOIN buyers b ON s.buyer_id = b.id
+        WHERE b.name = %s AND s.total_revenue > COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0)
+        ORDER BY s.contract_date ASC
+    ''', (buyer_name,))
+    unpaid = cur.fetchall()
+    rem = float(amount_eur)
+    for s in unpaid:
+        if rem <= 0: break
+        alloc = min(rem, float(s['out']))
+        if alloc > 0:
+            cur.execute('INSERT INTO payment_allocations (payment_id, sale_id, amount) VALUES (%s, %s, %s)', (p_id, s['id'], alloc))
+            rem -= alloc
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+    return p_id
+
+def delete_payment(payment_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM payments_received WHERE id = %s', (payment_id,))
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def add_supplier_payment(payment_date, supplier_name, payment_method_name, amount_sent, invoice_number, receipt_date=None, amount_received=None):
     conn = get_db_connection()
     cur = DictCursor(conn)
-    supplier_id = get_or_create_supplier(cur, supplier_name)
-    payment_method_id = get_or_create_payment_method(cur, payment_method_name)
-    invoice_id = get_or_create_invoice(cur, invoice_number, supplier_id, amount_sent) if invoice_number else None
-    
+    s_id = get_or_create_supplier(cur, supplier_name)
+    pm_id = get_or_create_payment_method(cur, payment_method_name)
+    inv_id = get_or_create_invoice(cur, invoice_number, s_id, amount_sent) if invoice_number else None
     cur.execute('''
-        INSERT INTO supplier_payments (
-            payment_date, supplier_id, payment_method_id, amount_sent_eur,
-            invoice_id, receipt_date, amount_received_eur
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-    ''', (payment_date, supplier_id, payment_method_id, amount_sent, invoice_id, receipt_date, amount_received))
-    result = cur.fetchone()
-    payment_id = result['id'] if result else None
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
-    return payment_id
+        INSERT INTO supplier_payments (payment_date, supplier_id, payment_method_id, amount_sent_eur, invoice_id, receipt_date, amount_received_eur)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (payment_date, s_id, pm_id, amount_sent, inv_id, receipt_date, amount_received))
+    res = cur.fetchone(); p_id = res['id'] if res else None
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+    return p_id
 
 def delete_supplier_payment(payment_id):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('DELETE FROM supplier_payments WHERE id = %s', (payment_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
-
-@st.cache_data(show_spinner=False)
-def get_invoices():
-    conn = get_db_pool()
-    cur = DictCursor(conn)
-    cur.execute('''
-        SELECT i.*, s.name as supplier,
-            COALESCE((SELECT SUM(amount_sent_eur) FROM supplier_payments WHERE invoice_id = i.id), 0) as paid_amount
-        FROM invoices i
-        LEFT JOIN suppliers s ON i.supplier_id = s.id
-        ORDER BY i.created_at DESC
-    ''')
-    invoices = cur.fetchall()
-    cur.close()
-    return [dict(i) for i in invoices]
-
-@st.cache_data(show_spinner=False)
-def get_settings():
-    conn = get_db_pool()
-    cur = DictCursor(conn)
-    
-    cur.execute('SELECT name FROM suppliers ORDER BY name')
-    suppliers = [r['name'] for r in cur.fetchall()]
-    
-    cur.execute('SELECT name FROM buyers ORDER BY name')
-    buyers = [r['name'] for r in cur.fetchall()]
-    
-    cur.execute('SELECT name FROM payment_methods ORDER BY name')
-    payment_methods = [r['name'] for r in cur.fetchall()]
-    
-    cur.close()
-    
-    return {
-        'suppliers': suppliers,
-        'buyers': buyers,
-        'payment_methods': payment_methods
-    }
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def add_supplier(name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute('INSERT INTO suppliers (name) VALUES (%s)', (name,))
-        conn.commit()
-        clear_db_cache()
-    except:
-        conn.rollback()
-    cur.close()
-    conn.close()
+    conn = get_db_connection(); cur = conn.cursor()
+    try: cur.execute('INSERT INTO suppliers (name) VALUES (%s)', (name,)); conn.commit(); clear_db_cache()
+    except: conn.rollback()
+    cur.close(); conn.close()
 
 def add_buyer(name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute('INSERT INTO buyers (name) VALUES (%s)', (name,))
-        conn.commit()
-        clear_db_cache()
-    except:
-        conn.rollback()
-    cur.close()
-    conn.close()
+    conn = get_db_connection(); cur = conn.cursor()
+    try: cur.execute('INSERT INTO buyers (name) VALUES (%s)', (name,)); conn.commit(); clear_db_cache()
+    except: conn.rollback()
+    cur.close(); conn.close()
 
 def add_payment_method(name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute('INSERT INTO payment_methods (name) VALUES (%s)', (name,))
-        conn.commit()
-        clear_db_cache()
-    except:
-        conn.rollback()
-    cur.close()
-    conn.close()
+    conn = get_db_connection(); cur = conn.cursor()
+    try: cur.execute('INSERT INTO payment_methods (name) VALUES (%s)', (name,)); conn.commit(); clear_db_cache()
+    except: conn.rollback()
+    cur.close(); conn.close()
 
 def delete_supplier(name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM suppliers WHERE name = %s', (name,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
+    conn = get_db_connection(); cur = conn.cursor()
+    cur.execute('DELETE FROM suppliers WHERE name = %s', (name,)); conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def delete_buyer(name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM buyers WHERE name = %s', (name,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
+    conn = get_db_connection(); cur = conn.cursor()
+    cur.execute('DELETE FROM buyers WHERE name = %s', (name,)); conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def delete_payment_method(name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM payment_methods WHERE name = %s', (name,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    clear_db_cache()
+    conn = get_db_connection(); cur = conn.cursor()
+    cur.execute('DELETE FROM payment_methods WHERE name = %s', (name,)); conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
-def sales_to_df(sales=None):
-    if sales is None:
-        sales = get_sales()
-    if not sales:
-        return []
-    
-    numeric_cols = ['quantity_mwh', 'sales_price_eur_mwh', 'purchase_price_eur_mwh', 
-                   'cost_capacity_eur_mwh', 'cost_transport_eur_mwh', 'cost_customs_eur_mwh', 'margin_eur_mwh',
-                   'total_revenue', 'total_margin', 'purchase_cost', 'amount_paid']
-    
-    for row in sales:
-        for col in numeric_cols:
-            if col in row:
-                try:
-                    val = row[col]
-                    if val is None or str(val).lower() == 'nan':
-                        row[col] = 0.0
-                    else:
-                        row[col] = float(val)
-                except (ValueError, TypeError):
-                    row[col] = 0.0
-    return sales
-
-def payments_to_df(payments=None):
-    if payments is None:
-        payments = get_payments_received()
-    if not payments:
-        return []
-    
-    for row in payments:
-        if 'amount_eur' in row:
-            try:
-                row['amount_eur'] = float(row['amount_eur']) if row['amount_eur'] is not None else 0.0
-            except:
-                row['amount_eur'] = 0.0
-        if 'allocated_amount' in row:
-            try:
-                row['allocated_amount'] = float(row['allocated_amount']) if row['allocated_amount'] is not None else 0.0
-            except:
-                row['allocated_amount'] = 0.0
-    return payments
-
-def supplier_payments_to_df(payments=None):
-    if payments is None:
-        payments = get_supplier_payments()
-    if not payments:
-        return []
-    
-    numeric_cols = ['amount_sent_eur', 'amount_received_eur']
-    for row in payments:
-        for col in numeric_cols:
-            if col in row:
-                try:
-                    val = row[col]
-                    if val is None or str(val).lower() == 'nan':
-                        row[col] = 0.0
-                    else:
-                        row[col] = float(val)
-                except (ValueError, TypeError):
-                    row[col] = 0.0
-    return payments
-
-@st.cache_data(show_spinner=False)
-def get_dashboard_metrics():
-    conn = get_db_pool()
-    cur = DictCursor(conn)
-    
-    cur.execute('''
-        SELECT 
-            COALESCE(SUM(total_revenue), 0) as total_revenue, 
-            COALESCE(SUM(total_margin), 0) as total_margin, 
-            COALESCE(SUM(quantity_mwh), 0) as total_quantity, 
-            COALESCE(SUM(purchase_cost), 0) as total_purchase_cost 
-        FROM sales
-    ''')
-    sales_metrics = cur.fetchone()
-    
-    cur.execute('''
-        SELECT 
-            sup.name,
-            COALESCE(SUM(s.purchase_cost), 0) as purchase_cost
-        FROM sales s
-        LEFT JOIN suppliers sup ON s.supplier_id = sup.id
-        GROUP BY sup.name
-    ''')
-    supplier_costs = {r['name'] if r['name'] else 'Unknown': float(r['purchase_cost']) for r in cur.fetchall()}
-    
-    gpe_purchase_cost = supplier_costs.get('GPE', 0)
-    keler_purchase_cost = supplier_costs.get('Keler', 0)
-    
-    cur.execute('SELECT COALESCE(SUM(amount_eur), 0) as total_received FROM payments_received')
-    result = cur.fetchone()
-    payments_received = result['total_received'] if result else 0
-    
-    cur.execute('SELECT COALESCE(SUM(amount_sent_eur), 0) as total_sent, COALESCE(SUM(amount_received_eur), 0) as total_supplier_received FROM supplier_payments')
-    supplier_metrics = cur.fetchone()
-    
-    cur.execute('SELECT COALESCE(SUM(amount), 0) as total_allocated FROM payment_allocations')
-    result = cur.fetchone()
-    total_allocated = result['total_allocated'] if result else 0
-    
-    outstanding = float(sales_metrics['total_revenue']) - float(total_allocated) - keler_purchase_cost
-    supplier_balance = float(supplier_metrics['total_supplier_received']) - gpe_purchase_cost
-    
-    cur.close()
-    
-    return {
-        'total_revenue': float(sales_metrics['total_revenue']),
-        'total_margin': float(sales_metrics['total_margin']),
-        'total_quantity': float(sales_metrics['total_quantity']),
-        'total_purchase_cost': float(sales_metrics['total_purchase_cost']),
-        'gpe_purchase_cost': gpe_purchase_cost,
-        'keler_purchase_cost': keler_purchase_cost,
-        'supplier_costs': supplier_costs,
-        'payments_received': float(payments_received),
-        'total_sent_to_suppliers': float(supplier_metrics['total_sent']),
-        'total_received_by_suppliers': float(supplier_metrics['total_supplier_received']),
-        'supplier_balance': supplier_balance,
-        'outstanding_receivables': outstanding,
-        'total_allocated': float(total_allocated)
-    }
-
-def load_purchases():
-    return get_supplier_payments()
-
-def load_sales():
-    return get_sales()
-
-def load_payments_received():
-    return get_payments_received()
-
-def load_settings():
-    return get_settings()
-
-def purchases_to_df(purchases=None):
-    return supplier_payments_to_df(purchases)
+# Compat layer
+def sales_to_df(sales=None): return sales if sales is not None else get_sales()
+def payments_to_df(payments=None): return payments if payments is not None else get_payments_received()
+def supplier_payments_to_df(payments=None): return payments if payments is not None else get_supplier_payments()
+def load_purchases(): return get_supplier_payments()
+def load_sales(): return get_sales()
+def load_payments_received(): return get_payments_received()
+def load_settings(): return get_settings()
+def purchases_to_df(p=None): return supplier_payments_to_df(p)
