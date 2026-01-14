@@ -1,7 +1,9 @@
 {
- "projectId": "704afe63-0b4a-4050-803e-5116d1754a58",
- "createdAt": 1768381556029,
- "startupCommands": [
-   "python3 -m pip install streamlit pandas plotly openpyxl psycopg2-binary; python3 -m streamlit run Dashboard.py --server.port 8501 --server.address 0.0.0.0"
- ]
+  "projectId": "704afe63-0b4a-4050-803e-5116d1754a58",
+  "createdAt": 1768381556029,
+  "startupCommands": [
+    "python3 -m pip install streamlit pandas plotly openpyxl psycopg2-binary; python3 -m streamlit run Dashboard.py --server.port 8501 --server.address 0.0.0.0"
+  ],
+  "vercelProjectId": "prj_6pWqpT1CzjAFb3h2dAXPWHkG9VkK",
+  "deployedWithUserToken": false
 }
