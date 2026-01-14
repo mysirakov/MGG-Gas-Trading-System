@@ -4,6 +4,9 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -137,9 +140,10 @@ def get_or_create_supplier(cur, name):
     cur.execute('SELECT id FROM suppliers WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result['id']
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO suppliers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()['id']
+    result = cur.fetchone()
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_buyer(cur, name):
     if not name:
@@ -147,9 +151,10 @@ def get_or_create_buyer(cur, name):
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result['id']
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()['id']
+    result = cur.fetchone()
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_payment_method(cur, name):
     if not name:
@@ -157,9 +162,10 @@ def get_or_create_payment_method(cur, name):
     cur.execute('SELECT id FROM payment_methods WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result['id']
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO payment_methods (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()['id']
+    result = cur.fetchone()
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     if not invoice_number:
@@ -167,19 +173,20 @@ def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     cur.execute('SELECT id FROM invoices WHERE invoice_number = %s', (invoice_number,))
     result = cur.fetchone()
     if result:
-        return result['id']
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('''
         INSERT INTO invoices (invoice_number, supplier_id, total_amount) 
         VALUES (%s, %s, %s) RETURNING id
     ''', (invoice_number, supplier_id, total_amount or 0))
-    return cur.fetchone()['id']
+    result = cur.fetchone()
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def migrate_json_to_postgres():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     cur.execute('SELECT COUNT(*) FROM sales')
-    if cur.fetchone()[0] > 0:
+    if cur.fetchone()['count'] > 0:
         cur.close()
         conn.close()
         return "Data already migrated"
