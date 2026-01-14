@@ -1,5 +1,6 @@
 import streamlit as st
-import pandas as pd
+import csv
+import io
 from datetime import datetime, date
 from database import (
     get_sales, add_sale, update_sale, delete_sale, get_settings, sales_to_df
@@ -26,10 +27,10 @@ tab1, tab2, tab3 = st.tabs(["View Sales", "Add Sale", "Bulk Upload"])
 with tab1:
     df = sales_to_df(sales)
     
-    if not df.empty:
-        total_revenue = df['total_revenue'].sum()
-        total_margin = df['total_margin'].sum()
-        total_quantity = df['quantity_mwh'].sum()
+    if df:
+        total_revenue = sum(float(row.get('total_revenue', 0)) for row in df)
+        total_margin = sum(float(row.get('total_margin', 0)) for row in df)
+        total_quantity = sum(float(row.get('quantity_mwh', 0)) for row in df)
         avg_margin = total_margin / total_quantity if total_quantity > 0 else 0
         
         col1, col2, col3, col4 = st.columns(4)
@@ -47,30 +48,46 @@ with tab1:
         
         col1, col2 = st.columns(2)
         with col1:
-            if 'buyer' in df.columns:
-                filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].dropna().unique().tolist())
-            else:
-                filter_buyer = []
+            buyers_list = sorted(list(set(row.get('buyer') for row in df if row.get('buyer'))))
+            filter_buyer = st.multiselect("Filter by Buyer", options=buyers_list)
         
-        filtered_df = df.copy()
+        filtered_df = df
         if filter_buyer:
-            filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
+            filtered_df = [row for row in df if row.get('buyer') in filter_buyer]
         
         display_cols = ['contract_date', 'buyer', 'supplier', 'quantity_mwh', 'sales_price_eur_mwh', 
                        'purchase_price_eur_mwh', 'cost_capacity_eur_mwh', 'cost_transport_eur_mwh',
                        'cost_customs_eur_mwh', 'margin_eur_mwh', 'total_revenue', 'total_margin', 'amount_paid']
-        available_cols = [col for col in display_cols if col in filtered_df.columns]
         
-        display_filtered = filtered_df[available_cols].copy()
-        if 'contract_date' in display_filtered.columns:
-            display_filtered['contract_date'] = pd.to_datetime(display_filtered['contract_date']).dt.strftime('%b %d, %Y')
-        
+        display_filtered = []
+        for row in filtered_df:
+            new_row = {}
+            for col in display_cols:
+                if col in row:
+                    val = row[col]
+                    if col == 'contract_date' and val:
+                        if isinstance(val, str):
+                            try:
+                                val = datetime.strptime(val, '%Y-%m-%d').strftime('%b %d, %Y')
+                            except:
+                                pass
+                        elif hasattr(val, 'strftime'):
+                            val = val.strftime('%b %d, %Y')
+                    new_row[col] = val
+            display_filtered.append(new_row)
+            
         st.dataframe(display_filtered, width="stretch", hide_index=True, height=400)
         
         col1, col2 = st.columns([1, 4])
         with col1:
-            csv = filtered_df.to_csv(index=False)
-            st.download_button("Export", csv, "sales_export.csv", "text/csv")
+            output = io.StringIO()
+            if filtered_df:
+                writer = csv.DictWriter(output, fieldnames=filtered_df[0].keys())
+                writer.writeheader()
+                writer.writerows(filtered_df)
+            csv_data = output.getvalue()
+            st.download_button("Export", csv_data, "sales_export.csv", "text/csv")
+
         
         st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
         
@@ -108,8 +125,8 @@ with tab2:
         cost_customs = st.number_input("Cost of Customs (EUR/MWh)", min_value=0.0, step=0.01, key="single_customs", help="Customs expense per MWh")
     
     margin = sales_price - purchase_price - cost_capacity - cost_transport - cost_customs
-    total_revenue = sales_price * quantity_mwh
-    total_margin = margin * quantity_mwh
+    total_revenue_calc = sales_price * quantity_mwh
+    total_margin_calc = margin * quantity_mwh
     
     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
     
@@ -117,10 +134,10 @@ with tab2:
     with col1:
         metric_card("calculate", "Margin (EUR/MWh)", f"€{margin:,.2f}", "blue")
     with col2:
-        metric_card("attach_money", "Total Revenue", f"€{total_revenue:,.2f}", "green")
+        metric_card("attach_money", "Total Revenue", f"€{total_revenue_calc:,.2f}", "green")
     with col3:
-        color = "green" if total_margin >= 0 else "red"
-        metric_card("trending_up" if total_margin >= 0 else "trending_down", "Total Margin", f"€{total_margin:,.2f}", color)
+        color = "green" if total_margin_calc >= 0 else "red"
+        metric_card("trending_up" if total_margin_calc >= 0 else "trending_down", "Total Margin", f"€{total_margin_calc:,.2f}", color)
     
     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
     
@@ -146,53 +163,61 @@ with tab3:
         - `supplier` - Supplier name (optional, defaults to GPE)
         """)
         
-        sample_data = pd.DataFrame({
-            'contract_date': ['01/11/2024'],
-            'sales_price_eur_mwh': [40.00],
-            'quantity_mwh': [280],
-            'cost_capacity_eur_mwh': [0.50],
-            'cost_transport_eur_mwh': [0.30],
-            'cost_customs_eur_mwh': [0.10],
-            'purchase_price_eur_mwh': [35.50],
-            'buyer': ['Keler'],
-            'supplier': ['GPE']
-        })
+        sample_data = [
+            {
+                'contract_date': '01/11/2024',
+                'sales_price_eur_mwh': 40.00,
+                'quantity_mwh': 280,
+                'cost_capacity_eur_mwh': 0.50,
+                'cost_transport_eur_mwh': 0.30,
+                'cost_customs_eur_mwh': 0.10,
+                'purchase_price_eur_mwh': 35.50,
+                'buyer': 'Keler',
+                'supplier': 'GPE'
+            }
+        ]
         st.dataframe(sample_data)
         
-        csv = sample_data.to_csv(index=False)
-        st.download_button("Download Template CSV", csv, "sales_template.csv", "text/csv")
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=sample_data[0].keys())
+        writer.writeheader()
+        writer.writerows(sample_data)
+        csv_data = output.getvalue()
+        st.download_button("Download Template CSV", csv_data, "sales_template.csv", "text/csv")
     
-    uploaded_file = st.file_uploader("Upload Sales File", type=['csv', 'xlsx'], key="bulk_sales")
+    uploaded_file = st.file_uploader("Upload Sales File", type=['csv'], key="bulk_sales")
     
     if uploaded_file:
         try:
-            if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
+            content = uploaded_file.read().decode('utf-8')
+            reader = csv.DictReader(io.StringIO(content))
+            data = list(reader)
             
             st.markdown("##### Preview of Uploaded Data")
-            st.dataframe(df, width="stretch")
+            st.dataframe(data, width="stretch")
             
             if st.button("Import All Rows", type="primary", key="import_sales"):
                 count = 0
-                for _, row in df.iterrows():
-                    contract_date_str = str(row.get('contract_date', ''))
-                    try:
-                        contract_date = pd.to_datetime(contract_date_str, dayfirst=True).date()
-                    except:
-                        contract_date = date.today()
+                for row in data:
+                    contract_date_str = row.get('contract_date', '')
+                    contract_date = date.today()
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
+                        try:
+                            contract_date = datetime.strptime(contract_date_str, fmt).date()
+                            break
+                        except:
+                            continue
                     
                     add_sale(
                         contract_date,
                         str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
-                        float(row.get('quantity_mwh', 0)),
-                        float(row.get('sales_price_eur_mwh', 0)),
-                        float(row.get('purchase_price_eur_mwh', 0)),
-                        float(row.get('cost_capacity_eur_mwh', 0)),
-                        float(row.get('cost_transport_eur_mwh', 0)),
+                        float(row.get('quantity_mwh', 0) or 0),
+                        float(row.get('sales_price_eur_mwh', 0) or 0),
+                        float(row.get('purchase_price_eur_mwh', 0) or 0),
+                        float(row.get('cost_capacity_eur_mwh', 0) or 0),
+                        float(row.get('cost_transport_eur_mwh', 0) or 0),
                         str(row.get('supplier', settings['suppliers'][0] if settings['suppliers'] else 'GPE')),
-                        float(row.get('cost_customs_eur_mwh', 0))
+                        float(row.get('cost_customs_eur_mwh', 0) or 0)
                     )
                     count += 1
                 

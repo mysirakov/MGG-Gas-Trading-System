@@ -1,5 +1,6 @@
 import streamlit as st
-import pandas as pd
+import csv
+import io
 from datetime import datetime, date
 from database import (
     get_payments_received, add_payment_received, delete_payment, get_settings, get_sales,
@@ -53,34 +54,51 @@ tab1, tab2, tab3 = st.tabs(["View Payments", "Record Payment", "Bulk Upload"])
 with tab1:
     df = payments_to_df(payments)
 
-    if not df.empty:
+    if df:
         col1, col2 = st.columns(2)
         with col1:
-            if 'buyer' in df.columns:
-                filter_buyer = st.multiselect("Filter by Buyer", options=df['buyer'].dropna().unique().tolist())
-            else:
-                filter_buyer = []
+            buyers_list = sorted(list(set(row.get('buyer') for row in df if row.get('buyer'))))
+            filter_buyer = st.multiselect("Filter by Buyer", options=buyers_list)
 
-        filtered_df = df.copy()
+        filtered_df = df
         if filter_buyer:
-            filtered_df = filtered_df[filtered_df['buyer'].isin(filter_buyer)]
+            filtered_df = [row for row in df if row.get('buyer') in filter_buyer]
 
         display_cols = ['payment_date', 'buyer', 'amount_eur', 'allocated_amount', 'notes']
-        available_cols = [c for c in display_cols if c in filtered_df.columns]
         
-        display_filtered = filtered_df[available_cols].copy()
-        if 'payment_date' in display_filtered.columns:
-            display_filtered['payment_date'] = pd.to_datetime(display_filtered['payment_date']).dt.strftime('%b %d, %Y')
-        if 'allocated_amount' not in display_filtered.columns:
-            display_filtered['allocated_amount'] = display_filtered['amount_eur']
-        display_filtered['unallocated'] = display_filtered['amount_eur'] - display_filtered['allocated_amount']
-        
+        display_filtered = []
+        for row in filtered_df:
+            new_row = {}
+            for col in display_cols:
+                if col in row:
+                    val = row[col]
+                    if col == 'payment_date' and val:
+                        if isinstance(val, str):
+                            try:
+                                val = datetime.strptime(val, '%Y-%m-%d').strftime('%b %d, %Y')
+                            except:
+                                pass
+                        elif hasattr(val, 'strftime'):
+                            val = val.strftime('%b %d, %Y')
+                    new_row[col] = val
+            
+            # Add derived columns
+            amt = float(new_row.get('amount_eur', 0))
+            alloc = float(new_row.get('allocated_amount', amt))
+            new_row['unallocated'] = amt - alloc
+            display_filtered.append(new_row)
+            
         st.dataframe(display_filtered, width="stretch", hide_index=True, height=300)
 
         col1, col2 = st.columns([1, 4])
         with col1:
-            csv = filtered_df.to_csv(index=False)
-            st.download_button("Export", csv, "payments_export.csv", "text/csv")
+            output = io.StringIO()
+            if filtered_df:
+                writer = csv.DictWriter(output, fieldnames=filtered_df[0].keys())
+                writer.writeheader()
+                writer.writerows(filtered_df)
+            csv_data = output.getvalue()
+            st.download_button("Export", csv_data, "payments_export.csv", "text/csv")
 
         st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
         
@@ -131,10 +149,16 @@ with tab1:
 
         with col2:
             st.markdown("**Payment Summary by Buyer**")
-            if not payments_df.empty and 'buyer' in payments_df.columns:
-                buyer_summary = payments_df.groupby('buyer')['amount_eur'].sum().reset_index()
-                buyer_summary.columns = ['Buyer', 'Total Received (EUR)']
-                st.dataframe(buyer_summary, width="stretch", hide_index=True)
+            if payments_df:
+                buyer_sum = {}
+                for row in payments_df:
+                    b = row.get('buyer', 'Unknown')
+                    if b not in buyer_sum:
+                        buyer_sum[b] = 0.0
+                    buyer_sum[b] += float(row.get('amount_eur', 0))
+                
+                buyer_summary_data = [{'Buyer': b, 'Total Received (EUR)': amt} for b, amt in buyer_sum.items()]
+                st.dataframe(buyer_summary_data, width="stretch", hide_index=True)
             else:
                 st.info("No payment data yet")
 
@@ -240,42 +264,50 @@ with tab3:
         Payments will be automatically allocated to oldest outstanding sales first (FIFO).
         """)
 
-        sample_data = pd.DataFrame({
-            'payment_date': ['03/11/2024'],
-            'amount_eur': [11200],
-            'buyer': ['Keler'],
-            'notes': ['Settlement for Nov 1-2']
-        })
+        sample_data = [
+            {
+                'payment_date': '03/11/2024',
+                'amount_eur': 11200,
+                'buyer': 'Keler',
+                'notes': 'Settlement for Nov 1-2'
+            }
+        ]
         st.dataframe(sample_data)
 
-        csv = sample_data.to_csv(index=False)
-        st.download_button("Download Template CSV", csv, "payments_template.csv", "text/csv")
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=sample_data[0].keys())
+        writer.writeheader()
+        writer.writerows(sample_data)
+        csv_data = output.getvalue()
+        st.download_button("Download Template CSV", csv_data, "payments_template.csv", "text/csv")
 
-    uploaded_file = st.file_uploader("Upload Payments File", type=['csv', 'xlsx'], key="bulk_payments")
+    uploaded_file = st.file_uploader("Upload Payments File", type=['csv'], key="bulk_payments")
 
     if uploaded_file:
         try:
-            if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
+            content = uploaded_file.read().decode('utf-8')
+            reader = csv.DictReader(io.StringIO(content))
+            data = list(reader)
 
             st.markdown("##### Preview of Uploaded Data")
-            st.dataframe(df, width="stretch")
+            st.dataframe(data, width="stretch")
 
             if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
                 count = 0
-                for _, row in df.iterrows():
+                for row in data:
                     payment_date_str = str(row.get('payment_date', ''))
-                    try:
-                        payment_date = pd.to_datetime(payment_date_str, dayfirst=True).date()
-                    except:
-                        payment_date = date.today()
+                    payment_date = date.today()
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
+                        try:
+                            payment_date = datetime.strptime(payment_date_str, fmt).date()
+                            break
+                        except:
+                            continue
                     
                     add_payment_received(
                         payment_date,
                         str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
-                        float(row.get('amount_eur', 0)),
+                        float(row.get('amount_eur', 0) or 0),
                         str(row.get('notes', ''))
                     )
                     count += 1

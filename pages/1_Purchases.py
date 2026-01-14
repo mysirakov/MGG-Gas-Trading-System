@@ -1,5 +1,7 @@
 import streamlit as st
-import pandas as pd
+import csv
+import io
+from datetime import datetime
 from database import get_sales, sales_to_df
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
 
@@ -18,17 +20,17 @@ page_header("Purchases", "Daily Gas Purchase Details & History")
 sales = get_sales()
 sales_df = sales_to_df(sales)
 
-if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price_eur_mwh' in sales_df.columns:
-    valid_df = sales_df[
-        (sales_df['quantity_mwh'] > 0) &
-        (sales_df['purchase_price_eur_mwh'] > 0)
-    ].copy()
+if sales_df and any(row.get('quantity_mwh', 0) > 0 for row in sales_df):
+    valid_sales = [
+        row for row in sales_df 
+        if float(row.get('quantity_mwh', 0)) > 0 and float(row.get('purchase_price_eur_mwh', 0)) > 0
+    ]
 
-    if not valid_df.empty:
-        total_quantity = valid_df['quantity_mwh'].sum()
-        total_purchase_cost = (valid_df['quantity_mwh'] * valid_df['purchase_price_eur_mwh']).sum()
+    if valid_sales:
+        total_quantity = sum(float(row.get('quantity_mwh', 0)) for row in valid_sales)
+        total_purchase_cost = sum(float(row.get('quantity_mwh', 0)) * float(row.get('purchase_price_eur_mwh', 0)) for row in valid_sales)
         avg_purchase_price = total_purchase_cost / total_quantity if total_quantity > 0 else 0
-        num_transactions = len(valid_df)
+        num_transactions = len(valid_sales)
 
         col1, col2, col3 = st.columns(3)
         
@@ -43,10 +45,15 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
         
         col_btn1, col_btn2, col_spacer = st.columns([1, 1, 4])
         with col_btn1:
-            csv = valid_df.to_csv(index=False)
+            output = io.StringIO()
+            if valid_sales:
+                writer = csv.DictWriter(output, fieldnames=valid_sales[0].keys())
+                writer.writeheader()
+                writer.writerows(valid_sales)
+            csv_data = output.getvalue()
             st.download_button(
                 "Export",
-                csv,
+                csv_data,
                 "purchases.csv",
                 "text/csv",
                 key="export_btn"
@@ -54,26 +61,29 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
         
         st.markdown("</div>", unsafe_allow_html=True)
 
-        display_df = valid_df[['contract_date', 'supplier' if 'supplier' in valid_df.columns else 'buyer', 'quantity_mwh', 'purchase_price_eur_mwh', 'purchase_cost']].copy()
-        
-        if 'supplier' not in valid_df.columns:
-            display_df = valid_df[['contract_date', 'quantity_mwh', 'purchase_price_eur_mwh', 'purchase_cost']].copy()
-            display_df.columns = ['Date', 'Quantity (MWh)', 'Price per MWh', 'Total Cost']
-        else:
-            display_df.columns = ['Date', 'Supplier', 'Quantity (MWh)', 'Price per MWh', 'Total Cost']
-
-        if 'Date' in display_df.columns:
-            try:
-                display_df['Date'] = pd.to_datetime(display_df['Date']).dt.strftime('%b %d, %Y')
-            except:
-                pass
+        display_data = []
+        for row in valid_sales:
+            date_val = row.get('contract_date')
+            if isinstance(date_val, str):
+                try:
+                    date_val = datetime.strptime(date_val, '%Y-%m-%d').strftime('%b %d, %Y')
+                except:
+                    pass
+            elif hasattr(date_val, 'strftime'):
+                date_val = date_val.strftime('%b %d, %Y')
+                
+            display_row = {
+                'Date': date_val,
+                'Quantity (MWh)': f"{float(row.get('quantity_mwh', 0)):,.0f}",
+                'Price per MWh': f"€{float(row.get('purchase_price_eur_mwh', 0)):,.2f}",
+                'Total Cost': f"€{float(row.get('purchase_cost', 0)):,.0f}"
+            }
+            if 'supplier' in row:
+                display_row['Supplier'] = row['supplier']
+            display_data.append(display_row)
 
         st.dataframe(
-            display_df.style.format({
-                'Quantity (MWh)': '{:,.0f}',
-                'Price per MWh': '€{:,.2f}',
-                'Total Cost': '€{:,.0f}'
-            }),
+            display_data,
             width="stretch",
             hide_index=True,
             height=400
@@ -85,7 +95,7 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
         
         st.markdown(f"""
             <div class="summary-container">
-                <span>Showing 1-{min(len(display_df), 10)} of {len(display_df)} records</span>
+                <span>Showing 1-{min(len(display_data), 10)} of {len(display_data)} records</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -93,15 +103,23 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
 
         section_header("show_chart", "Purchase Price Trend")
 
-        chart_df = valid_df[['contract_date', 'purchase_price_eur_mwh']].copy()
+        chart_data = []
+        for row in valid_sales:
+            d = row.get('contract_date')
+            if isinstance(d, str):
+                try:
+                    d = datetime.strptime(d, '%Y-%m-%d').date()
+                except:
+                    pass
+            chart_data.append({
+                'contract_date': d,
+                'purchase_price_eur_mwh': float(row.get('purchase_price_eur_mwh', 0))
+            })
+        
         try:
-            chart_df['contract_date'] = pd.to_datetime(chart_df['contract_date'])
-            chart_df = chart_df.sort_values('contract_date').set_index('contract_date')
-
-            st.line_chart(chart_df['purchase_price_eur_mwh'], color="#3b82f6")
+            chart_data.sort(key=lambda x: x['contract_date'] if x['contract_date'] else datetime.min.date())
+            st.line_chart(chart_data, x='contract_date', y='purchase_price_eur_mwh', color="#3b82f6")
         except Exception as e:
             st.info("Unable to display price trend chart")
-    else:
-        empty_state("inventory_2", "No purchase data available")
 else:
     empty_state("inventory_2", "No purchase data available")

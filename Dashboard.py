@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+from datetime import datetime
 from database import (
     initialize_database_system, get_sales, get_supplier_payments, get_payments_received,
     get_dashboard_metrics, sales_to_df, payments_to_df, supplier_payments_to_df
@@ -73,26 +73,66 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("insights", "Performance Charts")
 
-if not sales_df.empty and 'contract_date' in sales_df.columns:
+if sales_df:
     col1, col2 = st.columns(2)
     
     with col1:
-        sales_df_chart = sales_df.copy()
-        sales_df_chart['contract_date'] = pd.to_datetime(sales_df_chart['contract_date'])
-        daily_metrics = sales_df_chart.groupby('contract_date').agg({
-            'total_revenue': 'sum',
-            'total_margin': 'sum'
-        }).rename(columns={'total_revenue': 'Revenue', 'total_margin': 'Profit'})
+        # Group by date for line chart
+        daily_metrics_dict = {}
+        for row in sales_df:
+            d = row['contract_date']
+            if isinstance(d, str):
+                try:
+                    d = datetime.strptime(d, '%Y-%m-%d').date()
+                except:
+                    pass
+            
+            if d not in daily_metrics_dict:
+                daily_metrics_dict[d] = {'Revenue': 0.0, 'Profit': 0.0}
+            daily_metrics_dict[d]['Revenue'] += float(row.get('total_revenue', 0))
+            daily_metrics_dict[d]['Profit'] += float(row.get('total_margin', 0))
+        
+        # Sort by date
+        sorted_dates = sorted(daily_metrics_dict.keys())
+        chart_data = []
+        for d in sorted_dates:
+            chart_data.append({
+                'date': d,
+                'Revenue': daily_metrics_dict[d]['Revenue'],
+                'Profit': daily_metrics_dict[d]['Profit']
+            })
         
         st.markdown("##### Revenue vs Profit Over Time")
-        st.line_chart(daily_metrics, y=['Revenue', 'Profit'], color=["#3b82f6", "#10b981"])
+        if chart_data:
+            st.line_chart(chart_data, x='date', y=['Revenue', 'Profit'], color=["#3b82f6", "#10b981"])
     
     with col2:
-        daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
-        daily_volume = daily_volume.set_index('contract_date')
+        # Group by date for bar chart
+        daily_volume_dict = {}
+        for row in sales_df:
+            d = row['contract_date']
+            if isinstance(d, str):
+                try:
+                    d = datetime.strptime(d, '%Y-%m-%d').date()
+                except:
+                    pass
+            
+            if d not in daily_volume_dict:
+                daily_volume_dict[d] = 0.0
+            daily_volume_dict[d] += float(row.get('quantity_mwh', 0))
         
+        # Sort by date
+        sorted_dates = sorted(daily_volume_dict.keys())
+        volume_data = []
+        for d in sorted_dates:
+            volume_data.append({
+                'date': d,
+                'quantity_mwh': daily_volume_dict[d]
+            })
+            
         st.markdown("##### Daily Trading Volume")
-        st.bar_chart(daily_volume['quantity_mwh'], color="#3b82f6")
+        if volume_data:
+            st.bar_chart(volume_data, x='date', y='quantity_mwh', color="#3b82f6")
 else:
     empty_state("insert_chart", "Add sales data to see performance charts")
 
@@ -105,24 +145,28 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("##### Cash Position")
-    cash_data = {
-        'Category': ['Payments to Suppliers', 'Payments Received', 'Net Cash Flow'],
-        'Amount': [f"€{total_sent:,.2f}", f"€{payments_received:,.2f}", f"€{payments_received - total_sent:,.2f}"]
-    }
-    st.dataframe(pd.DataFrame(cash_data), width="stretch", hide_index=True)
+    cash_data = [
+        {'Category': 'Payments to Suppliers', 'Amount': f"€{total_sent:,.2f}"},
+        {'Category': 'Payments Received', 'Amount': f"€{payments_received:,.2f}"},
+        {'Category': 'Net Cash Flow', 'Amount': f"€{payments_received - total_sent:,.2f}"}
+    ]
+    st.dataframe(cash_data, width="stretch", hide_index=True)
 
 with col2:
     st.markdown("##### P&L Summary")
-    if not sales_df.empty:
-        capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
-        transport_cost = (sales_df['cost_transport_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_transport_eur_mwh' in sales_df.columns else 0
+    if sales_df:
+        capacity_cost = sum(row.get('cost_capacity_eur_mwh', 0) * row.get('quantity_mwh', 0) for row in sales_df)
+        transport_cost = sum(row.get('cost_transport_eur_mwh', 0) * row.get('quantity_mwh', 0) for row in sales_df)
         purchase_cost = metrics['total_purchase_cost']
         
-        pnl_data = {
-            'Category': ['Gross Revenue', 'Purchase Costs', 'Capacity Costs', 'Transport Costs', 'Net Profit'],
-            'Amount': [f"€{total_revenue:,.2f}", f"-€{purchase_cost:,.2f}", f"-€{capacity_cost:,.2f}", f"-€{transport_cost:,.2f}", f"€{total_margin:,.2f}"]
-        }
-        st.dataframe(pd.DataFrame(pnl_data), width="stretch", hide_index=True)
+        pnl_data = [
+            {'Category': 'Gross Revenue', 'Amount': f"€{total_revenue:,.2f}"},
+            {'Category': 'Purchase Costs', 'Amount': f"-€{purchase_cost:,.2f}"},
+            {'Category': 'Capacity Costs', 'Amount': f"-€{capacity_cost:,.2f}"},
+            {'Category': 'Transport Costs', 'Amount': f"-€{transport_cost:,.2f}"},
+            {'Category': 'Net Profit', 'Amount': f"€{total_margin:,.2f}"}
+        ]
+        st.dataframe(pnl_data, width="stretch", hide_index=True)
     else:
         st.info("Add sales data to see P&L summary")
 

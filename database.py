@@ -3,7 +3,6 @@ import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
-import pandas as pd
 from dotenv import load_dotenv
 import streamlit as st
 
@@ -141,7 +140,7 @@ def init_database():
     conn.close()
 
 def parse_date(date_str):
-    if not date_str or pd.isna(date_str):
+    if not date_str or str(date_str).lower() == 'nan':
         return None
     if isinstance(date_str, str):
         for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']:
@@ -638,39 +637,63 @@ def sales_to_df(sales=None):
     if sales is None:
         sales = get_sales()
     if not sales:
-        return pd.DataFrame()
-    df = pd.DataFrame(sales)
+        return []
+    
     numeric_cols = ['quantity_mwh', 'sales_price_eur_mwh', 'purchase_price_eur_mwh', 
                    'cost_capacity_eur_mwh', 'cost_transport_eur_mwh', 'cost_customs_eur_mwh', 'margin_eur_mwh',
                    'total_revenue', 'total_margin', 'purchase_cost', 'amount_paid']
-    for col in numeric_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    return df
+    
+    for row in sales:
+        for col in numeric_cols:
+            if col in row:
+                try:
+                    val = row[col]
+                    if val is None or str(val).lower() == 'nan':
+                        row[col] = 0.0
+                    else:
+                        row[col] = float(val)
+                except (ValueError, TypeError):
+                    row[col] = 0.0
+    return sales
 
 def payments_to_df(payments=None):
     if payments is None:
         payments = get_payments_received()
     if not payments:
-        return pd.DataFrame()
-    df = pd.DataFrame(payments)
-    if 'amount_eur' in df.columns:
-        df['amount_eur'] = pd.to_numeric(df['amount_eur'], errors='coerce').fillna(0)
-    if 'allocated_amount' in df.columns:
-        df['allocated_amount'] = pd.to_numeric(df['allocated_amount'], errors='coerce').fillna(0)
-    return df
+        return []
+    
+    for row in payments:
+        if 'amount_eur' in row:
+            try:
+                row['amount_eur'] = float(row['amount_eur']) if row['amount_eur'] is not None else 0.0
+            except:
+                row['amount_eur'] = 0.0
+        if 'allocated_amount' in row:
+            try:
+                row['allocated_amount'] = float(row['allocated_amount']) if row['allocated_amount'] is not None else 0.0
+            except:
+                row['allocated_amount'] = 0.0
+    return payments
 
 def supplier_payments_to_df(payments=None):
     if payments is None:
         payments = get_supplier_payments()
     if not payments:
-        return pd.DataFrame()
-    df = pd.DataFrame(payments)
+        return []
+    
     numeric_cols = ['amount_sent_eur', 'amount_received_eur']
-    for col in numeric_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    return df
+    for row in payments:
+        for col in numeric_cols:
+            if col in row:
+                try:
+                    val = row[col]
+                    if val is None or str(val).lower() == 'nan':
+                        row[col] = 0.0
+                    else:
+                        row[col] = float(val)
+                except (ValueError, TypeError):
+                    row[col] = 0.0
+    return payments
 
 @st.cache_data
 def get_dashboard_metrics():
