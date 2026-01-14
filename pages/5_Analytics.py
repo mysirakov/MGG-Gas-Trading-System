@@ -1,8 +1,5 @@
-
 import streamlit as st
-import pandas as pd
-import altair as alt
-from datetime import datetime
+from datetime import date, datetime
 from database import (
     get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
     sales_to_df, payments_to_df, supplier_payments_to_df
@@ -26,9 +23,9 @@ purchases = get_supplier_payments()
 payments = get_payments_received()
 metrics = get_dashboard_metrics()
 
-purchases_df = supplier_payments_to_df(purchases)
-sales_df = sales_to_df(sales)
-payments_df = payments_to_df(payments)
+purchases_data = supplier_payments_to_df(purchases)
+sales_data = sales_to_df(sales)
+payments_data = payments_to_df(payments)
 
 total_revenue = metrics['total_revenue']
 total_margin = metrics['total_margin']
@@ -50,7 +47,7 @@ st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
 total_sent = metrics['total_sent_to_suppliers']
 supplier_balance = metrics['supplier_balance']
-payments_received = metrics['payments_received']
+payments_received_total = metrics['payments_received']
 outstanding = metrics['outstanding_receivables']
 
 col1, col2, col3, col4 = st.columns(4)
@@ -60,7 +57,7 @@ with col1:
 with col2:
     metric_card("savings", "Supplier Balance", f"€{supplier_balance:,.0f}", "blue")
 with col3:
-    metric_card("check_circle", "Payments Received", f"€{payments_received:,.0f}", "green")
+    metric_card("check_circle", "Payments Received", f"€{payments_received_total:,.0f}", "green")
 with col4:
     metric_card("receipt_long", "Outstanding", f"€{outstanding:,.0f}", "orange")
 
@@ -68,31 +65,53 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("show_chart", "Price Analysis")
 
-if not sales_df.empty:
-    if 'contract_date' in sales_df.columns:
-        sales_df_copy = sales_df.copy()
-        sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'])
-        sales_daily = sales_df_copy.groupby('contract_date').agg({
-            'sales_price_eur_mwh': 'mean',
-            'purchase_price_eur_mwh': 'mean',
-            'margin_eur_mwh': 'mean'
-        }).reset_index()
+if sales_data:
+    # Group by date for line chart
+    daily_prices = {}
+    for s in sales_data:
+        d = s.get('contract_date')
+        if not d: continue
+        if isinstance(d, str):
+            try: d = datetime.strptime(d, '%Y-%m-%d').date()
+            except: continue
+            
+        if d not in daily_prices:
+            daily_prices[d] = {'sales_price': [], 'purchase_price': [], 'margin': []}
+        
+        daily_prices[d]['sales_price'].append(float(s.get('sales_price_eur_mwh', 0) or 0))
+        daily_prices[d]['purchase_price'].append(float(s.get('purchase_price_eur_mwh', 0) or 0))
+        daily_prices[d]['margin'].append(float(s.get('margin_eur_mwh', 0) or 0))
 
-        col1, col2 = st.columns(2)
+    # Calculate means
+    chart_data = []
+    margin_data = []
+    sorted_dates = sorted(daily_prices.keys())
+    for d in sorted_dates:
+        s_price = sum(daily_prices[d]['sales_price']) / len(daily_prices[d]['sales_price'])
+        p_price = sum(daily_prices[d]['purchase_price']) / len(daily_prices[d]['purchase_price'])
+        m_price = sum(daily_prices[d]['margin']) / len(daily_prices[d]['margin'])
+        
+        chart_data.append({
+            'date': d,
+            'Sales Price': s_price,
+            'Purchase Price': p_price
+        })
+        margin_data.append({
+            'date': d,
+            'Margin': m_price
+        })
 
-        with col1:
-            sales_daily_chart = sales_daily.set_index('contract_date')[['sales_price_eur_mwh', 'purchase_price_eur_mwh']]
-            sales_daily_chart = sales_daily_chart.rename(columns={
-                'sales_price_eur_mwh': 'Sales Price',
-                'purchase_price_eur_mwh': 'Purchase Price'
-            })
-            st.markdown("##### Sales vs Purchase Price")
-            st.line_chart(sales_daily_chart, color=["#10b981", "#ef4444"])
+    col1, col2 = st.columns(2)
 
-        with col2:
-            st.markdown("##### Daily Margin per MWh")
-            margin_daily = sales_daily.set_index('contract_date')['margin_eur_mwh']
-            st.bar_chart(margin_daily, color="#10b981")
+    with col1:
+        st.markdown("##### Sales vs Purchase Price")
+        if chart_data:
+            st.line_chart(chart_data, x='date', y=['Sales Price', 'Purchase Price'], color=["#10b981", "#ef4444"])
+
+    with col2:
+        st.markdown("##### Daily Margin per MWh")
+        if margin_data:
+            st.bar_chart(margin_data, x='date', y='Margin', color="#10b981")
 else:
     empty_state("insert_chart", "Add sales data to see price analysis charts")
 
@@ -100,46 +119,35 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("account_balance", "P&L Summary")
 
-if not sales_df.empty:
+if sales_data:
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("##### Revenue Breakdown")
-        capacity_cost = (sales_df['cost_capacity_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_capacity_eur_mwh' in sales_df.columns else 0
-        transport_cost = (sales_df['cost_transport_eur_mwh'] * sales_df['quantity_mwh']).sum() if 'cost_transport_eur_mwh' in sales_df.columns else 0
+        capacity_cost = sum(float(s.get('cost_capacity_eur_mwh', 0) or 0) * float(s.get('quantity_mwh', 0) or 0) for s in sales_data)
+        transport_cost = sum(float(s.get('cost_transport_eur_mwh', 0) or 0) * float(s.get('quantity_mwh', 0) or 0) for s in sales_data)
         purchase_cost_total = metrics['total_purchase_cost']
 
-        pnl_data = {
-            'Category': ['Gross Revenue', 'Capacity Costs', 'Transport Costs', 'Purchase Costs', 'Net Profit'],
-            'Amount': [
-                f"€{total_revenue:,.2f}",
-                f"-€{capacity_cost:,.2f}",
-                f"-€{transport_cost:,.2f}",
-                f"-€{purchase_cost_total:,.2f}",
-                f"€{total_margin:,.2f}"
-            ]
-        }
-        st.dataframe(pd.DataFrame(pnl_data), width="stretch", hide_index=True)
+        pnl_display = [
+            {'Category': 'Gross Revenue', 'Amount': f"€{total_revenue:,.2f}"},
+            {'Category': 'Capacity Costs', 'Amount': f"-€{capacity_cost:,.2f}"},
+            {'Category': 'Transport Costs', 'Amount': f"-€{transport_cost:,.2f}"},
+            {'Category': 'Purchase Costs', 'Amount': f"-€{purchase_cost_total:,.2f}"},
+            {'Category': 'Net Profit', 'Amount': f"€{total_margin:,.2f}"}
+        ]
+        st.dataframe(pnl_display, width="stretch", hide_index=True)
 
     with col2:
         st.markdown("##### Cost Distribution")
         cost_values = [abs(purchase_cost_total), abs(capacity_cost), abs(transport_cost)]
         cost_labels = ['Purchase', 'Capacity', 'Transport']
-
+        
         if sum(cost_values) > 0:
-            cost_df = pd.DataFrame({
-                'Category': cost_labels,
-                'Amount': cost_values
-            })
+            distribution = []
+            for label, val in zip(cost_labels, cost_values):
+                distribution.append({'Cost Category': label, 'Amount': val})
             
-            pie_chart = alt.Chart(cost_df).mark_arc(innerRadius=50).encode(
-                theta=alt.Theta(field="Amount", type="quantitative"),
-                color=alt.Color(field="Category", type="nominal", 
-                               scale=alt.Scale(range=['#3b82f6', '#10b981', '#f59e0b'])),
-                tooltip=['Category', 'Amount']
-            ).properties(height=350)
-            
-            st.altair_chart(pie_chart, use_container_width=True)
+            st.bar_chart(distribution, x='Cost Category', y='Amount', color="#3b82f6")
 else:
     st.info("Add sales data to see P&L breakdown")
 
@@ -147,11 +155,19 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("bar_chart", "Trading Volume")
 
-if not sales_df.empty and 'contract_date' in sales_df.columns:
-    sales_df_copy = sales_df.copy()
-    sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'])
-    volume_daily = sales_df_copy.groupby('contract_date')['quantity_mwh'].sum()
-    st.bar_chart(volume_daily, color='#3b82f6')
+if sales_data:
+    volume_dict = {}
+    for s in sales_data:
+        d = s.get('contract_date')
+        if not d: continue
+        if isinstance(d, str):
+            try: d = datetime.strptime(d, '%Y-%m-%d').date()
+            except: continue
+        
+        volume_dict[d] = volume_dict.get(d, 0) + float(s.get('quantity_mwh', 0) or 0)
+    
+    volume_chart = [{'date': d, 'Quantity (MWh)': v} for d, v in sorted(volume_dict.items())]
+    st.bar_chart(volume_chart, x='date', y='Quantity (MWh)', color='#3b82f6')
 else:
     st.info("Add sales data to see volume charts")
 
@@ -163,21 +179,35 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("##### Cash Outflows (to Suppliers)")
-    if not purchases_df.empty and 'payment_date' in purchases_df.columns:
-        purchases_df_copy = purchases_df.copy()
-        purchases_df_copy['payment_date'] = pd.to_datetime(purchases_df_copy['payment_date'])
-        outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum()
-        st.bar_chart(outflow_daily, color='#ef4444')
+    if purchases_data:
+        outflow_dict = {}
+        for p in purchases_data:
+            d = p.get('payment_date')
+            if not d: continue
+            if isinstance(d, str):
+                try: d = datetime.strptime(d, '%Y-%m-%d').date()
+                except: continue
+            outflow_dict[d] = outflow_dict.get(d, 0) + float(p.get('amount_sent_eur', 0) or 0)
+        
+        outflow_chart = [{'date': d, 'Amount Sent': v} for d, v in sorted(outflow_dict.items())]
+        st.bar_chart(outflow_chart, x='date', y='Amount Sent', color='#ef4444')
     else:
         st.info("Add purchase data to see cash outflows")
 
 with col2:
     st.markdown("##### Cash Inflows (from Buyers)")
-    if not payments_df.empty and 'payment_date' in payments_df.columns:
-        payments_df_copy = payments_df.copy()
-        payments_df_copy['payment_date'] = pd.to_datetime(payments_df_copy['payment_date'])
-        inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum()
-        st.bar_chart(inflow_daily, color='#10b981')
+    if payments_data:
+        inflow_dict = {}
+        for p in payments_data:
+            d = p.get('payment_date')
+            if not d: continue
+            if isinstance(d, str):
+                try: d = datetime.strptime(d, '%Y-%m-%d').date()
+                except: continue
+            inflow_dict[d] = inflow_dict.get(d, 0) + float(p.get('amount_eur', 0) or 0)
+            
+        inflow_chart = [{'date': d, 'Amount Received': v} for d, v in sorted(inflow_dict.items())]
+        st.bar_chart(inflow_chart, x='date', y='Amount Received', color='#10b981')
     else:
         st.info("Add payment data to see cash inflows")
 
@@ -185,20 +215,38 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("table_chart", "Detailed Trading Summary")
 
-if not sales_df.empty:
-    sales_df_display = sales_df.copy()
-    if 'quantity_mwh' in sales_df_display.columns:
-        sales_df_display = sales_df_display[sales_df_display['quantity_mwh'] > 0]
-    if 'contract_date' in sales_df_display.columns:
-        sales_df_display['contract_date'] = pd.to_datetime(sales_df_display['contract_date']).dt.strftime('%b %d, %Y')
-
+if sales_data:
     display_cols = ['contract_date', 'buyer', 'quantity_mwh', 'sales_price_eur_mwh', 
                    'purchase_price_eur_mwh', 'margin_eur_mwh', 'total_margin', 'amount_paid']
-    available_cols = [col for col in display_cols if col in sales_df_display.columns]
+    
+    summary_display = []
+    for s in sales_data:
+        if float(s.get('quantity_mwh', 0) or 0) <= 0:
+            continue
+            
+        row = {}
+        for col in display_cols:
+            val = s.get(col)
+            if col == 'contract_date' and val:
+                if isinstance(val, (date, datetime)):
+                    row[col] = val.strftime('%b %d, %Y')
+                else:
+                    row[col] = str(val)
+            else:
+                row[col] = val
+        summary_display.append(row)
 
-    st.dataframe(sales_df_display[available_cols], width='stretch', hide_index=True, height=300)
+    st.dataframe(summary_display, width='stretch', hide_index=True, height=300)
 
-    csv = sales_df_display.to_csv(index=False)
-    st.download_button("Export Full Report", csv, "trading_report.csv", "text/csv")
+    # Simple CSV export
+    import io
+    import csv
+    output = io.StringIO()
+    if summary_display:
+        writer = csv.DictWriter(output, fieldnames=summary_display[0].keys())
+        writer.writeheader()
+        writer.writerows(summary_display)
+        csv_data = output.getvalue()
+        st.download_button("Export Full Report", csv_data, "trading_report.csv", "text/csv")
 else:
     st.info("No trading data available yet")

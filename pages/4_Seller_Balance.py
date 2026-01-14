@@ -1,6 +1,7 @@
 import streamlit as st
-import pandas as pd
-from datetime import date
+import csv
+import io
+from datetime import date, datetime
 from database import (
     get_supplier_payments, add_supplier_payment, delete_supplier_payment,
     get_sales, get_settings, get_invoices, get_dashboard_metrics,
@@ -26,8 +27,8 @@ sales = get_sales()
 invoices = get_invoices()
 metrics = get_dashboard_metrics()
 
-purchases_df = supplier_payments_to_df(purchases)
-sales_df = sales_to_df(sales)
+purchases_data = supplier_payments_to_df(purchases)
+sales_data = sales_to_df(sales)
 
 gpe_purchase_cost = metrics['gpe_purchase_cost']
 total_received_by_supplier = metrics['total_received_by_suppliers']
@@ -50,32 +51,27 @@ tab1, tab2, tab3, tab4 = st.tabs(["Balance Overview", "Add Payment", "Bulk Uploa
 with tab1:
     section_header("account_balance", "Balance Breakdown by Supplier")
     
-    if not purchases_df.empty and 'supplier' in purchases_df.columns:
-        suppliers = purchases_df['supplier'].dropna().unique().tolist()
+    if purchases_data:
+        # Get unique suppliers
+        suppliers = list(set(p['supplier'] for p in purchases_data if p.get('supplier')))
         
         balance_data = []
         supplier_costs = metrics.get('supplier_costs', {})
         
         for supplier in suppliers:
-            sup_purchases = purchases_df[purchases_df['supplier'] == supplier]
-            amount_received = sup_purchases['amount_received_eur'].sum()
+            sup_purchases = [p for p in purchases_data if p.get('supplier') == supplier]
+            amount_received = sum(float(p.get('amount_received_eur', 0) or 0) for p in sup_purchases)
             purchase_cost = supplier_costs.get(supplier, 0)
             
             balance_data.append({
                 'Supplier': supplier,
-                'Amount Received (EUR)': amount_received,
-                'Purchase Cost (EUR)': purchase_cost,
-                'Available Balance (EUR)': amount_received - purchase_cost
+                'Amount Received': f"€{amount_received:,.2f}",
+                'Purchase Cost': f"€{purchase_cost:,.2f}",
+                'Available Balance': f"€{amount_received - purchase_cost:,.2f}"
             })
         
-        balance_df = pd.DataFrame(balance_data)
-        
         st.dataframe(
-            balance_df.style.format({
-                'Amount Received (EUR)': '€{:,.2f}',
-                'Purchase Cost (EUR)': '€{:,.2f}',
-                'Available Balance (EUR)': '€{:,.2f}'
-            }),
+            balance_data,
             width="stretch",
             hide_index=True
         )
@@ -86,15 +82,26 @@ with tab1:
     
     section_header("history", "Payment History")
     
-    if not purchases_df.empty:
+    if purchases_data:
         display_cols = ['payment_date', 'supplier', 'payment_method', 'amount_sent_eur', 'amount_received_eur', 'invoice_number']
-        available_cols = [c for c in display_cols if c in purchases_df.columns]
         
-        display_df = purchases_df[available_cols].copy()
-        if 'payment_date' in display_df.columns:
-            display_df['payment_date'] = pd.to_datetime(display_df['payment_date']).dt.strftime('%b %d, %Y')
-        
-        st.dataframe(display_df, width="stretch", hide_index=True, height=300)
+        history_display = []
+        for p in purchases_data:
+            row = {}
+            for col in display_cols:
+                val = p.get(col)
+                if col == 'payment_date' and val:
+                    if isinstance(val, (date, datetime)):
+                        row[col] = val.strftime('%b %d, %Y')
+                    else:
+                        row[col] = str(val)
+                elif col in ['amount_sent_eur', 'amount_received_eur']:
+                    row[col] = f"€{float(val or 0):,.2f}"
+                else:
+                    row[col] = val
+            history_display.append(row)
+            
+        st.dataframe(history_display, width="stretch", hide_index=True, height=300)
         
         st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
         
@@ -154,54 +161,57 @@ with tab3:
         - `amount_received_eur` - Amount received by supplier in EUR
         """)
         
-        sample_data = pd.DataFrame({
-            'payment_date': ['01/11/2024'],
-            'supplier': ['GPE'],
-            'payment_method': ['Unicredit'],
-            'amount_sent_eur': [50000],
-            'invoice_number': ['INV-001'],
-            'receipt_date': ['03/11/2024'],
-            'amount_received_eur': [49985]
-        })
-        st.dataframe(sample_data)
+        sample_rows = [
+            ['payment_date', 'supplier', 'payment_method', 'amount_sent_eur', 'invoice_number', 'receipt_date', 'amount_received_eur'],
+            ['01/11/2024', 'GPE', 'Unicredit', 50000, 'INV-001', '03/11/2024', 49985]
+        ]
+        st.table(sample_rows)
         
-        csv = sample_data.to_csv(index=False)
-        st.download_button("Download Template CSV", csv, "payments_template.csv", "text/csv")
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerows(sample_rows)
+        csv_data = output.getvalue()
+        st.download_button("Download Template CSV", csv_data, "payments_template.csv", "text/csv")
     
-    uploaded_file = st.file_uploader("Upload Payments File", type=['csv', 'xlsx'], key="bulk_payments")
+    uploaded_file = st.file_uploader("Upload Payments File (CSV only)", type=['csv'], key="bulk_payments")
     
     if uploaded_file:
         try:
-            if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
+            content = uploaded_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(io.StringIO(content))
+            rows = list(csv_reader)
             
             st.markdown("##### Preview of Uploaded Data")
-            st.dataframe(df, width="stretch")
+            st.dataframe(rows, width="stretch")
             
             if st.button("Import All Rows", type="primary", key="import_payments"):
                 count = 0
-                for _, row in df.iterrows():
-                    payment_date_str = str(row.get('payment_date', ''))
-                    receipt_date_str = str(row.get('receipt_date', ''))
-                    try:
-                        payment_date = pd.to_datetime(payment_date_str, dayfirst=True).date()
-                    except:
-                        payment_date = date.today()
-                    try:
-                        receipt_date = pd.to_datetime(receipt_date_str, dayfirst=True).date()
-                    except:
-                        receipt_date = date.today()
+                for row in rows:
+                    payment_date_str = row.get('payment_date', '').strip()
+                    receipt_date_str = row.get('receipt_date', '').strip()
+                    
+                    # Parse dates
+                    def parse_custom_date(date_str):
+                        if not date_str:
+                            return date.today()
+                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
+                            try:
+                                return datetime.strptime(date_str, fmt).date()
+                            except ValueError:
+                                continue
+                        return date.today()
+
+                    p_date = parse_custom_date(payment_date_str)
+                    r_date = parse_custom_date(receipt_date_str)
                     
                     add_supplier_payment(
-                        payment_date,
+                        p_date,
                         str(row.get('supplier', settings.get('suppliers', ['GPE'])[0])),
                         str(row.get('payment_method', settings.get('payment_methods', ['Unicredit'])[0])),
-                        float(row.get('amount_sent_eur', 0)),
+                        float(row.get('amount_sent_eur', 0) or 0),
                         str(row.get('invoice_number', '')),
-                        receipt_date,
-                        float(row.get('amount_received_eur', 0))
+                        r_date,
+                        float(row.get('amount_received_eur', 0) or 0)
                     )
                     count += 1
                 
@@ -214,25 +224,30 @@ with tab4:
     section_header("receipt", "Invoice Tracking")
     
     if invoices:
-        inv_df = pd.DataFrame(invoices)
+        col1, col2, col3 = st.columns(3)
+        total_invoiced = sum(float(inv.get('total_amount', 0) or 0) for inv in invoices)
+        total_paid = sum(float(inv.get('paid_amount', 0) or 0) for inv in invoices)
+        total_remaining = total_invoiced - total_paid
         
-        if not inv_df.empty:
-            col1, col2, col3 = st.columns(3)
-            total_invoiced = inv_df['total_amount'].sum()
-            total_paid = inv_df['paid_amount'].sum()
-            total_remaining = total_invoiced - total_paid
+        with col1:
+            metric_card("description", "Total Invoiced", f"€{total_invoiced:,.0f}", "blue")
+        with col2:
+            metric_card("check_circle", "Total Paid", f"€{total_paid:,.0f}", "green")
+        with col3:
+            metric_card("pending", "Outstanding", f"€{max(0, total_remaining):,.0f}", "orange")
+        
+        st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+        
+        display_cols = ['invoice_number', 'supplier', 'total_amount', 'paid_amount', 'status']
+        inv_display = []
+        for inv in invoices:
+            row = {col: inv.get(col) for col in display_cols}
+            # Format numbers for display
+            row['total_amount'] = f"€{float(row['total_amount'] or 0):,.2f}"
+            row['paid_amount'] = f"€{float(row['paid_amount'] or 0):,.2f}"
+            inv_display.append(row)
             
-            with col1:
-                metric_card("description", "Total Invoiced", f"€{total_invoiced:,.0f}", "blue")
-            with col2:
-                metric_card("check_circle", "Total Paid", f"€{total_paid:,.0f}", "green")
-            with col3:
-                metric_card("pending", "Outstanding", f"€{max(0, total_remaining):,.0f}", "orange")
-            
-            st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
-            
-            display_cols = ['invoice_number', 'supplier', 'total_amount', 'paid_amount', 'status']
-            available_cols = [c for c in display_cols if c in inv_df.columns]
-            st.dataframe(inv_df[available_cols], width="stretch", hide_index=True)
+        st.dataframe(inv_display, width="stretch", hide_index=True)
     else:
         empty_state("receipt_long", "No invoices recorded yet. Invoices are created when you add payments with invoice numbers.")
+
