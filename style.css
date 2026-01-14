@@ -1,0 +1,553 @@
+/* ============================================
+   GLASS-MORPHISM DESIGN SYSTEM
+   Matching reference design exactly
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+
+/* ============= Root Variables ============= */
+:root {
+    --background-light: #f3f4f6;
+    --primary: #3b82f6;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+}
+
+/* ============= Base Styles ============= */
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* ============= Main App Container ============= */
+.stApp {
+    background: var(--background-light) !important;
+}
+
+/* Gradient orb backgrounds */
+.stApp::before {
+    content: '';
+    position: fixed;
+    top: -10%;
+    left: -10%;
+    width: 40%;
+    height: 40%;
+    background: rgba(96, 165, 250, 0.2);
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.stApp::after {
+    content: '';
+    position: fixed;
+    bottom: -10%;
+    right: -10%;
+    width: 40%;
+    height: 40%;
+    background: rgba(167, 139, 250, 0.15);
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.main .block-container {
+    padding: 2rem 2.5rem !important;
+    max-width: 1400px !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============= Sidebar Styling ============= */
+[data-testid="stSidebar"] {
+    background: var(--glass-bg) !important;
+    border-right: 1px solid var(--glass-border) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    background: transparent !important;
+    padding-top: 2rem !important;
+}
+
+[data-testid="stSidebarNav"] {
+    background: transparent !important;
+}
+
+[data-testid="stSidebarNav"] li {
+    margin: 0.25rem 0.5rem !important;
+}
+
+[data-testid="stSidebarNav"] a {
+    background: transparent !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+[data-testid="stSidebarNav"] a:hover {
+    background: rgba(255, 255, 255, 0.5) !important;
+    color: #1e293b !important;
+}
+
+[data-testid="stSidebarNav"] a[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    color: var(--primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ============= Page Headers ============= */
+.header-container {
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 2.25rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
+}
+
+.page-subtitle {
+    font-size: 1.1rem !important;
+    color: #64748b !important;
+    font-weight: 400 !important;
+    margin: 0.5rem 0 0 0 !important;
+}
+
+/* ============= Custom Metric Cards ============= */
+.metric-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: scale(1.01);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.metric-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.metric-icon.blue { background: #dbeafe; color: #2563eb; }
+.metric-icon.green { background: #d1fae5; color: #059669; }
+.metric-icon.orange { background: #fed7aa; color: #ea580c; }
+.metric-icon.purple { background: #e9d5ff; color: #9333ea; }
+.metric-icon.red { background: #fee2e2; color: #dc2626; }
+.metric-icon.teal { background: #ccfbf1; color: #0d9488; }
+
+.metric-icon .material-icons-round {
+    font-size: 28px;
+}
+
+.metric-content {
+    flex: 1;
+    min-width: 0; /* Prevents overflow */
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin: 0 !important;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+    margin: 0.25rem 0 0 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============= Info Cards ============= */
+.info-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    padding: 1.25rem;
+    backdrop-filter: blur(8px);
+    height: 100%;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.info-header .material-icons-round {
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.info-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.info-value {
+    margin: 0 !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.info-subtitle {
+    margin: 0.25rem 0 0 0 !important;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+/* ============= Empty State ============= */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #94a3b8;
+}
+
+.empty-state .material-icons-round {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 1rem 0 0 0 !important;
+    font-size: 1rem;
+}
+
+/* ============= Glass Panel Container ============= */
+.glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1.5rem;
+}
+
+/* ============= Native Streamlit Metrics Override ============= */
+div[data-testid="metric-container"] {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    padding: 1rem 1.5rem !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.2s ease !important;
+}
+
+div[data-testid="metric-container"]:hover {
+    transform: scale(1.01);
+}
+
+div[data-testid="metric-container"] label {
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+/* ============= Data Tables ============= */
+div[data-testid="stDataFrame"] {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    overflow: hidden !important;
+}
+
+/* ============= Plotly Charts ============= */
+.stPlotlyChart {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ============= Buttons ============= */
+.stButton > button {
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.6rem 1.25rem !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+    width: auto !important;
+}
+
+.stButton > button:hover {
+    background: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* ============= Section Headers ============= */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0 1rem 0;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.section-header .material-icons-round {
+    color: var(--primary);
+    font-size: 24px;
+}
+
+/* ============= Status Badges ============= */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.success { background: #dcfce7; color: #15803d; }
+.status-badge.warning { background: #fef3c7; color: #b45309; }
+.status-badge.error { background: #fee2e2; color: #dc2626; }
+
+.status-badge .material-icons-round {
+    font-size: 14px;
+}
+
+/* ============= List Item Cards ============= */
+.list-item-card {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.list-item-card:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.list-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.list-item-header .material-icons-round {
+    font-size: 18px;
+}
+
+.list-item-header.warning .material-icons-round { color: #f59e0b; }
+.list-item-header.primary .material-icons-round { color: #3b82f6; }
+.list-item-header.success .material-icons-round { color: #10b981; }
+
+.list-item-title {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.list-item-details {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+/* ============= Summary Blocks ============= */
+.summary-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+/* ============= RESPONSIVE DESIGN ============= */
+
+/* Tablet (Small Desktop) */
+@media screen and (max-width: 1024px) {
+    .main .block-container {
+        padding: 1.5rem 1.5rem !important;
+    }
+    
+    .metric-card {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Mobile */
+@media screen and (max-width: 768px) {
+    .main .block-container {
+        padding: 1rem 1rem !important;
+    }
+    
+    .page-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+        gap: 0.75rem;
+        /* Allow stacking if very small */
+    }
+    
+    .metric-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .metric-icon .material-icons-round {
+        font-size: 24px;
+    }
+    
+    .metric-value {
+        font-size: 1.15rem;
+        white-space: normal; /* Allow wrap on mobile if needed */
+        word-break: break-all;
+    }
+    
+    /* Force Streamlit columns to stack better on mobile */
+    div[data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    div[data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    
+    /* Charts need to be taller on mobile when stacked */
+    .stPlotlyChart {
+        height: 300px !important;
+        padding: 1rem !important;
+    }
+}
+
+/* Extra Small Devices */
+@media screen and (max-width: 480px) {
+    .metric-card {
+        flex-direction: row; /* Keep row but maybe stack internally */
+    }
+    
+    .metric-value {
+        font-size: 1.1rem;
+    }
+    
+    .stButton > button {
+        width: 100% !important;
+    }
+}
+
+/* ============= Mobile Nav Hint ============= */
+.mobile-nav-hint {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+@media screen and (max-width: 768px) {
+    .mobile-nav-hint {
+        display: flex;
+    }
+}
+
+/* ============= Sidebar Toggle Button Styling ============= */
+button[data-testid="stSidebarCollapseButton"] {
+    background: white !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    color: var(--primary) !important;
+    padding: 0.5rem !important;
+    margin: 1rem !important;
+    z-index: 999999 !important;
+}
+
+/* ============= Hide Streamlit Branding ============= */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header { visibility: visible !important; background: transparent !important; }
+[data-testid="stHeader"] { background: transparent !important; z-index: 999998 !important; }
+
+/* ============= Prevent Overflow ============= */
+.stApp, .main, .block-container {
+    overflow-x: hidden !important;
+}

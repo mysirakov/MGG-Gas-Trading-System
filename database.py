@@ -1,38 +1,18 @@
 import os
 import json
-import pg8000.dbapi
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
-from urllib.parse import urlparse
+import pandas as pd
 from dotenv import load_dotenv
+import streamlit as st
 
 load_dotenv()
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL environment variable is not set")
-    
-    result = urlparse(DATABASE_URL)
-    username = result.username
-    password = result.password
-    database = result.path[1:]
-    hostname = result.hostname
-    port = result.port or 5432
-    
-    return pg8000.dbapi.connect(
-        user=username,
-        password=password,
-        host=hostname,
-        port=port,
-        database=database
-    )
-
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
+    return psycopg2.connect(DATABASE_URL)
 
 def initialize_database_system():
     init_database()
@@ -96,9 +76,12 @@ def init_database():
         )
     ''')
     
+    # Ensure missing columns exist in case table was created with old schema
     try:
         cur.execute("ALTER TABLE sales ADD COLUMN IF NOT EXISTS supplier_id INTEGER REFERENCES suppliers(id)")
         cur.execute("ALTER TABLE sales ADD COLUMN IF NOT EXISTS cost_customs_eur_mwh DECIMAL(12,4) DEFAULT 0")
+        # Note: Generated columns cannot be easily altered to include new columns in their expression.
+        # But we'll leave it as is for now if they already exist.
     except:
         conn.rollback()
     
@@ -158,10 +141,8 @@ def init_database():
     conn.close()
 
 def parse_date(date_str):
-    if not date_str:
+    if not date_str or pd.isna(date_str):
         return None
-    if isinstance(date_str, datetime):
-        return date_str.date()
     if isinstance(date_str, str):
         for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']:
             try:
@@ -176,10 +157,10 @@ def get_or_create_supplier(cur, name):
     cur.execute('SELECT id FROM suppliers WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO suppliers (name) VALUES (%s) RETURNING id', (name,))
     result = cur.fetchone()
-    return result[0]
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_buyer(cur, name):
     if not name:
@@ -187,10 +168,10 @@ def get_or_create_buyer(cur, name):
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
     result = cur.fetchone()
-    return result[0]
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_payment_method(cur, name):
     if not name:
@@ -198,10 +179,10 @@ def get_or_create_payment_method(cur, name):
     cur.execute('SELECT id FROM payment_methods WHERE name = %s', (name,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('INSERT INTO payment_methods (name) VALUES (%s) RETURNING id', (name,))
     result = cur.fetchone()
-    return result[0]
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     if not invoice_number:
@@ -209,21 +190,20 @@ def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     cur.execute('SELECT id FROM invoices WHERE invoice_number = %s', (invoice_number,))
     result = cur.fetchone()
     if result:
-        return result[0]
+        return result[0] if isinstance(result, tuple) else result['id']
     cur.execute('''
         INSERT INTO invoices (invoice_number, supplier_id, total_amount) 
         VALUES (%s, %s, %s) RETURNING id
     ''', (invoice_number, supplier_id, total_amount or 0))
     result = cur.fetchone()
-    return result[0]
+    return result[0] if isinstance(result, tuple) else result['id']
 
 def migrate_json_to_postgres():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     cur.execute('SELECT COUNT(*) FROM sales')
-    count = cur.fetchone()[0]
-    if count > 0:
+    if cur.fetchone()['count'] > 0:
         cur.close()
         conn.close()
         return "Data already migrated"
@@ -271,7 +251,7 @@ def migrate_json_to_postgres():
             sale.get('cost_customs_eur_mwh', 0),
             sale.get('id')
         ))
-        new_id = cur.fetchone()[0]
+        new_id = cur.fetchone()['id']
         old_to_new_sale_ids[sale.get('id')] = new_id
     
     try:
@@ -310,7 +290,7 @@ def migrate_json_to_postgres():
     for payment in payments:
         buyer_id = get_or_create_buyer(cur, payment.get('buyer'))
         notes = payment.get('notes', '')
-        if notes == 'nan' or notes is None:
+        if notes == 'nan':
             notes = ''
         
         cur.execute('''
@@ -323,7 +303,7 @@ def migrate_json_to_postgres():
             notes,
             payment.get('id')
         ))
-        new_payment_id = cur.fetchone()[0]
+        new_payment_id = cur.fetchone()['id']
         
         for alloc in payment.get('allocations', []):
             old_sale_id = alloc.get('sale_id')
@@ -332,6 +312,7 @@ def migrate_json_to_postgres():
                 cur.execute('''
                     INSERT INTO payment_allocations (payment_id, sale_id, amount)
                     VALUES (%s, %s, %s)
+                    ON CONFLICT (payment_id, sale_id) DO UPDATE SET amount = payment_allocations.amount + EXCLUDED.amount
                 ''', (new_payment_id, new_sale_id, alloc.get('amount', 0)))
     
     conn.commit()
@@ -339,9 +320,10 @@ def migrate_json_to_postgres():
     conn.close()
     return "Migration complete"
 
+@st.cache_data
 def get_sales():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('''
         SELECT s.*, b.name as buyer, sup.name as supplier,
             COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as amount_paid
@@ -350,15 +332,17 @@ def get_sales():
         LEFT JOIN suppliers sup ON s.supplier_id = sup.id
         ORDER BY s.contract_date DESC
     ''')
-    rows = cur.fetchall()
-    sales = [dict_factory(cur, row) for row in rows]
+    sales = cur.fetchall()
     cur.close()
     conn.close()
-    return sales
+    return [dict(s) for s in sales]
+
+def clear_db_cache():
+    st.cache_data.clear()
 
 def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
     supplier_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
     cur.execute('''
@@ -367,15 +351,16 @@ def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_pric
             purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id, cost_customs_eur_mwh
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (contract_date, buyer_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_id, customs_cost))
-    sale_id = cur.fetchone()[0]
+    sale_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
     return sale_id
 
 def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
     supplier_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
     cur.execute('''
@@ -387,6 +372,7 @@ def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, p
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def delete_sale(sale_id):
     conn = get_db_connection()
@@ -395,10 +381,12 @@ def delete_sale(sale_id):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+@st.cache_data
 def get_payments_received():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('''
         SELECT p.*, b.name as buyer,
             COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE payment_id = p.id), 0) as allocated_amount
@@ -406,30 +394,30 @@ def get_payments_received():
         LEFT JOIN buyers b ON p.buyer_id = b.id
         ORDER BY p.payment_date DESC
     ''')
-    rows = cur.fetchall()
-    payments = [dict_factory(cur, row) for row in rows]
+    payments = cur.fetchall()
     cur.close()
     conn.close()
-    return payments
+    return [dict(p) for p in payments]
 
+@st.cache_data
 def get_payment_allocations(payment_id):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('''
         SELECT pa.*, s.contract_date, s.total_revenue
         FROM payment_allocations pa
         JOIN sales s ON pa.sale_id = s.id
         WHERE pa.payment_id = %s
     ''', (payment_id,))
-    rows = cur.fetchall()
-    allocations = [dict_factory(cur, row) for row in rows]
+    allocations = cur.fetchall()
     cur.close()
     conn.close()
-    return allocations
+    return [dict(a) for a in allocations]
 
+@st.cache_data
 def get_unpaid_sales(buyer_name=None):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     query = '''
         SELECT s.*, b.name as buyer,
             s.total_revenue - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as outstanding
@@ -443,22 +431,21 @@ def get_unpaid_sales(buyer_name=None):
         params.append(buyer_name)
     query += ' ORDER BY s.contract_date ASC'
     cur.execute(query, params)
-    rows = cur.fetchall()
-    sales = [dict_factory(cur, row) for row in rows]
+    sales = cur.fetchall()
     cur.close()
     conn.close()
-    return sales
+    return [dict(s) for s in sales]
 
 def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     buyer_id = get_or_create_buyer(cur, buyer_name)
     
     cur.execute('''
         INSERT INTO payments_received (payment_date, buyer_id, amount_eur, notes)
         VALUES (%s, %s, %s, %s) RETURNING id
     ''', (payment_date, buyer_id, amount_eur, notes))
-    payment_id = cur.fetchone()[0]
+    payment_id = cur.fetchone()['id']
     
     cur.execute('''
         SELECT s.id, s.total_revenue,
@@ -469,7 +456,7 @@ def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
         AND s.total_revenue > COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0)
         ORDER BY s.contract_date ASC
     ''', (buyer_name,))
-    unpaid_sales = [dict_factory(cur, r) for r in cur.fetchall()]
+    unpaid_sales = cur.fetchall()
     
     remaining = float(amount_eur)
     for sale in unpaid_sales:
@@ -487,6 +474,7 @@ def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
     return payment_id
 
 def delete_payment(payment_id):
@@ -496,10 +484,12 @@ def delete_payment(payment_id):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+@st.cache_data
 def get_supplier_payments():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('''
         SELECT sp.*, s.name as supplier, pm.name as payment_method, i.invoice_number
         FROM supplier_payments sp
@@ -508,15 +498,14 @@ def get_supplier_payments():
         LEFT JOIN invoices i ON sp.invoice_id = i.id
         ORDER BY sp.payment_date DESC
     ''')
-    rows = cur.fetchall()
-    payments = [dict_factory(cur, row) for row in rows]
+    payments = cur.fetchall()
     cur.close()
     conn.close()
-    return payments
+    return [dict(p) for p in payments]
 
 def add_supplier_payment(payment_date, supplier_name, payment_method_name, amount_sent, invoice_number, receipt_date=None, amount_received=None):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     supplier_id = get_or_create_supplier(cur, supplier_name)
     payment_method_id = get_or_create_payment_method(cur, payment_method_name)
     invoice_id = get_or_create_invoice(cur, invoice_number, supplier_id, amount_sent) if invoice_number else None
@@ -527,10 +516,11 @@ def add_supplier_payment(payment_date, supplier_name, payment_method_name, amoun
             invoice_id, receipt_date, amount_received_eur
         ) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (payment_date, supplier_id, payment_method_id, amount_sent, invoice_id, receipt_date, amount_received))
-    payment_id = cur.fetchone()[0]
+    payment_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
     return payment_id
 
 def delete_supplier_payment(payment_id):
@@ -540,10 +530,12 @@ def delete_supplier_payment(payment_id):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+@st.cache_data
 def get_invoices():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('''
         SELECT i.*, s.name as supplier,
             COALESCE((SELECT SUM(amount_sent_eur) FROM supplier_payments WHERE invoice_id = i.id), 0) as paid_amount
@@ -551,24 +543,24 @@ def get_invoices():
         LEFT JOIN suppliers s ON i.supplier_id = s.id
         ORDER BY i.created_at DESC
     ''')
-    rows = cur.fetchall()
-    invoices = [dict_factory(cur, row) for row in rows]
+    invoices = cur.fetchall()
     cur.close()
     conn.close()
-    return invoices
+    return [dict(i) for i in invoices]
 
+@st.cache_data
 def get_settings():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     cur.execute('SELECT name FROM suppliers ORDER BY name')
-    suppliers = [r[0] for r in cur.fetchall()]
+    suppliers = [r['name'] for r in cur.fetchall()]
     
     cur.execute('SELECT name FROM buyers ORDER BY name')
-    buyers = [r[0] for r in cur.fetchall()]
+    buyers = [r['name'] for r in cur.fetchall()]
     
     cur.execute('SELECT name FROM payment_methods ORDER BY name')
-    payment_methods = [r[0] for r in cur.fetchall()]
+    payment_methods = [r['name'] for r in cur.fetchall()]
     
     cur.close()
     conn.close()
@@ -585,7 +577,8 @@ def add_supplier(name):
     try:
         cur.execute('INSERT INTO suppliers (name) VALUES (%s)', (name,))
         conn.commit()
-    except:
+        clear_db_cache()
+    except psycopg2.errors.UniqueViolation:
         conn.rollback()
     cur.close()
     conn.close()
@@ -596,7 +589,8 @@ def add_buyer(name):
     try:
         cur.execute('INSERT INTO buyers (name) VALUES (%s)', (name,))
         conn.commit()
-    except:
+        clear_db_cache()
+    except psycopg2.errors.UniqueViolation:
         conn.rollback()
     cur.close()
     conn.close()
@@ -607,7 +601,8 @@ def add_payment_method(name):
     try:
         cur.execute('INSERT INTO payment_methods (name) VALUES (%s)', (name,))
         conn.commit()
-    except:
+        clear_db_cache()
+    except psycopg2.errors.UniqueViolation:
         conn.rollback()
     cur.close()
     conn.close()
@@ -619,6 +614,7 @@ def delete_supplier(name):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def delete_buyer(name):
     conn = get_db_connection()
@@ -627,6 +623,7 @@ def delete_buyer(name):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def delete_payment_method(name):
     conn = get_db_connection()
@@ -635,10 +632,50 @@ def delete_payment_method(name):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+def sales_to_df(sales=None):
+    if sales is None:
+        sales = get_sales()
+    if not sales:
+        return pd.DataFrame()
+    df = pd.DataFrame(sales)
+    numeric_cols = ['quantity_mwh', 'sales_price_eur_mwh', 'purchase_price_eur_mwh', 
+                   'cost_capacity_eur_mwh', 'cost_transport_eur_mwh', 'cost_customs_eur_mwh', 'margin_eur_mwh',
+                   'total_revenue', 'total_margin', 'purchase_cost', 'amount_paid']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    return df
+
+def payments_to_df(payments=None):
+    if payments is None:
+        payments = get_payments_received()
+    if not payments:
+        return pd.DataFrame()
+    df = pd.DataFrame(payments)
+    if 'amount_eur' in df.columns:
+        df['amount_eur'] = pd.to_numeric(df['amount_eur'], errors='coerce').fillna(0)
+    if 'allocated_amount' in df.columns:
+        df['allocated_amount'] = pd.to_numeric(df['allocated_amount'], errors='coerce').fillna(0)
+    return df
+
+def supplier_payments_to_df(payments=None):
+    if payments is None:
+        payments = get_supplier_payments()
+    if not payments:
+        return pd.DataFrame()
+    df = pd.DataFrame(payments)
+    numeric_cols = ['amount_sent_eur', 'amount_received_eur']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    return df
+
+@st.cache_data
 def get_dashboard_metrics():
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     cur.execute('''
         SELECT 
@@ -648,8 +685,9 @@ def get_dashboard_metrics():
             COALESCE(SUM(purchase_cost), 0) as total_purchase_cost 
         FROM sales
     ''')
-    sales_metrics = dict_factory(cur, cur.fetchone())
+    sales_metrics = cur.fetchone()
     
+    # Get metrics per supplier
     cur.execute('''
         SELECT 
             sup.name,
@@ -658,21 +696,25 @@ def get_dashboard_metrics():
         LEFT JOIN suppliers sup ON s.supplier_id = sup.id
         GROUP BY sup.name
     ''')
-    supplier_costs = {r[0] if r[0] else 'Unknown': float(r[1]) for r in cur.fetchall()}
+    supplier_costs = {r['name'] if r['name'] else 'Unknown': float(r['purchase_cost']) for r in cur.fetchall()}
     
     gpe_purchase_cost = supplier_costs.get('GPE', 0)
     keler_purchase_cost = supplier_costs.get('Keler', 0)
     
     cur.execute('SELECT COALESCE(SUM(amount_eur), 0) as total_received FROM payments_received')
-    payments_received = float(cur.fetchone()[0])
+    payments_received = cur.fetchone()['total_received']
     
     cur.execute('SELECT COALESCE(SUM(amount_sent_eur), 0) as total_sent, COALESCE(SUM(amount_received_eur), 0) as total_supplier_received FROM supplier_payments')
-    supplier_metrics = dict_factory(cur, cur.fetchone())
+    supplier_metrics = cur.fetchone()
     
     cur.execute('SELECT COALESCE(SUM(amount), 0) as total_allocated FROM payment_allocations')
-    total_allocated = float(cur.fetchone()[0])
+    total_allocated = cur.fetchone()['total_allocated']
     
+    # Calculate outstanding receivables (Total Revenue - Allocated - Keler Purchase Cost)
+    # This formula seems specific to the user's business logic
     outstanding = float(sales_metrics['total_revenue']) - float(total_allocated) - keler_purchase_cost
+    
+    # Calculate global supplier balance (Received by suppliers - GPE costs)
     supplier_balance = float(supplier_metrics['total_supplier_received']) - gpe_purchase_cost
     
     cur.close()
@@ -693,3 +735,21 @@ def get_dashboard_metrics():
         'outstanding_receivables': outstanding,
         'total_allocated': float(total_allocated)
     }
+
+def load_purchases():
+    return get_supplier_payments()
+
+def load_sales():
+    return get_sales()
+
+def load_payments_received():
+    return get_payments_received()
+
+def load_settings():
+    return get_settings()
+
+def purchases_to_df(purchases=None):
+    return supplier_payments_to_df(purchases)
+
+# Global initialization removed to avoid running on every import
+# initialize_database_system() should be called from the main app entry point
