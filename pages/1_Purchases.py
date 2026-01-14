@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from database import get_sales, sales_to_df
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
 
@@ -97,32 +96,9 @@ if not sales_df.empty and 'quantity_mwh' in sales_df.columns and 'purchase_price
         chart_df = valid_df[['contract_date', 'purchase_price_eur_mwh']].copy()
         try:
             chart_df['contract_date'] = pd.to_datetime(chart_df['contract_date'])
-            chart_df = chart_df.sort_values('contract_date')
+            chart_df = chart_df.sort_values('contract_date').set_index('contract_date')
 
-            fig = px.line(
-                chart_df, 
-                x='contract_date', 
-                y='purchase_price_eur_mwh',
-                labels={'contract_date': 'Date', 'purchase_price_eur_mwh': 'Price (EUR/MWh)'}
-            )
-            fig.update_traces(
-                mode='lines+markers',
-                line=dict(color='#3b82f6', width=3),
-                marker=dict(size=6)
-            )
-            fig.update_layout(
-                title=dict(text='Purchase Price Over Time', font=dict(size=16, color='#1e293b')),
-                height=350,
-                margin=dict(l=40, r=20, t=50, b=40),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter', size=12, color='#64748b'),
-                showlegend=False,
-                xaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-                yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-                autosize=True
-            )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            st.line_chart(chart_df['purchase_price_eur_mwh'], color="#3b82f6")
         except Exception as e:
             st.info("Unable to display price trend chart")
     else:

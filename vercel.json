@@ -5,16 +5,16 @@
       "src": "Dashboard.py",
       "use": "@vercel/python",
       "config": {
+        "runtime": "python3.9",
         "includeFiles": [
           "Dashboard.py",
           "components.py",
           "database.py",
-          "import_csv.py",
           "theme_manager.py",
           "style.css",
           "requirements.txt",
-          "pages/**",
-          ".streamlit/**"
+          "pages/*.py",
+          ".streamlit/config.toml"
         ],
         "excludeFiles": [
           "attached_assets/**",
@@ -22,8 +22,13 @@
           "temp_csv/**",
           ".git/**",
           "node_modules/**",
+          "import_csv.py",
           "uv.lock",
-          "pyproject.toml"
+          "pyproject.toml",
+          ".replit",
+          "replit.md",
+          "package.json",
+          "README.md"
         ]
       }
     }

@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from database import (
     initialize_database_system, get_sales, get_supplier_payments, get_payments_received,
     get_dashboard_metrics, sales_to_df, payments_to_df, supplier_payments_to_df
@@ -84,67 +82,17 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
         daily_metrics = sales_df_chart.groupby('contract_date').agg({
             'total_revenue': 'sum',
             'total_margin': 'sum'
-        }).reset_index()
+        }).rename(columns={'total_revenue': 'Revenue', 'total_margin': 'Profit'})
         
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=daily_metrics['contract_date'], 
-            y=daily_metrics['total_revenue'],
-            mode='lines+markers', 
-            name='Revenue', 
-            line=dict(color='#3b82f6', width=3),
-            marker=dict(size=6)
-        ))
-        fig.add_trace(go.Scatter(
-            x=daily_metrics['contract_date'], 
-            y=daily_metrics['total_margin'],
-            mode='lines+markers', 
-            name='Profit', 
-            line=dict(color='#10b981', width=3),
-            marker=dict(size=6)
-        ))
-        fig.update_layout(
-            title=dict(text='Revenue vs Profit Over Time', font=dict(size=16, color='#1e293b')),
-            xaxis_title='Date',
-            yaxis_title='Amount (EUR)',
-            hovermode='x unified',
-            height=350,
-            margin=dict(l=40, r=20, t=50, b=40),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12, color='#64748b'),
-            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-            xaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-            autosize=True
-        )
-        st.plotly_chart(fig)
+        st.markdown("##### Revenue vs Profit Over Time")
+        st.line_chart(daily_metrics, y=['Revenue', 'Profit'], color=["#3b82f6", "#10b981"])
     
     with col2:
         daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
+        daily_volume = daily_volume.set_index('contract_date')
         
-        fig = px.bar(
-            daily_volume, 
-            x='contract_date', 
-            y='quantity_mwh',
-            color_discrete_sequence=['#3b82f6']
-        )
-        fig.update_layout(
-            title=dict(text='Daily Trading Volume', font=dict(size=16, color='#1e293b')),
-            xaxis_title='Date',
-            yaxis_title='Volume (MWh)',
-            height=350,
-            margin=dict(l=40, r=20, t=50, b=40),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12, color='#64748b'),
-            showlegend=False,
-            xaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
-            autosize=True
-        )
-        fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig)
+        st.markdown("##### Daily Trading Volume")
+        st.bar_chart(daily_volume['quantity_mwh'], color="#3b82f6")
 else:
     empty_state("insert_chart", "Add sales data to see performance charts")
 

@@ -15,7 +15,11 @@ replit.md
 package.json
 .orchids
 .replit
-.streamlit/config.toml
+import_csv.py
+README.md
+LICENSE
+.vscode
+.idea
 __pycache__
 *.pyc
 *.pyo

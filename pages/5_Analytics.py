@@ -1,8 +1,7 @@
 
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import altair as alt
 from datetime import datetime
 from database import (
     get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
@@ -82,44 +81,18 @@ if not sales_df.empty:
         col1, col2 = st.columns(2)
 
         with col1:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['sales_price_eur_mwh'],
-                                    mode='lines+markers', name='Sales Price', line=dict(color='#10b981', width=3)))
-            fig.add_trace(go.Scatter(x=sales_daily['contract_date'], y=sales_daily['purchase_price_eur_mwh'],
-                                    mode='lines+markers', name='Purchase Price', line=dict(color='#ef4444', width=3)))
-            fig.update_layout(
-                title=dict(text='Sales vs Purchase Price', font=dict(size=16, color='#1e293b')),
-                xaxis_title='Date', yaxis_title='Price (EUR/MWh)',
-                hovermode='x unified',
-                height=400,
-                margin=dict(l=50, r=50, t=60, b=50),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter', size=12, color='#64748b'),
-                legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-                xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-                yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-            )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            sales_daily_chart = sales_daily.set_index('contract_date')[['sales_price_eur_mwh', 'purchase_price_eur_mwh']]
+            sales_daily_chart = sales_daily_chart.rename(columns={
+                'sales_price_eur_mwh': 'Sales Price',
+                'purchase_price_eur_mwh': 'Purchase Price'
+            })
+            st.markdown("##### Sales vs Purchase Price")
+            st.line_chart(sales_daily_chart, color=["#10b981", "#ef4444"])
 
         with col2:
-            fig = go.Figure()
-            colors = ['#10b981' if x >= 0 else '#ef4444' for x in sales_daily['margin_eur_mwh']]
-            fig.add_trace(go.Bar(x=sales_daily['contract_date'], y=sales_daily['margin_eur_mwh'],
-                                name='Margin', marker_color=colors))
-            fig.update_layout(
-                title=dict(text='Daily Margin per MWh', font=dict(size=16, color='#1e293b')),
-                xaxis_title='Date', yaxis_title='Margin (EUR/MWh)',
-                height=400,
-                margin=dict(l=50, r=50, t=60, b=50),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter', size=12, color='#64748b'),
-                xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-                yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-            )
-            fig.update_traces(marker_cornerradius=6)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            st.markdown("##### Daily Margin per MWh")
+            margin_daily = sales_daily.set_index('contract_date')['margin_eur_mwh']
+            st.bar_chart(margin_daily, color="#10b981")
 else:
     empty_state("insert_chart", "Add sales data to see price analysis charts")
 
@@ -154,16 +127,19 @@ if not sales_df.empty:
         cost_labels = ['Purchase', 'Capacity', 'Transport']
 
         if sum(cost_values) > 0:
-            fig = px.pie(values=cost_values, names=cost_labels, 
-                        color_discrete_sequence=['#3b82f6', '#10b981', '#f59e0b'])
-            fig.update_layout(
-                height=400, 
-                margin=dict(l=20, r=20, t=40, b=20),
-                paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter', size=12)
-            )
-            fig.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            cost_df = pd.DataFrame({
+                'Category': cost_labels,
+                'Amount': cost_values
+            })
+            
+            pie_chart = alt.Chart(cost_df).mark_arc(innerRadius=50).encode(
+                theta=alt.Theta(field="Amount", type="quantitative"),
+                color=alt.Color(field="Category", type="nominal", 
+                               scale=alt.Scale(range=['#3b82f6', '#10b981', '#f59e0b'])),
+                tooltip=['Category', 'Amount']
+            ).properties(height=350)
+            
+            st.altair_chart(pie_chart, use_container_width=True)
 else:
     st.info("Add sales data to see P&L breakdown")
 
@@ -174,28 +150,8 @@ section_header("bar_chart", "Trading Volume")
 if not sales_df.empty and 'contract_date' in sales_df.columns:
     sales_df_copy = sales_df.copy()
     sales_df_copy['contract_date'] = pd.to_datetime(sales_df_copy['contract_date'])
-    volume_daily = sales_df_copy.groupby('contract_date').agg({
-        'quantity_mwh': 'sum',
-        'total_revenue': 'sum',
-        'total_margin': 'sum'
-    }).reset_index()
-
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=volume_daily['contract_date'], y=volume_daily['quantity_mwh'],
-                        name='Volume (MWh)', marker_color='#3b82f6'))
-    fig.update_layout(
-        title=dict(text='Daily Trading Volume', font=dict(size=16, color='#1e293b')),
-        xaxis_title='Date', yaxis_title='Volume (MWh)',
-        height=400,
-        margin=dict(l=50, r=50, t=60, b=50),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12, color='#64748b'),
-        xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-        yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-    )
-    fig.update_traces(marker_cornerradius=6)
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    volume_daily = sales_df_copy.groupby('contract_date')['quantity_mwh'].sum()
+    st.bar_chart(volume_daily, color='#3b82f6')
 else:
     st.info("Add sales data to see volume charts")
 
@@ -210,23 +166,8 @@ with col1:
     if not purchases_df.empty and 'payment_date' in purchases_df.columns:
         purchases_df_copy = purchases_df.copy()
         purchases_df_copy['payment_date'] = pd.to_datetime(purchases_df_copy['payment_date'])
-        outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum().reset_index()
-
-        fig = px.bar(outflow_daily, x='payment_date', y='amount_sent_eur',
-                    color_discrete_sequence=['#ef4444'])
-        fig.update_layout(
-            xaxis_title='Date', yaxis_title='Amount (EUR)',
-            height=350,
-            margin=dict(l=50, r=50, t=40, b=50),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12, color='#64748b'),
-            showlegend=False,
-            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-        )
-        fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        outflow_daily = purchases_df_copy.groupby('payment_date')['amount_sent_eur'].sum()
+        st.bar_chart(outflow_daily, color='#ef4444')
     else:
         st.info("Add purchase data to see cash outflows")
 
@@ -235,23 +176,8 @@ with col2:
     if not payments_df.empty and 'payment_date' in payments_df.columns:
         payments_df_copy = payments_df.copy()
         payments_df_copy['payment_date'] = pd.to_datetime(payments_df_copy['payment_date'])
-        inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum().reset_index()
-
-        fig = px.bar(inflow_daily, x='payment_date', y='amount_eur',
-                    color_discrete_sequence=['#10b981'])
-        fig.update_layout(
-            xaxis_title='Date', yaxis_title='Amount (EUR)',
-            height=350,
-            margin=dict(l=50, r=50, t=40, b=50),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12, color='#64748b'),
-            showlegend=False,
-            xaxis=dict(gridcolor='rgba(148,163,184,0.1)'),
-            yaxis=dict(gridcolor='rgba(148,163,184,0.1)')
-        )
-        fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        inflow_daily = payments_df_copy.groupby('payment_date')['amount_eur'].sum()
+        st.bar_chart(inflow_daily, color='#10b981')
     else:
         st.info("Add payment data to see cash inflows")
 
