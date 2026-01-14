@@ -5,6 +5,7 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
+import streamlit as st
 
 load_dotenv()
 
@@ -12,6 +13,12 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
+
+@st.cache_resource
+def initialize_database_system():
+    init_database()
+    migrate_json_to_postgres()
+    return True
 
 def init_database():
     conn = get_db_connection()
@@ -314,6 +321,7 @@ def migrate_json_to_postgres():
     conn.close()
     return "Migration complete"
 
+@st.cache_data
 def get_sales():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -330,6 +338,9 @@ def get_sales():
     conn.close()
     return [dict(s) for s in sales]
 
+def clear_db_cache():
+    st.cache_data.clear()
+
 def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -345,6 +356,7 @@ def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_pric
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
     return sale_id
 
 def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
@@ -361,6 +373,7 @@ def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, p
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def delete_sale(sale_id):
     conn = get_db_connection()
@@ -369,7 +382,9 @@ def delete_sale(sale_id):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+@st.cache_data
 def get_payments_received():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -385,6 +400,7 @@ def get_payments_received():
     conn.close()
     return [dict(p) for p in payments]
 
+@st.cache_data
 def get_payment_allocations(payment_id):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -399,6 +415,7 @@ def get_payment_allocations(payment_id):
     conn.close()
     return [dict(a) for a in allocations]
 
+@st.cache_data
 def get_unpaid_sales(buyer_name=None):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -458,6 +475,7 @@ def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
     return payment_id
 
 def delete_payment(payment_id):
@@ -467,7 +485,9 @@ def delete_payment(payment_id):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+@st.cache_data
 def get_supplier_payments():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -501,6 +521,7 @@ def add_supplier_payment(payment_date, supplier_name, payment_method_name, amoun
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
     return payment_id
 
 def delete_supplier_payment(payment_id):
@@ -510,7 +531,9 @@ def delete_supplier_payment(payment_id):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
+@st.cache_data
 def get_invoices():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -526,6 +549,7 @@ def get_invoices():
     conn.close()
     return [dict(i) for i in invoices]
 
+@st.cache_data
 def get_settings():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -554,6 +578,7 @@ def add_supplier(name):
     try:
         cur.execute('INSERT INTO suppliers (name) VALUES (%s)', (name,))
         conn.commit()
+        clear_db_cache()
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
     cur.close()
@@ -565,6 +590,7 @@ def add_buyer(name):
     try:
         cur.execute('INSERT INTO buyers (name) VALUES (%s)', (name,))
         conn.commit()
+        clear_db_cache()
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
     cur.close()
@@ -576,6 +602,7 @@ def add_payment_method(name):
     try:
         cur.execute('INSERT INTO payment_methods (name) VALUES (%s)', (name,))
         conn.commit()
+        clear_db_cache()
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
     cur.close()
@@ -588,6 +615,7 @@ def delete_supplier(name):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def delete_buyer(name):
     conn = get_db_connection()
@@ -596,6 +624,7 @@ def delete_buyer(name):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def delete_payment_method(name):
     conn = get_db_connection()
@@ -604,6 +633,7 @@ def delete_payment_method(name):
     conn.commit()
     cur.close()
     conn.close()
+    clear_db_cache()
 
 def sales_to_df(sales=None):
     if sales is None:
@@ -643,6 +673,7 @@ def supplier_payments_to_df(payments=None):
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     return df
 
+@st.cache_data
 def get_dashboard_metrics():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -721,5 +752,5 @@ def load_settings():
 def purchases_to_df(purchases=None):
     return supplier_payments_to_df(purchases)
 
-init_database()
-migrate_json_to_postgres()
+# Global initialization removed to avoid running on every import
+# initialize_database_system() should be called from the main app entry point

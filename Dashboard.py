@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from database import (
-    get_sales, get_supplier_payments, get_payments_received,
+    initialize_database_system, get_sales, get_supplier_payments, get_payments_received,
     get_dashboard_metrics, sales_to_df, payments_to_df, supplier_payments_to_df
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
@@ -14,6 +14,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Initialize database system
+initialize_database_system()
 
 try:
     with open('style.css') as f:
@@ -115,7 +118,7 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
             yaxis=dict(gridcolor='rgba(148,163,184,0.1)', zerolinecolor='rgba(148,163,184,0.1)'),
             autosize=True
         )
-        st.plotly_chart(fig, config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
     
     with col2:
         daily_volume = sales_df_chart.groupby('contract_date')['quantity_mwh'].sum().reset_index()
@@ -141,7 +144,7 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
             autosize=True
         )
         fig.update_traces(marker_cornerradius=6)
-        st.plotly_chart(fig, config={'displayModeBar': False, 'responsive': True})
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'responsive': True})
 else:
     empty_state("insert_chart", "Add sales data to see performance charts")
 
