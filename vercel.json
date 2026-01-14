@@ -5,7 +5,17 @@
       "src": "Dashboard.py",
       "use": "@vercel/python",
       "config": {
-        "excludeFiles": "{attached_assets/**,.git/**,temp_csv/**,data/**,uv.lock,pyproject.toml}"
+        "includeFiles": [
+          "Dashboard.py",
+          "components.py",
+          "database.py",
+          "import_csv.py",
+          "theme_manager.py",
+          "style.css",
+          "requirements.txt",
+          "pages/**",
+          ".streamlit/**"
+        ]
       }
     }
   ],
