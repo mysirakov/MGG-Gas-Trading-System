@@ -28,7 +28,12 @@
           ".replit",
           "replit.md",
           "package.json",
-          "README.md"
+          "README.md",
+          "tests/**",
+          "docs/**",
+          "*.png",
+          "*.jpg",
+          "*.csv"
         ]
       }
     }
