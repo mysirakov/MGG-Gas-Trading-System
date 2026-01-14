@@ -10,6 +10,17 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
+@st.cache_resource
+def get_db_pool():
+    url = urlparse(DATABASE_URL)
+    return pg8000.connect(
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port or 5432,
+        database=url.path[1:]
+    )
+
 def get_db_connection():
     url = urlparse(DATABASE_URL)
     return pg8000.connect(
@@ -47,8 +58,10 @@ class DictCursor:
         return getattr(self.cur, name)
 
 def initialize_database_system():
-    init_database()
-    migrate_json_to_postgres()
+    if 'db_initialized' not in st.session_state:
+        init_database()
+        migrate_json_to_postgres()
+        st.session_state.db_initialized = True
     return True
 
 def init_database():
@@ -353,9 +366,9 @@ def migrate_json_to_postgres():
     conn.close()
     return "Migration complete"
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_sales():
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT s.*, b.name as buyer, sup.name as supplier,
@@ -367,7 +380,6 @@ def get_sales():
     ''')
     sales = cur.fetchall()
     cur.close()
-    conn.close()
     return [dict(s) for s in sales]
 
 def clear_db_cache():
@@ -417,9 +429,9 @@ def delete_sale(sale_id):
     conn.close()
     clear_db_cache()
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_payments_received():
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT p.*, b.name as buyer,
@@ -430,12 +442,11 @@ def get_payments_received():
     ''')
     payments = cur.fetchall()
     cur.close()
-    conn.close()
     return [dict(p) for p in payments]
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_payment_allocations(payment_id):
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT pa.*, s.contract_date, s.total_revenue
@@ -445,12 +456,11 @@ def get_payment_allocations(payment_id):
     ''', (payment_id,))
     allocations = cur.fetchall()
     cur.close()
-    conn.close()
     return [dict(a) for a in allocations]
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_unpaid_sales(buyer_name=None):
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     query = '''
         SELECT s.*, b.name as buyer,
@@ -467,7 +477,6 @@ def get_unpaid_sales(buyer_name=None):
     cur.execute(query, params)
     sales = cur.fetchall()
     cur.close()
-    conn.close()
     return [dict(s) for s in sales]
 
 def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
@@ -524,9 +533,9 @@ def delete_payment(payment_id):
     conn.close()
     clear_db_cache()
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_supplier_payments():
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT sp.*, s.name as supplier, pm.name as payment_method, i.invoice_number
@@ -538,7 +547,6 @@ def get_supplier_payments():
     ''')
     payments = cur.fetchall()
     cur.close()
-    conn.close()
     return [dict(p) for p in payments]
 
 def add_supplier_payment(payment_date, supplier_name, payment_method_name, amount_sent, invoice_number, receipt_date=None, amount_received=None):
@@ -571,9 +579,9 @@ def delete_supplier_payment(payment_id):
     conn.close()
     clear_db_cache()
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_invoices():
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     cur.execute('''
         SELECT i.*, s.name as supplier,
@@ -584,12 +592,11 @@ def get_invoices():
     ''')
     invoices = cur.fetchall()
     cur.close()
-    conn.close()
     return [dict(i) for i in invoices]
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_settings():
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     
     cur.execute('SELECT name FROM suppliers ORDER BY name')
@@ -602,7 +609,6 @@ def get_settings():
     payment_methods = [r['name'] for r in cur.fetchall()]
     
     cur.close()
-    conn.close()
     
     return {
         'suppliers': suppliers,
@@ -735,9 +741,9 @@ def supplier_payments_to_df(payments=None):
                     row[col] = 0.0
     return payments
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_dashboard_metrics():
-    conn = get_db_connection()
+    conn = get_db_pool()
     cur = DictCursor(conn)
     
     cur.execute('''
@@ -778,7 +784,6 @@ def get_dashboard_metrics():
     supplier_balance = float(supplier_metrics['total_supplier_received']) - gpe_purchase_cost
     
     cur.close()
-    conn.close()
     
     return {
         'total_revenue': float(sales_metrics['total_revenue']),
