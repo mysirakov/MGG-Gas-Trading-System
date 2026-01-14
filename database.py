@@ -230,7 +230,7 @@ def migrate_json_to_postgres():
             sale.get('cost_transport_eur_mwh', 0),
             sale.get('id')
         ))
-        new_id = cur.fetchone()[0]
+        new_id = cur.fetchone()['id']
         old_to_new_sale_ids[sale.get('id')] = new_id
     
     try:
@@ -282,7 +282,7 @@ def migrate_json_to_postgres():
             notes,
             payment.get('id')
         ))
-        new_payment_id = cur.fetchone()[0]
+        new_payment_id = cur.fetchone()['id']
         
         for alloc in payment.get('allocations', []):
             old_sale_id = alloc.get('sale_id')
