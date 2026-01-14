@@ -142,8 +142,8 @@ if not sales_df.empty and 'contract_date' in sales_df.columns:
         )
         fig.update_traces(marker_cornerradius=6)
         st.plotly_chart(fig, config={'displayModeBar': False, 'responsive': True})
-    else:
-        empty_state("insert_chart", "Add sales data to see performance charts")
+else:
+    empty_state("insert_chart", "Add sales data to see performance charts")
 
 
 st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
