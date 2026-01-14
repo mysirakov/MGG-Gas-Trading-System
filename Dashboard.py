@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 from datetime import datetime
 from database import (
     initialize_database_system, get_sales, get_supplier_payments, get_payments_received,
@@ -88,10 +87,16 @@ if sales:
                 except:
                     pass
             
-            if d not in daily_metrics_dict:
-                daily_metrics_dict[d] = {'Revenue': 0.0, 'Profit': 0.0}
-            daily_metrics_dict[d]['Revenue'] += float(row.get('total_revenue', 0))
-            daily_metrics_dict[d]['Profit'] += float(row.get('total_margin', 0))
+            # Format date for Vega-Lite
+            if hasattr(d, 'isoformat'):
+                d_str = d.isoformat()
+            else:
+                d_str = str(d)
+
+            if d_str not in daily_metrics_dict:
+                daily_metrics_dict[d_str] = {'Revenue': 0.0, 'Profit': 0.0}
+            daily_metrics_dict[d_str]['Revenue'] += float(row.get('total_revenue', 0))
+            daily_metrics_dict[d_str]['Profit'] += float(row.get('total_margin', 0))
         
         # Sort by date
         sorted_dates = sorted(daily_metrics_dict.keys())
@@ -99,15 +104,27 @@ if sales:
         for d in sorted_dates:
             chart_data.append({
                 'date': d,
-                'Revenue': daily_metrics_dict[d]['Revenue'],
-                'Profit': daily_metrics_dict[d]['Profit']
+                'Value': daily_metrics_dict[d]['Revenue'],
+                'Type': 'Revenue'
+            })
+            chart_data.append({
+                'date': d,
+                'Value': daily_metrics_dict[d]['Profit'],
+                'Type': 'Profit'
             })
         
         st.markdown("##### Revenue vs Profit Over Time")
         if chart_data:
-            df_chart = pd.DataFrame(chart_data)
-            df_chart.set_index('date', inplace=True)
-            st.line_chart(df_chart)
+            st.vega_lite_chart(chart_data, {
+                'mark': {'type': 'line', 'point': True},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Value', 'type': 'quantitative', 'title': 'Amount (€)'},
+                    'color': {'field': 'Type', 'type': 'nominal', 'scale': {'range': ['#1E88E5', '#43A047']}}
+                },
+                'width': 'container',
+                'height': 300
+            })
     
     with col2:
         # Group by date for bar chart
@@ -120,9 +137,14 @@ if sales:
                 except:
                     pass
             
-            if d not in daily_volume_dict:
-                daily_volume_dict[d] = 0.0
-            daily_volume_dict[d] += float(row.get('quantity_mwh', 0))
+            if hasattr(d, 'isoformat'):
+                d_str = d.isoformat()
+            else:
+                d_str = str(d)
+
+            if d_str not in daily_volume_dict:
+                daily_volume_dict[d_str] = 0.0
+            daily_volume_dict[d_str] += float(row.get('quantity_mwh', 0))
         
         # Sort by date
         sorted_dates = sorted(daily_volume_dict.keys())
@@ -130,14 +152,20 @@ if sales:
         for d in sorted_dates:
             volume_data.append({
                 'date': d,
-                'quantity_mwh': daily_volume_dict[d]
+                'Quantity': daily_volume_dict[d]
             })
             
         st.markdown("##### Daily Trading Volume")
         if volume_data:
-            df_vol = pd.DataFrame(volume_data)
-            df_vol.set_index('date', inplace=True)
-            st.bar_chart(df_vol)
+            st.vega_lite_chart(volume_data, {
+                'mark': {'type': 'bar', 'color': '#FB8C00'},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Quantity', 'type': 'quantitative', 'title': 'MWh'}
+                },
+                'width': 'container',
+                'height': 300
+            })
 else:
     empty_state("insert_chart", "Add sales data to see performance charts")
 

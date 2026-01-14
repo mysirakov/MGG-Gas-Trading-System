@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import csv
 import io
 from datetime import datetime
@@ -111,19 +110,32 @@ if sales_df and any(row.get('quantity_mwh', 0) > 0 for row in sales_df):
                     d = datetime.strptime(d, '%Y-%m-%d').date()
                 except:
                     pass
+            
+            # Format date for Vega-Lite
+            if hasattr(d, 'isoformat'):
+                d_str = d.isoformat()
+            else:
+                d_str = str(d)
+
             chart_data.append({
-                'contract_date': d,
-                'purchase_price_eur_mwh': float(row.get('purchase_price_eur_mwh', 0))
+                'date': d_str,
+                'Price': float(row.get('purchase_price_eur_mwh', 0))
             })
         
         try:
-            chart_data.sort(key=lambda x: x['contract_date'] if x['contract_date'] else datetime.min.date())
-            df_chart = pd.DataFrame(chart_data)
-            df_chart.set_index('contract_date', inplace=True)
-            st.line_chart(df_chart)
+            # Sort by date
+            chart_data.sort(key=lambda x: x['date'])
+            
+            st.vega_lite_chart(chart_data, {
+                'mark': {'type': 'line', 'point': True, 'color': '#1E88E5'},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Price', 'type': 'quantitative', 'title': 'Price (€/MWh)'}
+                },
+                'width': 'container',
+                'height': 300
+            })
         except Exception as e:
             st.info("Unable to display price trend chart")
-else:
-    empty_state("inventory_2", "No purchase data available")
 else:
     empty_state("inventory_2", "No purchase data available")

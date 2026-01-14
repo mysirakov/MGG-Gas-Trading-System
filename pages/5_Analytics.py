@@ -1,5 +1,6 @@
 import streamlit as st
-import pandas as pd
+import io
+import csv
 from datetime import date, datetime
 from database import (
     get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics,
@@ -75,13 +76,19 @@ if sales_data:
         if isinstance(d, str):
             try: d = datetime.strptime(d, '%Y-%m-%d').date()
             except: continue
-            
-        if d not in daily_prices:
-            daily_prices[d] = {'sales_price': [], 'purchase_price': [], 'margin': []}
         
-        daily_prices[d]['sales_price'].append(float(s.get('sales_price_eur_mwh', 0) or 0))
-        daily_prices[d]['purchase_price'].append(float(s.get('purchase_price_eur_mwh', 0) or 0))
-        daily_prices[d]['margin'].append(float(s.get('margin_eur_mwh', 0) or 0))
+        # Format date for Vega-Lite
+        if hasattr(d, 'isoformat'):
+            d_str = d.isoformat()
+        else:
+            d_str = str(d)
+            
+        if d_str not in daily_prices:
+            daily_prices[d_str] = {'sales_price': [], 'purchase_price': [], 'margin': []}
+        
+        daily_prices[d_str]['sales_price'].append(float(s.get('sales_price_eur_mwh', 0) or 0))
+        daily_prices[d_str]['purchase_price'].append(float(s.get('purchase_price_eur_mwh', 0) or 0))
+        daily_prices[d_str]['margin'].append(float(s.get('margin_eur_mwh', 0) or 0))
 
     # Calculate means
     chart_data = []
@@ -92,31 +99,38 @@ if sales_data:
         p_price = sum(daily_prices[d]['purchase_price']) / len(daily_prices[d]['purchase_price'])
         m_price = sum(daily_prices[d]['margin']) / len(daily_prices[d]['margin'])
         
-        chart_data.append({
-            'date': d,
-            'Sales Price': s_price,
-            'Purchase Price': p_price
-        })
-        margin_data.append({
-            'date': d,
-            'Margin': m_price
-        })
+        chart_data.append({'date': d, 'Price': s_price, 'Type': 'Sales Price'})
+        chart_data.append({'date': d, 'Price': p_price, 'Type': 'Purchase Price'})
+        margin_data.append({'date': d, 'Margin': m_price})
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("##### Sales vs Purchase Price")
         if chart_data:
-            df_chart = pd.DataFrame(chart_data)
-            df_chart.set_index('date', inplace=True)
-            st.line_chart(df_chart)
+            st.vega_lite_chart(chart_data, {
+                'mark': {'type': 'line', 'point': True},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Price', 'type': 'quantitative', 'title': 'Price (€/MWh)'},
+                    'color': {'field': 'Type', 'type': 'nominal'}
+                },
+                'width': 'container',
+                'height': 300
+            })
 
     with col2:
         st.markdown("##### Daily Margin per MWh")
         if margin_data:
-            df_margin = pd.DataFrame(margin_data)
-            df_margin.set_index('date', inplace=True)
-            st.bar_chart(df_margin)
+            st.vega_lite_chart(margin_data, {
+                'mark': {'type': 'bar', 'color': '#43A047'},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Margin', 'type': 'quantitative', 'title': 'Margin (€/MWh)'}
+                },
+                'width': 'container',
+                'height': 300
+            })
 else:
     empty_state("insert_chart", "Add sales data to see price analysis charts")
 
@@ -150,11 +164,17 @@ if sales_data:
         if sum(cost_values) > 0:
             distribution = []
             for label, val in zip(cost_labels, cost_values):
-                distribution.append({'Cost Category': label, 'Amount': val})
+                distribution.append({'Category': label, 'Amount': val})
             
-            df_dist = pd.DataFrame(distribution)
-            df_dist.set_index('Cost Category', inplace=True)
-            st.bar_chart(df_dist)
+            st.vega_lite_chart(distribution, {
+                'mark': {'type': 'bar', 'color': '#FB8C00'},
+                'encoding': {
+                    'x': {'field': 'Category', 'type': 'nominal', 'title': 'Cost Category'},
+                    'y': {'field': 'Amount', 'type': 'quantitative', 'title': 'Amount (€)'}
+                },
+                'width': 'container',
+                'height': 300
+            })
 else:
     st.info("Add sales data to see P&L breakdown")
 
@@ -171,12 +191,24 @@ if sales_data:
             try: d = datetime.strptime(d, '%Y-%m-%d').date()
             except: continue
         
-        volume_dict[d] = volume_dict.get(d, 0) + float(s.get('quantity_mwh', 0) or 0)
+        if hasattr(d, 'isoformat'):
+            d_str = d.isoformat()
+        else:
+            d_str = str(d)
+        
+        volume_dict[d_str] = volume_dict.get(d_str, 0) + float(s.get('quantity_mwh', 0) or 0)
     
-    volume_chart = [{'date': d, 'Quantity (MWh)': v} for d, v in sorted(volume_dict.items())]
-    df_vol = pd.DataFrame(volume_chart)
-    df_vol.set_index('date', inplace=True)
-    st.bar_chart(df_vol)
+    volume_chart = [{'date': d, 'Quantity': v} for d, v in sorted(volume_dict.items())]
+    if volume_chart:
+        st.vega_lite_chart(volume_chart, {
+            'mark': {'type': 'bar', 'color': '#1E88E5'},
+            'encoding': {
+                'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                'y': {'field': 'Quantity', 'type': 'quantitative', 'title': 'MWh'}
+            },
+            'width': 'container',
+            'height': 300
+        })
 else:
     st.info("Add sales data to see volume charts")
 
@@ -196,12 +228,25 @@ with col1:
             if isinstance(d, str):
                 try: d = datetime.strptime(d, '%Y-%m-%d').date()
                 except: continue
-            outflow_dict[d] = outflow_dict.get(d, 0) + float(p.get('amount_sent_eur', 0) or 0)
+            
+            if hasattr(d, 'isoformat'):
+                d_str = d.isoformat()
+            else:
+                d_str = str(d)
+                
+            outflow_dict[d_str] = outflow_dict.get(d_str, 0) + float(p.get('amount_sent_eur', 0) or 0)
         
-        outflow_chart = [{'date': d, 'Amount Sent': v} for d, v in sorted(outflow_dict.items())]
-        df_out = pd.DataFrame(outflow_chart)
-        df_out.set_index('date', inplace=True)
-        st.bar_chart(df_out)
+        outflow_chart = [{'date': d, 'Amount': v} for d, v in sorted(outflow_dict.items())]
+        if outflow_chart:
+            st.vega_lite_chart(outflow_chart, {
+                'mark': {'type': 'bar', 'color': '#E53935'},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Amount', 'type': 'quantitative', 'title': 'Amount (€)'}
+                },
+                'width': 'container',
+                'height': 300
+            })
     else:
         st.info("Add purchase data to see cash outflows")
 
@@ -215,12 +260,25 @@ with col2:
             if isinstance(d, str):
                 try: d = datetime.strptime(d, '%Y-%m-%d').date()
                 except: continue
-            inflow_dict[d] = inflow_dict.get(d, 0) + float(p.get('amount_eur', 0) or 0)
             
-        inflow_chart = [{'date': d, 'Amount Received': v} for d, v in sorted(inflow_dict.items())]
-        df_in = pd.DataFrame(inflow_chart)
-        df_in.set_index('date', inplace=True)
-        st.bar_chart(df_in)
+            if hasattr(d, 'isoformat'):
+                d_str = d.isoformat()
+            else:
+                d_str = str(d)
+                
+            inflow_dict[d_str] = inflow_dict.get(d_str, 0) + float(p.get('amount_eur', 0) or 0)
+            
+        inflow_chart = [{'date': d, 'Amount': v} for d, v in sorted(inflow_dict.items())]
+        if inflow_chart:
+            st.vega_lite_chart(inflow_chart, {
+                'mark': {'type': 'bar', 'color': '#43A047'},
+                'encoding': {
+                    'x': {'field': 'date', 'type': 'temporal', 'title': 'Date'},
+                    'y': {'field': 'Amount', 'type': 'quantitative', 'title': 'Amount (€)'}
+                },
+                'width': 'container',
+                'height': 300
+            })
     else:
         st.info("Add payment data to see cash inflows")
 
@@ -252,8 +310,6 @@ if sales_data:
     st.dataframe(summary_display)
 
     # Simple CSV export
-    import io
-    import csv
     output = io.StringIO()
     if summary_display:
         writer = csv.DictWriter(output, fieldnames=summary_display[0].keys())

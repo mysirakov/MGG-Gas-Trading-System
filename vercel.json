@@ -1,50 +1,56 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "Dashboard.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.12",
-        "includeFiles": [
-          "Dashboard.py",
-          "components.py",
-          "database.py",
-          "theme_manager.py",
-          "style.css",
-          "requirements.txt",
-          "pages/*.py",
-          ".streamlit/config.toml"
-        ],
-        "excludeFiles": [
-          "attached_assets/**",
-          "data/**",
-          "temp_csv/**",
-          ".git/**",
-          "node_modules/**",
-          "import_csv.py",
-          "uv.lock",
-          "pyproject.toml",
-          ".replit",
-          "replit.md",
-          "package.json",
-          "package-lock.json",
-          "README.md",
-          "tests/**",
-          "docs/**",
-          "*.png",
-          "*.jpg",
-          "*.jpeg",
-          "*.csv",
-          "*.xlsx",
-          "*.pdf",
-          "main.py",
-          "__pycache__/**",
-          "*.pyc"
-        ]
+    "builds": [
+      {
+        "src": "Dashboard.py",
+        "use": "@vercel/python",
+        "config": {
+          "runtime": "python3.12",
+          "includeFiles": [
+            "Dashboard.py",
+            "components.py",
+            "database.py",
+            "theme_manager.py",
+            "style.css",
+            "requirements.txt",
+            "pages/*.py",
+            ".streamlit/config.toml"
+          ],
+          "excludeFiles": [
+            "attached_assets/**",
+            "data/**",
+            "temp_csv/**",
+            ".git/**",
+            "node_modules/**",
+            "import_csv.py",
+            "uv.lock",
+            "pyproject.toml",
+            ".replit",
+            "replit.md",
+            "package.json",
+            "package-lock.json",
+            "README.md",
+            "tests/**",
+            "docs/**",
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "*.csv",
+            "*.xlsx",
+            "*.pdf",
+            "main.py",
+            "__pycache__/**",
+            "*.pyc",
+            "*.pyo",
+            "*.pyd",
+            ".env*",
+            ".vscode/**",
+            "scripts/**"
+          ]
+        }
       }
-    }
-  ],
+    ],
+
   "routes": [
     {
       "src": "(.*)",
