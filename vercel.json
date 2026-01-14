@@ -15,6 +15,15 @@
           "requirements.txt",
           "pages/**",
           ".streamlit/**"
+        ],
+        "excludeFiles": [
+          "attached_assets/**",
+          "data/**",
+          "temp_csv/**",
+          ".git/**",
+          "node_modules/**",
+          "uv.lock",
+          "pyproject.toml"
         ]
       }
     }

@@ -1,9 +1,0 @@
-{
-  "name": "mgg-gas-trading-system",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "echo 'No build step for Python'",
-    "install": "echo 'Bun install satisfied'"
-  }
-}
