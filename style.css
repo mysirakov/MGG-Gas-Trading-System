@@ -509,10 +509,43 @@ div[data-testid="stDataFrame"] {
     }
 }
 
+/* ============= Mobile Nav Hint ============= */
+.mobile-nav-hint {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+@media screen and (max-width: 768px) {
+    .mobile-nav-hint {
+        display: flex;
+    }
+}
+
+/* ============= Sidebar Toggle Button Styling ============= */
+button[data-testid="stSidebarCollapseButton"] {
+    background: white !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    color: var(--primary) !important;
+    padding: 0.5rem !important;
+    margin: 1rem !important;
+    z-index: 999999 !important;
+}
+
 /* ============= Hide Streamlit Branding ============= */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header {visibility: hidden;}
+header { visibility: visible !important; background: transparent !important; }
+[data-testid="stHeader"] { background: transparent !important; z-index: 999998 !important; }
 
 /* ============= Prevent Overflow ============= */
 .stApp, .main, .block-container {

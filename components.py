@@ -10,8 +10,12 @@ def load_material_icons():
     """, unsafe_allow_html=True)
 
 def page_header(title: str, subtitle: str):
-    """Render a styled page header"""
+    """Render a styled page header with mobile navigation"""
     st.markdown(f"""
+        <div class="mobile-nav-hint">
+            <span class="material-icons-round">menu</span>
+            Tap top-left for menu
+        </div>
         <div class="header-container">
             <h1 class="page-title">{title}</h1>
             <p class="page-subtitle">{subtitle}</p>
