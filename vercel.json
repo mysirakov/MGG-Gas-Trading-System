@@ -28,13 +28,19 @@
           ".replit",
           "replit.md",
           "package.json",
+          "package-lock.json",
           "README.md",
           "tests/**",
           "docs/**",
           "*.png",
           "*.jpg",
+          "*.jpeg",
           "*.csv",
-          "main.py"
+          "*.xlsx",
+          "*.pdf",
+          "main.py",
+          "__pycache__/**",
+          "*.pyc"
         ]
       }
     }
