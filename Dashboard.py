@@ -73,7 +73,7 @@ st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
 section_header("insights", "Performance Charts")
 
-if sales_df:
+if sales:
     col1, col2 = st.columns(2)
     
     with col1:

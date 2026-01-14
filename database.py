@@ -25,7 +25,10 @@ class DictCursor:
         self.cur = conn.cursor()
     
     def execute(self, sql, params=None):
-        self.cur.execute(sql, params)
+        if params is None:
+            self.cur.execute(sql)
+        else:
+            self.cur.execute(sql, params)
     
     def fetchone(self):
         row = self.cur.fetchone()

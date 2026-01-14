@@ -121,7 +121,7 @@ with tab1:
     
     section_header("assignment", "Sales Payment Status")
 
-    if sales_df:
+    if sales:
         col1, col2 = st.columns(2)
 
         with col1:
