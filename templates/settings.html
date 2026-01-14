@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
+    <p class="text-gray-500">Configure System Entities and Data Management</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- Suppliers -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-bold flex items-center gap-2">
+                <span class="material-icons text-blue-600">inventory</span>
+                <span>Suppliers</span>
+            </h3>
+        </div>
+        <div class="p-4">
+            <form action="/settings/suppliers/add" method="POST" class="flex gap-2 mb-4">
+                <input type="text" name="name" placeholder="New Supplier" required class="flex-1 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-sm">Add</button>
+            </form>
+            <ul class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                {% for item in settings.suppliers %}
+                <li class="py-2 flex justify-between items-center group">
+                    <span class="text-sm text-gray-700">{{ item }}</span>
+                    <form action="/settings/suppliers/delete" method="POST" onsubmit="return confirm('Are you sure?')">
+                        <input type="hidden" name="name" value="{{ item }}">
+                        <button type="submit" class="text-gray-300 hover:text-red-600">
+                            <span class="material-icons text-sm">delete</span>
+                        </button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Buyers -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-bold flex items-center gap-2">
+                <span class="material-icons text-green-600">groups</span>
+                <span>Buyers</span>
+            </h3>
+        </div>
+        <div class="p-4">
+            <form action="/settings/buyers/add" method="POST" class="flex gap-2 mb-4">
+                <input type="text" name="name" placeholder="New Buyer" required class="flex-1 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-sm">Add</button>
+            </form>
+            <ul class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                {% for item in settings.buyers %}
+                <li class="py-2 flex justify-between items-center group">
+                    <span class="text-sm text-gray-700">{{ item }}</span>
+                    <form action="/settings/buyers/delete" method="POST" onsubmit="return confirm('Are you sure?')">
+                        <input type="hidden" name="name" value="{{ item }}">
+                        <button type="submit" class="text-gray-300 hover:text-red-600">
+                            <span class="material-icons text-sm">delete</span>
+                        </button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-bold flex items-center gap-2">
+                <span class="material-icons text-purple-600">account_balance</span>
+                <span>Payment Methods</span>
+            </h3>
+        </div>
+        <div class="p-4">
+            <form action="/settings/payment_methods/add" method="POST" class="flex gap-2 mb-4">
+                <input type="text" name="name" placeholder="New Method" required class="flex-1 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-sm">Add</button>
+            </form>
+            <ul class="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                {% for item in settings.payment_methods %}
+                <li class="py-2 flex justify-between items-center group">
+                    <span class="text-sm text-gray-700">{{ item }}</span>
+                    <form action="/settings/payment_methods/delete" method="POST" onsubmit="return confirm('Are you sure?')">
+                        <input type="hidden" name="name" value="{{ item }}">
+                        <button type="submit" class="text-gray-300 hover:text-red-600">
+                            <span class="material-icons text-sm">delete</span>
+                        </button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="mt-8 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="p-4 bg-gray-50 border-b border-gray-200">
+        <h3 class="font-bold flex items-center gap-2">
+            <span class="material-icons text-orange-600">storage</span>
+            <span>Database Maintenance</span>
+        </h3>
+    </div>
+    <div class="p-6">
+        <div class="flex flex-wrap gap-4">
+            <form action="/settings/database/initialize" method="POST">
+                <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm flex items-center gap-2">
+                    <span class="material-icons text-sm">refresh</span>
+                    <span>Re-initialize Database</span>
+                </button>
+            </form>
+        </div>
+        <p class="mt-4 text-xs text-gray-500">
+            Re-initializing the database will ensure all tables are created and data from JSON files is migrated if the database is empty.
+        </p>
+    </div>
+</div>
+{% endblock %}

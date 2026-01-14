@@ -2,41 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "Dashboard.py",
+      "src": "main.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.9",
-        "includeFiles": [
-          "Dashboard.py",
-          "components.py",
-          "database.py",
-          "theme_manager.py",
-          "style.css",
-          "requirements.txt",
-          "pages/*.py",
-          ".streamlit/config.toml"
-        ],
-        "excludeFiles": [
-          "attached_assets/**",
-          "data/**",
-          "temp_csv/**",
-          ".git/**",
-          "node_modules/**",
-          "import_csv.py",
-          "uv.lock",
-          "pyproject.toml",
-          ".replit",
-          "replit.md",
-          "package.json",
-          "README.md"
-        ]
+        "runtime": "python3.9"
       }
     }
   ],
   "routes": [
     {
-      "src": "(.*)",
-      "dest": "Dashboard.py"
+      "src": "/(.*)",
+      "dest": "main.py"
     }
   ]
 }

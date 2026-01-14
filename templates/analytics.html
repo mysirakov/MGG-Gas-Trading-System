@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-800">Analytics</h2>
+    <p class="text-gray-500">In-depth Analysis of Trading Performance and Margins</p>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-sm text-gray-500 font-medium">Avg. Margin (€/MWh)</p>
+        <h3 class="text-2xl font-bold text-blue-600">
+            {% if metrics.total_quantity > 0 %}
+                €{{ "{:.2f}".format(metrics.total_margin / metrics.total_quantity) }}
+            {% else %}
+                €0.00
+            {% endif %}
+        </h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-sm text-gray-500 font-medium">Avg. Sales Price</p>
+        <h3 class="text-2xl font-bold text-green-600">
+            {% if metrics.total_quantity > 0 %}
+                €{{ "{:.2f}".format(metrics.total_revenue / metrics.total_quantity) }}
+            {% else %}
+                €0.00
+            {% endif %}
+        </h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-sm text-gray-500 font-medium">Total Volume</p>
+        <h3 class="text-2xl font-bold text-orange-600">{{ "{:,.0f}".format(metrics.total_quantity) }} MWh</h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-sm text-gray-500 font-medium">Efficiency Ratio</p>
+        <h3 class="text-2xl font-bold text-purple-600">
+            {% if metrics.total_revenue > 0 %}
+                {{ "{:.1f}%".format(metrics.total_margin / metrics.total_revenue * 100) }}
+            {% else %}
+                0.0%
+            {% endif %}
+        </h3>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Margin Analysis by Buyer -->
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold mb-4">Profit by Buyer</h3>
+        <canvas id="buyerProfitChart" height="250"></canvas>
+    </div>
+    <!-- Volume Analysis by Buyer -->
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold mb-4">Volume by Buyer (MWh)</h3>
+        <canvas id="buyerVolumeChart" height="250"></canvas>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+    <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-bold">Monthly Performance Summary</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead class="bg-gray-50 text-gray-600 text-sm border-b border-gray-200">
+                <tr>
+                    <th class="p-4 font-semibold">Month</th>
+                    <th class="p-4 font-semibold text-right">Volume (MWh)</th>
+                    <th class="p-4 font-semibold text-right">Revenue</th>
+                    <th class="p-4 font-semibold text-right">Profit</th>
+                    <th class="p-4 font-semibold text-right">Margin %</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for row in monthly_stats %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-sm font-medium">{{ row.month }}</td>
+                    <td class="p-4 text-sm text-right">{{ "{:,.2f}".format(row.volume) }}</td>
+                    <td class="p-4 text-sm text-right font-semibold">€{{ "{:,.2f}".format(row.revenue) }}</td>
+                    <td class="p-4 text-sm text-right font-semibold text-green-600">€{{ "{:,.2f}".format(row.profit) }}</td>
+                    <td class="p-4 text-sm text-right">
+                        {% if row.revenue > 0 %}
+                            {{ "{:.1f}%".format(row.profit / row.revenue * 100) }}
+                        {% else %}
+                            0.0%
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Buyer Profit Chart
+    const bpCtx = document.getElementById('buyerProfitChart').getContext('2d');
+    new Chart(bpCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ buyer_data.names | tojson }},
+            datasets: [{
+                data: {{ buyer_data.profits | tojson }},
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Buyer Volume Chart
+    const bvCtx = document.getElementById('buyerVolumeChart').getContext('2d');
+    new Chart(bvCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ buyer_data.names | tojson }},
+            datasets: [{
+                label: 'Volume (MWh)',
+                data: {{ buyer_data.volumes | tojson }},
+                backgroundColor: '#3b82f6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            indexAxis: 'y',
+            scales: {
+                x: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+{% endblock %}
