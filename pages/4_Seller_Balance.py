@@ -54,15 +54,18 @@ with tab1:
         suppliers = purchases_df['supplier'].dropna().unique().tolist()
         
         balance_data = []
+        supplier_costs = metrics.get('supplier_costs', {})
+        
         for supplier in suppliers:
             sup_purchases = purchases_df[purchases_df['supplier'] == supplier]
             amount_received = sup_purchases['amount_received_eur'].sum()
+            purchase_cost = supplier_costs.get(supplier, 0)
             
             balance_data.append({
                 'Supplier': supplier,
                 'Amount Received (EUR)': amount_received,
-                'Purchase Cost (EUR)': gpe_purchase_cost,
-                'Available Balance (EUR)': amount_received - gpe_purchase_cost
+                'Purchase Cost (EUR)': purchase_cost,
+                'Available Balance (EUR)': amount_received - purchase_cost
             })
         
         balance_df = pd.DataFrame(balance_data)

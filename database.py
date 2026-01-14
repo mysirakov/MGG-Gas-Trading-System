@@ -46,19 +46,21 @@ def init_database():
             id SERIAL PRIMARY KEY,
             contract_date DATE NOT NULL,
             buyer_id INTEGER REFERENCES buyers(id),
+            supplier_id INTEGER REFERENCES suppliers(id),
             quantity_mwh DECIMAL(12,4) NOT NULL,
             sales_price_eur_mwh DECIMAL(12,4) NOT NULL,
             purchase_price_eur_mwh DECIMAL(12,4) NOT NULL,
             cost_capacity_eur_mwh DECIMAL(12,4) DEFAULT 0,
             cost_transport_eur_mwh DECIMAL(12,4) DEFAULT 0,
+            cost_customs_eur_mwh DECIMAL(12,4) DEFAULT 0,
             margin_eur_mwh DECIMAL(12,4) GENERATED ALWAYS AS (
-                sales_price_eur_mwh - purchase_price_eur_mwh - cost_capacity_eur_mwh - cost_transport_eur_mwh
+                sales_price_eur_mwh - purchase_price_eur_mwh - cost_capacity_eur_mwh - cost_transport_eur_mwh - cost_customs_eur_mwh
             ) STORED,
             total_revenue DECIMAL(14,2) GENERATED ALWAYS AS (
                 quantity_mwh * sales_price_eur_mwh
             ) STORED,
             total_margin DECIMAL(14,2) GENERATED ALWAYS AS (
-                quantity_mwh * (sales_price_eur_mwh - purchase_price_eur_mwh - cost_capacity_eur_mwh - cost_transport_eur_mwh)
+                quantity_mwh * (sales_price_eur_mwh - purchase_price_eur_mwh - cost_capacity_eur_mwh - cost_transport_eur_mwh - cost_customs_eur_mwh)
             ) STORED,
             purchase_cost DECIMAL(14,2) GENERATED ALWAYS AS (
                 quantity_mwh * purchase_price_eur_mwh
@@ -67,6 +69,15 @@ def init_database():
             old_id VARCHAR(50)
         )
     ''')
+    
+    # Ensure missing columns exist in case table was created with old schema
+    try:
+        cur.execute("ALTER TABLE sales ADD COLUMN IF NOT EXISTS supplier_id INTEGER REFERENCES suppliers(id)")
+        cur.execute("ALTER TABLE sales ADD COLUMN IF NOT EXISTS cost_customs_eur_mwh DECIMAL(12,4) DEFAULT 0")
+        # Note: Generated columns cannot be easily altered to include new columns in their expression.
+        # But we'll leave it as is for now if they already exist.
+    except:
+        conn.rollback()
     
     cur.execute('''
         CREATE TABLE IF NOT EXISTS invoices (
@@ -213,21 +224,25 @@ def migrate_json_to_postgres():
     
     for sale in sales:
         buyer_id = get_or_create_buyer(cur, sale.get('buyer'))
+        supplier_id = get_or_create_supplier(cur, sale.get('supplier', 'GPE'))
         contract_date = parse_date(sale.get('contract_date'))
         
         cur.execute('''
             INSERT INTO sales (
-                contract_date, buyer_id, quantity_mwh, sales_price_eur_mwh,
-                purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, old_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                contract_date, buyer_id, supplier_id, quantity_mwh, sales_price_eur_mwh,
+                purchase_price_eur_mwh, cost_capacity_eur_mwh, cost_transport_eur_mwh, 
+                cost_customs_eur_mwh, old_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
         ''', (
             contract_date,
             buyer_id,
+            supplier_id,
             sale.get('quantity_mwh', 0),
             sale.get('sales_price_eur_mwh', 0),
             sale.get('purchase_price_eur_mwh', 0),
             sale.get('cost_capacity_eur_mwh', 0),
             sale.get('cost_transport_eur_mwh', 0),
+            sale.get('cost_customs_eur_mwh', 0),
             sale.get('id')
         ))
         new_id = cur.fetchone()['id']
@@ -632,24 +647,29 @@ def get_dashboard_metrics():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    cur.execute('SELECT COALESCE(SUM(total_revenue), 0) as total_revenue, COALESCE(SUM(total_margin), 0) as total_margin, COALESCE(SUM(quantity_mwh), 0) as total_quantity, COALESCE(SUM(purchase_cost), 0) as total_purchase_cost FROM sales')
+    cur.execute('''
+        SELECT 
+            COALESCE(SUM(total_revenue), 0) as total_revenue, 
+            COALESCE(SUM(total_margin), 0) as total_margin, 
+            COALESCE(SUM(quantity_mwh), 0) as total_quantity, 
+            COALESCE(SUM(purchase_cost), 0) as total_purchase_cost 
+        FROM sales
+    ''')
     sales_metrics = cur.fetchone()
     
+    # Get metrics per supplier
     cur.execute('''
-        SELECT COALESCE(SUM(s.purchase_cost), 0) as gpe_purchase_cost
+        SELECT 
+            sup.name,
+            COALESCE(SUM(s.purchase_cost), 0) as purchase_cost
         FROM sales s
         LEFT JOIN suppliers sup ON s.supplier_id = sup.id
-        WHERE sup.name = 'GPE' OR s.supplier_id IS NULL
+        GROUP BY sup.name
     ''')
-    gpe_purchase_cost = float(cur.fetchone()['gpe_purchase_cost'])
+    supplier_costs = {r['name'] if r['name'] else 'Unknown': float(r['purchase_cost']) for r in cur.fetchall()}
     
-    cur.execute('''
-        SELECT COALESCE(SUM(s.purchase_cost), 0) as keler_purchase_cost
-        FROM sales s
-        LEFT JOIN suppliers sup ON s.supplier_id = sup.id
-        WHERE sup.name = 'Keler'
-    ''')
-    keler_purchase_cost = float(cur.fetchone()['keler_purchase_cost'])
+    gpe_purchase_cost = supplier_costs.get('GPE', 0)
+    keler_purchase_cost = supplier_costs.get('Keler', 0)
     
     cur.execute('SELECT COALESCE(SUM(amount_eur), 0) as total_received FROM payments_received')
     payments_received = cur.fetchone()['total_received']
@@ -660,7 +680,11 @@ def get_dashboard_metrics():
     cur.execute('SELECT COALESCE(SUM(amount), 0) as total_allocated FROM payment_allocations')
     total_allocated = cur.fetchone()['total_allocated']
     
+    # Calculate outstanding receivables (Total Revenue - Allocated - Keler Purchase Cost)
+    # This formula seems specific to the user's business logic
     outstanding = float(sales_metrics['total_revenue']) - float(total_allocated) - keler_purchase_cost
+    
+    # Calculate global supplier balance (Received by suppliers - GPE costs)
     supplier_balance = float(supplier_metrics['total_supplier_received']) - gpe_purchase_cost
     
     cur.close()
@@ -673,6 +697,7 @@ def get_dashboard_metrics():
         'total_purchase_cost': float(sales_metrics['total_purchase_cost']),
         'gpe_purchase_cost': gpe_purchase_cost,
         'keler_purchase_cost': keler_purchase_cost,
+        'supplier_costs': supplier_costs,
         'payments_received': float(payments_received),
         'total_sent_to_suppliers': float(supplier_metrics['total_sent']),
         'total_received_by_suppliers': float(supplier_metrics['total_supplier_received']),
