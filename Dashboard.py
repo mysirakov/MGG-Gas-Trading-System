@@ -1,5 +1,4 @@
 import streamlit as st
-from cookie_manager import get_cookie_manager
 from auth import restore_session, is_authenticated, sign_out, get_current_user
 from components import setup_page, load_material_icons
 
@@ -15,16 +14,6 @@ try:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except:
     pass
-
-cm = get_cookie_manager()
-
-if 'cookie_init' not in st.session_state:
-    st.session_state.cookie_init = True
-    try:
-        cm.get_all()
-    except:
-        pass
-    st.rerun()
 
 restore_session()
 
