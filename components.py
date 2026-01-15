@@ -50,20 +50,17 @@ CRITICAL_CSS = """
     opacity: 1 !important;
     visibility: visible !important;
 }
-[data-testid="stLogo"] {
-    width: 180px !important;
-    max-width: 180px !important;
-    margin: 0 auto 1.5rem auto !important;
-    display: block !important;
-}
-[data-testid="stLogo"] img {
-    width: 100% !important;
-    height: auto !important;
-}
 [data-testid="stSidebarHeader"] {
+    display: none !important;
+}
+.sidebar-logo-container {
     display: flex !important;
     justify-content: center !important;
-    padding: 1.5rem 1rem !important;
+    padding: 1.5rem 1rem 1rem 1rem !important;
+}
+.sidebar-logo-container img {
+    width: 200px !important;
+    height: auto !important;
 }
 </style>
 """
@@ -71,7 +68,8 @@ CRITICAL_CSS = """
 def setup_page():
     """Initialize page with logo and critical CSS - call immediately after st.set_page_config()"""
     st.markdown(CRITICAL_CSS, unsafe_allow_html=True)
-    st.logo(LOGO_URL, size="large")
+    with st.sidebar:
+        st.markdown(f'<div class="sidebar-logo-container"><img src="{LOGO_URL}" alt="Mix Gas Group"></div>', unsafe_allow_html=True)
 
 def load_material_icons():
     """Load Material Icons font"""
