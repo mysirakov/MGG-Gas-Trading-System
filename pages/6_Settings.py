@@ -1,6 +1,7 @@
 import streamlit as st
-from database import get_settings, add_supplier, add_buyer, add_payment_method, delete_supplier, delete_buyer, delete_payment_method
-from components import load_material_icons, page_header, metric_card, section_header, setup_page
+from database import get_settings, update_settings
+from components import load_material_icons, page_header, section_header, setup_page
+from auth import require_auth
 
 st.set_page_config(
     page_title="Mix Gas Group | Settings",
@@ -9,6 +10,7 @@ st.set_page_config(
 )
 
 setup_page()
+require_auth()
 
 try:
     with open('style.css') as f:

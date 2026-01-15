@@ -1,13 +1,13 @@
 import streamlit as st
 import csv
 import io
-from datetime import date, datetime
+from datetime import datetime, date
 from database import (
-    get_supplier_payments, add_supplier_payment, delete_supplier_payment,
-    get_sales, get_settings, get_invoices, get_dashboard_metrics,
-    supplier_payments_to_df, sales_to_df
+    get_supplier_payments, add_supplier_payment, update_supplier_payment, delete_supplier_payment,
+    get_settings, supplier_payments_to_df
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state, setup_page
+from auth import require_auth
 
 st.set_page_config(
     page_title="Mix Gas Group | Seller Balance",
@@ -16,6 +16,7 @@ st.set_page_config(
 )
 
 setup_page()
+require_auth()
 
 try:
     with open('style.css') as f:

@@ -387,6 +387,28 @@ def get_settings():
     cur.close(); conn.close()
     return {'suppliers': sups, 'buyers': buys, 'payment_methods': pms}
 
+def update_settings(setting_type, action, value):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    table_map = {'suppliers': 'suppliers', 'buyers': 'buyers', 'payment_methods': 'payment_methods'}
+    table = table_map.get(setting_type)
+    if not table:
+        cur.close(); conn.close()
+        return False
+    try:
+        if action == 'add':
+            cur.execute(f'INSERT INTO {table} (name) VALUES (%s) ON CONFLICT (name) DO NOTHING', (value,))
+        elif action == 'delete':
+            cur.execute(f'DELETE FROM {table} WHERE name = %s', (value,))
+        conn.commit()
+        get_settings.clear()
+        cur.close(); conn.close()
+        return True
+    except Exception as e:
+        conn.rollback()
+        cur.close(); conn.close()
+        return False
+
 @st.cache_data(show_spinner=False)
 def get_unpaid_sales(buyer_name=None):
     conn = get_db_connection()

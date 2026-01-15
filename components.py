@@ -70,6 +70,26 @@ def setup_page():
     st.markdown(CRITICAL_CSS, unsafe_allow_html=True)
     with st.sidebar:
         st.markdown(f'<div class="sidebar-logo-container"><img src="{LOGO_URL}" alt="Mix Gas Group"></div>', unsafe_allow_html=True)
+        render_auth_status()
+
+def render_auth_status():
+    """Render authentication status and logout button in sidebar"""
+    from auth import is_authenticated, get_current_user, sign_out
+    
+    if is_authenticated():
+        user = get_current_user()
+        if user:
+            st.markdown("---")
+            st.markdown(f"""
+                <div style="padding: 0.5rem 0.75rem; font-size: 0.85rem; color: #64748b;">
+                    <span style="font-weight: 500;">Signed in as:</span><br>
+                    <span style="color: #334155;">{user.email}</span>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("🚪 Logout", key="sidebar_logout", use_container_width=True):
+                result = sign_out()
+                if result['success']:
+                    st.rerun()
 
 def load_material_icons():
     """Load Material Icons font"""
