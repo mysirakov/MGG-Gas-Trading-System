@@ -220,11 +220,11 @@ def restore_session() -> bool:
     if is_authenticated():
         return True
     
-    if 'cookie_init_done' not in st.session_state:
-        st.session_state.cookie_init_done = True
+    if st.session_state.get('_cookie_rerun_count', 0) < 1:
+        st.session_state['_cookie_rerun_count'] = st.session_state.get('_cookie_rerun_count', 0) + 1
+        import time
+        time.sleep(0.1)
         st.rerun()
-    
-    refresh_token = None
     
     refresh_token = get_auth_cookie()
     
