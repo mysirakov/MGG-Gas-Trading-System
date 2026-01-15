@@ -41,10 +41,14 @@ div[data-testid="stTabs"] {
 if is_authenticated():
     st.switch_page("Dashboard.py")
 
-st.markdown('<div class="auth-header">', unsafe_allow_html=True)
-st.markdown("# Mix Gas Group")
-st.markdown("Gas Trading Management System")
-st.markdown('</div>', unsafe_allow_html=True)
+LOGO_URL = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/logo-mgg-1768474458463.png?width=8000&height=8000&resize=contain"
+
+st.markdown(f"""
+<div style="text-align: center; margin-bottom: 2rem;">
+    <img src="{LOGO_URL}" alt="Mix Gas Group" style="max-width: 280px; margin-bottom: 0.5rem;">
+    <p style="color: #64748b; font-size: 1rem; margin: 0;">Gas Trading Management System</p>
+</div>
+""", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["🔑 Login", "📝 Sign Up", "🔄 Reset Password"])
 
