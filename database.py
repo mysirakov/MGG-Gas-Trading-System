@@ -276,7 +276,7 @@ def migrate_json_to_postgres():
 def clear_db_cache():
     st.cache_data.clear()
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_sales():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -292,7 +292,7 @@ def get_sales():
     cur.close(); conn.close()
     return sanitize_data(res)
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_payments_received():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -307,7 +307,7 @@ def get_payments_received():
     cur.close(); conn.close()
     return sanitize_data(res)
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_supplier_payments():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -323,7 +323,7 @@ def get_supplier_payments():
     cur.close(); conn.close()
     return sanitize_data(res)
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_dashboard_metrics():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -378,7 +378,7 @@ def get_dashboard_metrics():
         'outstanding_receivables': out, 'total_allocated': row['alloc']
     })
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_settings():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -410,7 +410,7 @@ def update_settings(setting_type, action, value):
         cur.close(); conn.close()
         return False
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_unpaid_sales(buyer_name=None):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -432,7 +432,7 @@ def get_unpaid_sales(buyer_name=None):
     cur.close(); conn.close()
     return sanitize_data(res)
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=60)
 def get_invoices():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
