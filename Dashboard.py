@@ -27,6 +27,9 @@ load_material_icons()
 
 LOGO_URL = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/logo-mgg-1768474458463.png?width=8000&height=8000&resize=contain"
 
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 'Dashboard'
+
 with st.sidebar:
     st.markdown(f"""
     <div style="text-align: center; margin-bottom: 1.5rem;">
@@ -38,41 +41,48 @@ with st.sidebar:
     <style>
     div[data-testid="stSidebarNav"] {display: none;}
     section[data-testid="stSidebar"] > div:first-child {padding-top: 1rem;}
-    .nav-link {
+    
+    /* Style radio buttons as menu items */
+    div[data-testid="stRadio"] > label {display: none;}
+    div[data-testid="stRadio"] > div {gap: 0.25rem !important;}
+    div[data-testid="stRadio"] > div > label {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
         padding: 0.75rem 1rem;
-        margin: 0.25rem 0;
+        margin: 0;
         border-radius: 8px;
-        text-decoration: none;
-        color: #334155;
+        cursor: pointer;
         font-weight: 500;
+        color: #334155;
+        background: transparent;
         transition: all 0.2s;
     }
-    .nav-link:hover {
+    div[data-testid="stRadio"] > div > label:hover {
         background: rgba(59, 130, 246, 0.1);
         color: #1e40af;
     }
-    .nav-link.active {
+    div[data-testid="stRadio"] > div > label[data-checked="true"] {
         background: rgba(59, 130, 246, 0.15);
         color: #1e40af;
+        font-weight: 600;
     }
-    .nav-icon {
-        font-size: 20px;
+    div[data-testid="stRadio"] > div > label > div:first-child {
+        display: none !important;
+    }
+    div[data-testid="stRadio"] > div > label > div:last-child {
+        margin-left: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = 'Dashboard'
-    
     nav_options = ["Dashboard", "Purchases", "Sales", "Payments", "Seller Balance", "Analytics", "Settings"]
+    
+    current_index = nav_options.index(st.session_state.current_page) if st.session_state.current_page in nav_options else 0
     
     selected = st.radio(
         "Navigation",
         nav_options,
-        index=nav_options.index(st.session_state.current_page) if st.session_state.current_page in nav_options else 0,
+        index=current_index,
         label_visibility="collapsed",
         key="main_nav"
     )

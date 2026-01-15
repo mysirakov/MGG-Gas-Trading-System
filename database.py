@@ -179,33 +179,34 @@ def get_or_create_supplier(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM suppliers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result[0]
+    if result: return result['id']
     cur.execute('INSERT INTO suppliers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def get_or_create_buyer(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result[0]
+    if result: return result['id']
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def get_or_create_payment_method(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM payment_methods WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result[0]
+    if result: return result['id']
     cur.execute('INSERT INTO payment_methods (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    return cur.fetchone()['id']
 
 def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     if not invoice_number: return None
     cur.execute('SELECT id FROM invoices WHERE invoice_number = %s', (invoice_number,))
     result = cur.fetchone()
-    if result: return result[0]
+    if result: return result['id'] if isinstance(result, dict) else result[0]
     cur.execute('INSERT INTO invoices (invoice_number, supplier_id, total_amount) VALUES (%s, %s, %s) RETURNING id', (invoice_number, supplier_id, total_amount or 0))
-    return cur.fetchone()[0]
+    r = cur.fetchone()
+    return r['id'] if isinstance(r, dict) else r[0]
 
 def migrate_json_to_postgres():
     conn = get_db_connection()
