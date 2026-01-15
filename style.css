@@ -72,7 +72,7 @@ html, body, [class*="css"] {
 
 [data-testid="stSidebar"] > div:first-child {
     background: transparent !important;
-    padding-top: 2rem !important;
+    padding-top: 1.5rem !important;
 }
 
 [data-testid="stSidebarNav"] {
@@ -80,29 +80,34 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stSidebarNav"] li {
-    margin: 0.25rem 0.5rem !important;
+    margin: 0.5rem 0.75rem !important;
 }
 
 [data-testid="stSidebarNav"] a {
     background: transparent !important;
     border-radius: 12px !important;
-    padding: 0.75rem 1rem !important;
+    padding: 1rem 1.25rem !important;
     color: #475569 !important;
     font-weight: 500 !important;
-    transition: all 0.2s ease !important;
+    font-size: 1.05rem !important;
+    transition: all 0.2s ease-in-out !important;
+    border: 1px solid transparent !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 [data-testid="stSidebarNav"] a:hover {
-    background: rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.4) !important;
     color: #1e293b !important;
+    transform: translateY(-1px);
 }
 
 [data-testid="stSidebarNav"] a[aria-current="page"] {
-    background: rgba(255, 255, 255, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    color: var(--primary) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    background: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* ============= Page Headers ============= */

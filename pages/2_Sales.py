@@ -5,9 +5,16 @@ from datetime import datetime, date
 from database import (
     get_sales, add_sale, update_sale, delete_sale, get_settings, sales_to_df
 )
-from components import load_material_icons, page_header, metric_card, section_header, empty_state
+from components import load_material_icons, page_header, metric_card, section_header, empty_state, sidebar_logo
 
-st.set_page_config(page_title="Sales", page_icon="📊", layout="wide")
+st.set_page_config(
+    page_title="Mix Gas Group | Sales",
+    page_icon="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/Untitled-Project-1768468114127.png?width=8000&height=8000&resize=contain",
+    layout="wide"
+)
+
+# Render sidebar logo
+sidebar_logo()
 
 try:
     with open('style.css') as f:

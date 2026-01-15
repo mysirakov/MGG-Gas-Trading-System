@@ -1,8 +1,15 @@
 import streamlit as st
 from database import get_settings, add_supplier, add_buyer, add_payment_method, delete_supplier, delete_buyer, delete_payment_method
-from components import load_material_icons, page_header, metric_card, section_header
+from components import load_material_icons, page_header, metric_card, section_header, sidebar_logo
 
-st.set_page_config(page_title="Settings", page_icon="⚙️", layout="wide")
+st.set_page_config(
+    page_title="Mix Gas Group | Settings",
+    page_icon="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/Untitled-Project-1768468114127.png?width=8000&height=8000&resize=contain",
+    layout="wide"
+)
+
+# Render sidebar logo
+sidebar_logo()
 
 try:
     with open('style.css') as f:

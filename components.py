@@ -97,3 +97,9 @@ def empty_state(icon: str, message: str):
             <p>{message}</p>
         </div>
     """, unsafe_allow_html=True)
+
+def sidebar_logo():
+    """Render the company logo in the sidebar"""
+    logo_url = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/Untitled-Project-1768468114127.png?width=8000&height=8000&resize=contain"
+    st.sidebar.image(logo_url, use_container_width=True)
+    st.sidebar.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
