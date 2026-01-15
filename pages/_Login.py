@@ -12,36 +12,7 @@ st.set_page_config(
 restore_session()
 
 if is_authenticated():
-    setup_page()
-    load_material_icons()
-    st.markdown("""
-    <style>
-    .redirect-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 60vh;
-        text-align: center;
-    }
-    .redirect-container h2 {
-        color: #1E3A5F;
-        margin-bottom: 1rem;
-    }
-    .redirect-container p {
-        color: #64748b;
-        margin-bottom: 2rem;
-    }
-    </style>
-    <div class="redirect-container">
-        <h2>✓ Login Successful!</h2>
-        <p>Click below to continue to your dashboard</p>
-    </div>
-    """, unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.page_link("Dashboard.py", label="🏠 Go to Dashboard", use_container_width=True)
-    st.stop()
+    st.switch_page("Dashboard.py")
 
 setup_page()
 load_material_icons()

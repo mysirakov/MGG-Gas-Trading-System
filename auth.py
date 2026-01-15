@@ -93,7 +93,8 @@ def sign_in(email: str, password: str) -> dict:
             return {
                 'success': True,
                 'message': 'Login successful!',
-                'user': response.user
+                'user': response.user,
+                'refresh_token': response.session.refresh_token
             }
         return {'success': False, 'message': 'Login failed.', 'user': None}
     
@@ -104,11 +105,10 @@ def sign_out() -> dict:
     try:
         client = get_supabase_client()
         client.auth.sign_out()
-        _clear_session()
-        return {'success': True, 'message': 'Logged out successfully.'}
-    except Exception as e:
-        _clear_session()
-        return {'success': False, 'message': get_friendly_error(e)}
+    except:
+        pass
+    _clear_session()
+    return {'success': True, 'message': 'Logged out successfully.'}
 
 def reset_password(email: str) -> dict:
     try:
@@ -126,6 +126,7 @@ def _store_session(session):
     st.session_state['refresh_token'] = session.refresh_token
     st.session_state['user'] = session.user
     st.session_state['authenticated'] = True
+    st.query_params['rt'] = session.refresh_token
     try:
         client = get_supabase_client()
         client.auth.set_session(session.access_token, session.refresh_token)
@@ -137,6 +138,8 @@ def _clear_session():
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
+    if 'rt' in st.query_params:
+        del st.query_params['rt']
 
 def is_authenticated() -> bool:
     return st.session_state.get('authenticated', False) and st.session_state.get('user') is not None
@@ -181,6 +184,9 @@ def restore_session() -> bool:
         pass
     
     refresh_token = st.session_state.get('refresh_token')
+    if not refresh_token:
+        refresh_token = st.query_params.get('rt')
+    
     if refresh_token:
         try:
             client = get_supabase_client()
@@ -189,7 +195,8 @@ def restore_session() -> bool:
                 _store_session(response.session)
                 return True
         except:
-            pass
+            if 'rt' in st.query_params:
+                del st.query_params['rt']
     
     return False
 
