@@ -230,14 +230,7 @@ def restore_session() -> bool:
 
 def require_auth():
     """
-    Require authentication - redirects to login if not authenticated
-    Call this at the top of every protected page
+    Require authentication - returns True if authenticated, False otherwise.
+    Does NOT redirect - the main app handles showing login when needed.
     """
-    # First try to restore session from query params
-    if restore_session():
-        return True
-    
-    # Not authenticated - redirect to login
-    # Use st.stop() to prevent further execution before redirect
-    st.switch_page("pages/_Login.py")
-    st.stop()
+    return restore_session()
