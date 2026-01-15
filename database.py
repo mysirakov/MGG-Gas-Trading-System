@@ -504,6 +504,20 @@ def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
     return p_id
 
+def update_payment_received(payment_id, payment_date, buyer_name, amount_eur, notes=''):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    b_id = get_or_create_buyer(cur, buyer_name)
+    cur.execute('UPDATE payments_received SET payment_date = %s, buyer_id = %s, amount_eur = %s, notes = %s WHERE id = %s',
+                (payment_date, b_id, amount_eur, notes, payment_id))
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+
+def delete_payment_received(payment_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM payments_received WHERE id = %s', (payment_id,))
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+
 def delete_payment(payment_id):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -523,6 +537,18 @@ def add_supplier_payment(payment_date, supplier_name, payment_method_name, amoun
     res = cur.fetchone(); p_id = res[0] if res else None
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
     return p_id
+
+def update_supplier_payment(payment_id, payment_date, supplier_name, payment_method_name, amount_sent, invoice_number, receipt_date=None, amount_received=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    s_id = get_or_create_supplier(cur, supplier_name)
+    pm_id = get_or_create_payment_method(cur, payment_method_name)
+    inv_id = get_or_create_invoice(cur, invoice_number, s_id, amount_sent) if invoice_number else None
+    cur.execute('''
+        UPDATE supplier_payments SET payment_date = %s, supplier_id = %s, payment_method_id = %s, amount_sent_eur = %s,
+        invoice_id = %s, receipt_date = %s, amount_received_eur = %s WHERE id = %s
+    ''', (payment_date, s_id, pm_id, amount_sent, inv_id, receipt_date, amount_received, payment_id))
+    conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def delete_supplier_payment(payment_id):
     conn = get_db_connection()
