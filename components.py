@@ -67,10 +67,19 @@ CRITICAL_CSS = """
 
 def setup_page():
     """Initialize page with logo and critical CSS - call immediately after st.set_page_config()"""
+    from auth import is_authenticated
     st.markdown(CRITICAL_CSS, unsafe_allow_html=True)
-    with st.sidebar:
-        st.markdown(f'<div class="sidebar-logo-container"><img src="{LOGO_URL}" alt="Mix Gas Group"></div>', unsafe_allow_html=True)
-        render_auth_status()
+    
+    if is_authenticated():
+        with st.sidebar:
+            st.markdown(f'<div class="sidebar-logo-container"><img src="{LOGO_URL}" alt="Mix Gas Group"></div>', unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        [data-testid="stSidebarCollapsedControl"] { display: none !important; }
+        </style>
+        """, unsafe_allow_html=True)
 
 def render_auth_status():
     """Render authentication status and logout button in sidebar"""

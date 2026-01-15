@@ -164,7 +164,5 @@ def refresh_session() -> bool:
 
 def require_auth():
     if not is_authenticated():
-        st.warning('🔒 Please log in to access this page.')
-        st.page_link("pages/0_Login.py", label="👉 Go to Login", icon="🔐")
-        st.stop()
+        st.switch_page("pages/_Login.py")
     return True

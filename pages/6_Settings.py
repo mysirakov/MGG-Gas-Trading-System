@@ -1,7 +1,7 @@
 import streamlit as st
 from database import get_settings, update_settings, add_supplier, add_buyer, add_payment_method, delete_supplier, delete_buyer, delete_payment_method
 from components import load_material_icons, page_header, section_header, setup_page, metric_card
-from auth import require_auth
+from auth import require_auth, get_current_user, sign_out
 
 st.set_page_config(
     page_title="Mix Gas Group | Settings",
@@ -179,3 +179,27 @@ st.markdown("""
         </div>
     </div>
 """, unsafe_allow_html=True)
+
+st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+
+section_header("account_circle", "Account")
+
+user = get_current_user()
+if user:
+    st.markdown(f"""
+        <div style="
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        ">
+            <p style="margin: 0; font-weight: 600; color: #1e293b;">Signed in as</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #64748b;">{user.email}</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("Logout", type="primary", use_container_width=False):
+        result = sign_out()
+        if result['success']:
+            st.rerun()

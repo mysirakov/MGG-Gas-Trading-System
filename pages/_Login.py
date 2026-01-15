@@ -39,27 +39,7 @@ div[data-testid="stTabs"] {
 """, unsafe_allow_html=True)
 
 if is_authenticated():
-    user = get_current_user()
-    st.markdown('<div class="auth-container">', unsafe_allow_html=True)
-    st.markdown('<div class="auth-header">', unsafe_allow_html=True)
-    st.markdown("## Welcome Back!")
-    st.markdown(f"**Logged in as:** {user.email}")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🏠 Go to Dashboard", use_container_width=True, type="primary"):
-            st.switch_page("Dashboard.py")
-    with col2:
-        if st.button("🚪 Logout", use_container_width=True):
-            result = sign_out()
-            if result['success']:
-                st.success(result['message'])
-                st.rerun()
-            else:
-                st.error(result['message'])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
+    st.switch_page("Dashboard.py")
 
 st.markdown('<div class="auth-header">', unsafe_allow_html=True)
 st.markdown("# Mix Gas Group")
@@ -85,7 +65,7 @@ with tab1:
                 if result['success']:
                     st.success(result['message'])
                     st.balloons()
-                    st.rerun()
+                    st.switch_page("Dashboard.py")
                 else:
                     st.error(result['message'])
 
@@ -115,7 +95,7 @@ with tab2:
                     else:
                         st.success(result['message'])
                         st.balloons()
-                        st.rerun()
+                        st.switch_page("Dashboard.py")
                 else:
                     st.error(result['message'])
 
