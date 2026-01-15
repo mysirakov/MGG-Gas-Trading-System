@@ -3,7 +3,7 @@ import csv
 import io
 from datetime import datetime
 from database import get_sales, sales_to_df
-from components import load_material_icons, page_header, metric_card, section_header, empty_state, sidebar_logo
+from components import load_material_icons, page_header, metric_card, section_header, empty_state, setup_page
 
 st.set_page_config(
     page_title="Mix Gas Group | Purchases",
@@ -11,8 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Render sidebar logo
-sidebar_logo()
+setup_page()
 
 try:
     with open('style.css') as f:

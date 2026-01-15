@@ -4,7 +4,7 @@ from database import (
     initialize_database_system, get_sales, get_supplier_payments, get_payments_received,
     get_dashboard_metrics, sales_to_df, payments_to_df, supplier_payments_to_df
 )
-from components import load_material_icons, page_header, metric_card, section_header, empty_state, sidebar_logo
+from components import load_material_icons, page_header, metric_card, section_header, empty_state, setup_page
 
 st.set_page_config(
     page_title="Mix Gas Group | Dashboard",
@@ -13,10 +13,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Render sidebar logo
-sidebar_logo()
+setup_page()
 
-# Initialize database system
 initialize_database_system()
 
 try:

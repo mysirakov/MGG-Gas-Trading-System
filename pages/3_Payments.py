@@ -6,7 +6,7 @@ from database import (
     get_payments_received, add_payment_received, delete_payment, get_settings, get_sales,
     payments_to_df, sales_to_df, get_unpaid_sales, get_dashboard_metrics
 )
-from components import load_material_icons, page_header, metric_card, section_header, empty_state, sidebar_logo
+from components import load_material_icons, page_header, metric_card, section_header, empty_state, setup_page
 
 st.set_page_config(
     page_title="Mix Gas Group | Payments",
@@ -14,8 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Render sidebar logo
-sidebar_logo()
+setup_page()
 
 try:
     with open('style.css') as f:

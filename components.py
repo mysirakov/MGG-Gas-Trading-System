@@ -3,6 +3,65 @@ Custom UI Components for Glass-Morphism Design
 """
 import streamlit as st
 
+LOGO_URL = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/Untitled-Project-1768468114127.png?width=8000&height=8000&resize=contain"
+
+CRITICAL_CSS = """
+<style>
+[data-testid="stSidebar"] {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    background: transparent !important;
+    padding-top: 1rem !important;
+}
+[data-testid="stSidebarNav"] {
+    background: transparent !important;
+}
+[data-testid="stSidebarNav"] li {
+    margin: 0.5rem 0.75rem !important;
+}
+[data-testid="stSidebarNav"] a {
+    background: transparent !important;
+    border-radius: 12px !important;
+    padding: 1rem 1.25rem !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    font-size: 1.05rem !important;
+    transition: none !important;
+    border: 1px solid transparent !important;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stSidebarNav"] a:hover {
+    background: rgba(255, 255, 255, 0.4) !important;
+    color: #1e293b !important;
+}
+[data-testid="stSidebarNav"] a[aria-current="page"] {
+    background: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+[data-testid="stSidebarContent"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+[data-testid="stLogo"] {
+    height: auto !important;
+    max-height: 80px !important;
+}
+</style>
+"""
+
+def setup_page():
+    """Initialize page with logo and critical CSS - call immediately after st.set_page_config()"""
+    st.markdown(CRITICAL_CSS, unsafe_allow_html=True)
+    st.logo(LOGO_URL, size="large")
+
 def load_material_icons():
     """Load Material Icons font"""
     st.markdown("""
@@ -98,8 +157,4 @@ def empty_state(icon: str, message: str):
         </div>
     """, unsafe_allow_html=True)
 
-def sidebar_logo():
-    """Render the company logo in the sidebar"""
-    logo_url = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/Untitled-Project-1768468114127.png?width=8000&height=8000&resize=contain"
-    st.sidebar.image(logo_url, use_container_width=True)
-    st.sidebar.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+
