@@ -67,26 +67,19 @@ with st.sidebar:
     if 'current_page' not in st.session_state:
         st.session_state.current_page = 'Dashboard'
     
-    nav_items = [
-        ("Dashboard", "dashboard"),
-        ("Purchases", "local_gas_station"),
-        ("Sales", "trending_up"),
-        ("Payments", "payments"),
-        ("Seller Balance", "account_balance_wallet"),
-        ("Analytics", "analytics"),
-        ("Settings", "settings"),
-    ]
+    nav_options = ["Dashboard", "Purchases", "Sales", "Payments", "Seller Balance", "Analytics", "Settings"]
     
-    for page_name, icon in nav_items:
-        is_active = st.session_state.current_page == page_name
-        if st.button(
-            f"{'●' if is_active else '○'} {page_name}",
-            key=f"nav_{page_name}",
-            use_container_width=True,
-            type="primary" if is_active else "secondary"
-        ):
-            st.session_state.current_page = page_name
-            st.rerun()
+    selected = st.radio(
+        "Navigation",
+        nav_options,
+        index=nav_options.index(st.session_state.current_page) if st.session_state.current_page in nav_options else 0,
+        label_visibility="collapsed",
+        key="main_nav"
+    )
+    
+    if selected != st.session_state.current_page:
+        st.session_state.current_page = selected
+        st.rerun()
     
     st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
     st.divider()
