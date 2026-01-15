@@ -126,6 +126,11 @@ def _store_session(session):
     st.session_state['refresh_token'] = session.refresh_token
     st.session_state['user'] = session.user
     st.session_state['authenticated'] = True
+    try:
+        client = get_supabase_client()
+        client.auth.set_session(session.access_token, session.refresh_token)
+    except:
+        pass
 
 def _clear_session():
     keys_to_clear = ['access_token', 'refresh_token', 'user', 'authenticated', 'supabase_client']
@@ -134,7 +139,6 @@ def _clear_session():
             del st.session_state[key]
 
 def is_authenticated() -> bool:
-    """Check if user is authenticated and session is valid"""
     return st.session_state.get('authenticated', False) and st.session_state.get('user') is not None
 
 def get_current_user():
@@ -164,7 +168,6 @@ def refresh_session() -> bool:
     return False
 
 def restore_session() -> bool:
-    """Attempt to restore session from Supabase client - call on every page load"""
     if is_authenticated():
         return True
     
@@ -176,10 +179,21 @@ def restore_session() -> bool:
             return True
     except:
         pass
+    
+    refresh_token = st.session_state.get('refresh_token')
+    if refresh_token:
+        try:
+            client = get_supabase_client()
+            response = client.auth.refresh_session(refresh_token)
+            if response and response.session:
+                _store_session(response.session)
+                return True
+        except:
+            pass
+    
     return False
 
 def require_auth():
-    """Ensure user is logged in, redirect to login page if not"""
     restore_session()
     if not is_authenticated():
         st.switch_page("pages/_Login.py")
