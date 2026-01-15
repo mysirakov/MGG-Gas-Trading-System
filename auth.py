@@ -23,6 +23,7 @@ ERROR_MESSAGES = {
 }
 
 def get_supabase_client() -> Client:
+    """Get or create Supabase client - creates fresh client each time for reliability"""
     if 'supabase_client' not in st.session_state:
         st.session_state.supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
     return st.session_state.supabase_client
@@ -50,6 +51,14 @@ def get_friendly_error(error) -> str:
         return ERROR_MESSAGES['over_email_send_rate_limit']
     
     return f'An error occurred: {str(error)}'
+
+def _sync_session_state():
+    """Force sync session state to frontend - workaround for Streamlit bug"""
+    try:
+        for key in list(st.session_state.keys()):
+            st.session_state[key] = st.session_state[key]
+    except:
+        pass
 
 def sign_up(email: str, password: str) -> dict:
     try:
@@ -122,34 +131,48 @@ def reset_password(email: str) -> dict:
         return {'success': False, 'message': get_friendly_error(e)}
 
 def _store_session(session):
+    """Store session in both session_state AND query params for iframe persistence"""
     st.session_state['access_token'] = session.access_token
     st.session_state['refresh_token'] = session.refresh_token
     st.session_state['user'] = session.user
     st.session_state['authenticated'] = True
+    
+    # Store refresh token in URL query params - this SURVIVES page switches in iframe
     st.query_params['rt'] = session.refresh_token
+    
+    # Try to set session on client
     try:
         client = get_supabase_client()
         client.auth.set_session(session.access_token, session.refresh_token)
     except:
         pass
+    
+    # Force sync to frontend
+    _sync_session_state()
 
 def _clear_session():
+    """Clear all session data"""
     keys_to_clear = ['access_token', 'refresh_token', 'user', 'authenticated', 'supabase_client']
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
+    
+    # Clear query params
     if 'rt' in st.query_params:
         del st.query_params['rt']
 
 def is_authenticated() -> bool:
+    """Check if user is authenticated"""
     return st.session_state.get('authenticated', False) and st.session_state.get('user') is not None
 
 def get_current_user():
+    """Get current authenticated user"""
     if not is_authenticated():
         return None
     return st.session_state.get('user')
 
 def get_session():
+    """Get current session from Supabase client"""
     try:
         client = get_supabase_client()
         return client.auth.get_session()
@@ -157,6 +180,7 @@ def get_session():
         return None
 
 def refresh_session() -> bool:
+    """Refresh the current session"""
     try:
         client = get_supabase_client()
         refresh_token = st.session_state.get('refresh_token')
@@ -171,37 +195,49 @@ def refresh_session() -> bool:
     return False
 
 def restore_session() -> bool:
+    """
+    CRITICAL: Restore session from query params (primary) or session state (fallback)
+    This is the key function that makes auth work in iframes
+    """
+    # Already authenticated in this run
     if is_authenticated():
         return True
     
-    try:
-        client = get_supabase_client()
-        response = client.auth.get_session()
-        if response and response.session:
-            _store_session(response.session)
-            return True
-    except:
-        pass
+    # PRIORITY 1: Check query params (survives page switches in iframe)
+    refresh_token = st.query_params.get('rt')
     
-    refresh_token = st.session_state.get('refresh_token')
+    # PRIORITY 2: Check session state (may not survive page switch)
     if not refresh_token:
-        refresh_token = st.query_params.get('rt')
+        refresh_token = st.session_state.get('refresh_token')
     
     if refresh_token:
         try:
-            client = get_supabase_client()
+            # Create a fresh client to ensure clean state
+            client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+            st.session_state.supabase_client = client
+            
             response = client.auth.refresh_session(refresh_token)
             if response and response.session:
                 _store_session(response.session)
                 return True
-        except:
+        except Exception as e:
+            # Token is invalid/expired, clear it
             if 'rt' in st.query_params:
                 del st.query_params['rt']
+            _clear_session()
     
     return False
 
 def require_auth():
-    restore_session()
-    if not is_authenticated():
-        st.switch_page("pages/_Login.py")
-    return True
+    """
+    Require authentication - redirects to login if not authenticated
+    Call this at the top of every protected page
+    """
+    # First try to restore session from query params
+    if restore_session():
+        return True
+    
+    # Not authenticated - redirect to login
+    # Use st.stop() to prevent further execution before redirect
+    st.switch_page("pages/_Login.py")
+    st.stop()
