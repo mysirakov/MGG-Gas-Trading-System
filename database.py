@@ -179,25 +179,25 @@ def get_or_create_supplier(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM suppliers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result['id']
+    if result: return result[0]
     cur.execute('INSERT INTO suppliers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()['id']
+    return cur.fetchone()[0]
 
 def get_or_create_buyer(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result['id']
+    if result: return result[0]
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()['id']
+    return cur.fetchone()[0]
 
 def get_or_create_payment_method(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM payment_methods WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result['id']
+    if result: return result[0]
     cur.execute('INSERT INTO payment_methods (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()['id']
+    return cur.fetchone()[0]
 
 def get_or_create_invoice(cur, invoice_number, supplier_id, total_amount):
     if not invoice_number: return None
