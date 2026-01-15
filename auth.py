@@ -155,7 +155,7 @@ def _store_session(session):
 def _clear_session():
     from cookie_manager import delete_auth_cookie
     
-    keys_to_clear = ['access_token', 'refresh_token', 'user', 'authenticated', 'supabase_client']
+    keys_to_clear = ['access_token', 'refresh_token', 'user', 'authenticated', 'supabase_client', 'user_role']
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
@@ -172,6 +172,26 @@ def get_current_user():
     if not is_authenticated():
         return None
     return st.session_state.get('user')
+
+def is_admin() -> bool:
+    user = get_current_user()
+    if not user:
+        return False
+    
+    if 'user_role' in st.session_state:
+        return st.session_state['user_role'] == 'admin'
+    
+    try:
+        client = get_supabase_client()
+        result = client.table('user_roles').select('role').eq('user_id', user.id).execute()
+        if result.data and len(result.data) > 0:
+            role = result.data[0].get('role', 'viewer')
+        else:
+            role = 'viewer'
+        st.session_state['user_role'] = role
+        return role == 'admin'
+    except:
+        return False
 
 def get_session():
     try:

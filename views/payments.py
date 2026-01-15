@@ -7,6 +7,7 @@ from database import (
     get_settings, payments_to_df, get_sales, get_dashboard_metrics, sales_to_df, get_unpaid_sales, delete_payment
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
+from auth import is_admin
 
 def show_payments():
     load_material_icons()
@@ -17,6 +18,7 @@ def show_payments():
     payments = get_payments_received()
     sales = get_sales()
     metrics = get_dashboard_metrics()
+    admin = is_admin()
 
     sales_df = sales_to_df(sales)
     payments_df = payments_to_df(payments)
@@ -42,7 +44,10 @@ def show_payments():
 
     st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
-    tab1, tab2, tab3 = st.tabs(["View Payments", "Record Payment", "Bulk Upload"])
+    if admin:
+        tab1, tab2, tab3 = st.tabs(["View Payments", "Record Payment", "Bulk Upload"])
+    else:
+        tab1 = st.tabs(["View Payments"])[0]
 
     with tab1:
         df = payments_to_df(payments)
@@ -94,18 +99,19 @@ def show_payments():
 
             st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
             
-            section_header("delete", "Delete Payment")
-            if len(payments) > 0:
-                payment_options = {f"{p['payment_date']} - {p.get('buyer', 'N/A')} - €{float(p['amount_eur']):.2f}": p['id'] for p in payments}
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    selected_payment = st.selectbox("Select payment to delete", options=list(payment_options.keys()), label_visibility="collapsed", key="payments_delete_select")
-                with col2:
-                    if st.button("Delete", type="secondary", key="payments_delete_btn"):
-                        payment_id = payment_options[selected_payment]
-                        delete_payment(payment_id)
-                        st.success("Payment deleted!")
-                        st.rerun()
+            if admin:
+                section_header("delete", "Delete Payment")
+                if len(payments) > 0:
+                    payment_options = {f"{p['payment_date']} - {p.get('buyer', 'N/A')} - €{float(p['amount_eur']):.2f}": p['id'] for p in payments}
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        selected_payment = st.selectbox("Select payment to delete", options=list(payment_options.keys()), label_visibility="collapsed", key="payments_delete_select")
+                    with col2:
+                        if st.button("Delete", type="secondary", key="payments_delete_btn"):
+                            payment_id = payment_options[selected_payment]
+                            delete_payment(payment_id)
+                            st.success("Payment deleted!")
+                            st.rerun()
         else:
             empty_state("payments", "No payments recorded yet")
 
@@ -154,157 +160,158 @@ def show_payments():
                 else:
                     st.info("No payment data yet")
 
-    with tab2:
-        section_header("add_card", "Record Payment Received")
+    if admin:
+        with tab2:
+            section_header("add_card", "Record Payment Received")
 
-        col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
 
-        with col1:
-            payment_date = st.date_input("Payment Received Date", value=date.today(), key="single_payment_recv_date")
-            amount = st.number_input("Amount Received (EUR)", min_value=0.0, step=100.0, key="single_recv_amount")
-            buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_recv_buyer")
-            notes = st.text_area("Notes", key="single_recv_notes", placeholder="e.g., Settlement for gas days Nov 1-3")
+            with col1:
+                payment_date = st.date_input("Payment Received Date", value=date.today(), key="single_payment_recv_date")
+                amount = st.number_input("Amount Received (EUR)", min_value=0.0, step=100.0, key="single_recv_amount")
+                buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_recv_buyer")
+                notes = st.text_area("Notes", key="single_recv_notes", placeholder="e.g., Settlement for gas days Nov 1-3")
 
-        with col2:
-            unpaid_sales = get_unpaid_sales(buyer)
-            
-            if unpaid_sales and amount > 0:
-                st.markdown("**Outstanding Sales (oldest first)**")
+            with col2:
+                unpaid_sales = get_unpaid_sales(buyer)
+                
+                if unpaid_sales and amount > 0:
+                    st.markdown("**Outstanding Sales (oldest first)**")
 
-                for sale in unpaid_sales[:5]:
+                    for sale in unpaid_sales[:5]:
+                        sale_owed = float(sale.get('outstanding', 0))
+                        st.markdown(f"""
+                            <div class="list-item-card">
+                                <div class="list-item-header primary">
+                                    <span class="material-icons-round">receipt</span>
+                                    <span class="list-item-title">{sale['contract_date']}</span>
+                                </div>
+                                <div class="list-item-details">
+                                    Owed: €{sale_owed:,.2f}
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    if len(unpaid_sales) > 5:
+                        st.caption(f"...and {len(unpaid_sales) - 5} more outstanding sales")
+                elif not unpaid_sales:
+                    st.success("No outstanding sales for this buyer!")
+                else:
+                    st.info("Enter payment amount to see allocation preview")
+
+            if amount > 0 and unpaid_sales:
+                allocation_preview = []
+                remaining = amount
+
+                for sale in unpaid_sales:
                     sale_owed = float(sale.get('outstanding', 0))
+                    if sale_owed > 0 and remaining > 0:
+                        alloc_amount = min(remaining, sale_owed)
+                        allocation_preview.append({
+                            'contract_date': str(sale['contract_date']),
+                            'amount': alloc_amount,
+                            'owed': sale_owed
+                        })
+                        remaining -= alloc_amount
+
+                st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+                st.markdown("**Auto-allocation Preview (oldest first)**")
+
+                for alloc in allocation_preview:
+                    status = "Full" if alloc['amount'] >= alloc['owed'] else "Partial"
+                    icon = "check_circle" if status == "Full" else "pending"
+                    cls = "success" if status == "Full" else "warning"
                     st.markdown(f"""
                         <div class="list-item-card">
-                            <div class="list-item-header primary">
-                                <span class="material-icons-round">receipt</span>
-                                <span class="list-item-title">{sale['contract_date']}</span>
+                            <div class="list-item-header {cls}">
+                                <span class="material-icons-round">{icon}</span>
+                                <span class="list-item-title">{alloc['contract_date']}</span>
                             </div>
                             <div class="list-item-details">
-                                Owed: €{sale_owed:,.2f}
+                                Allocated: €{alloc['amount']:,.2f} ({status})
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
 
-                if len(unpaid_sales) > 5:
-                    st.caption(f"...and {len(unpaid_sales) - 5} more outstanding sales")
-            elif not unpaid_sales:
-                st.success("No outstanding sales for this buyer!")
-            else:
-                st.info("Enter payment amount to see allocation preview")
-
-        if amount > 0 and unpaid_sales:
-            allocation_preview = []
-            remaining = amount
-
-            for sale in unpaid_sales:
-                sale_owed = float(sale.get('outstanding', 0))
-                if sale_owed > 0 and remaining > 0:
-                    alloc_amount = min(remaining, sale_owed)
-                    allocation_preview.append({
-                        'contract_date': str(sale['contract_date']),
-                        'amount': alloc_amount,
-                        'owed': sale_owed
-                    })
-                    remaining -= alloc_amount
+                total_to_allocate = sum(a['amount'] for a in allocation_preview)
+                if remaining > 0:
+                    st.warning(f"€{remaining:,.2f} will remain unallocated after clearing oldest balances")
+                else:
+                    st.success(f"€{total_to_allocate:,.2f} will be fully allocated to {len(allocation_preview)} sale(s)")
 
             st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-            st.markdown("**Auto-allocation Preview (oldest first)**")
-
-            for alloc in allocation_preview:
-                status = "Full" if alloc['amount'] >= alloc['owed'] else "Partial"
-                icon = "check_circle" if status == "Full" else "pending"
-                cls = "success" if status == "Full" else "warning"
-                st.markdown(f"""
-                    <div class="list-item-card">
-                        <div class="list-item-header {cls}">
-                            <span class="material-icons-round">{icon}</span>
-                            <span class="list-item-title">{alloc['contract_date']}</span>
-                        </div>
-                        <div class="list-item-details">
-                            Allocated: €{alloc['amount']:,.2f} ({status})
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-
-            total_to_allocate = sum(a['amount'] for a in allocation_preview)
-            if remaining > 0:
-                st.warning(f"€{remaining:,.2f} will remain unallocated after clearing oldest balances")
-            else:
-                st.success(f"€{total_to_allocate:,.2f} will be fully allocated to {len(allocation_preview)} sale(s)")
-
-        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-        
-        if st.button("Record Payment & Auto-Allocate", type="primary", key="add_payment"):
-            if amount <= 0:
-                st.error("Please enter a payment amount")
-            else:
-                add_payment_received(payment_date, buyer, amount, notes)
-                st.success("Payment recorded and allocated!")
-                st.rerun()
-
-    with tab3:
-        section_header("upload_file", "Bulk Upload Payments")
-
-        with st.expander("Required Columns Format"):
-            st.markdown("""
-            Your file should contain the following columns:
-            - `payment_date` - Date payment received (DD/MM/YYYY)
-            - `amount_eur` - Amount received in EUR
-            - `buyer` - Buyer name
-            - `notes` - Optional notes about the payment
-
-            Payments will be automatically allocated to oldest outstanding sales first (FIFO).
-            """)
-
-            sample_data = [
-                {
-                    'payment_date': '03/11/2024',
-                    'amount_eur': 11200,
-                    'buyer': 'Keler',
-                    'notes': 'Settlement for Nov 1-2'
-                }
-            ]
-            st.dataframe(sample_data)
-
-            output = io.StringIO()
-            writer = csv.DictWriter(output, fieldnames=sample_data[0].keys())
-            writer.writeheader()
-            writer.writerows(sample_data)
-            csv_data = output.getvalue()
-            st.download_button("Download Template CSV", csv_data, "payments_template.csv", "text/csv", key="payments_template_dl")
-
-        uploaded_file = st.file_uploader("Upload Payments File", type=['csv'], key="bulk_payments_file")
-
-        if uploaded_file:
-            try:
-                content = uploaded_file.read().decode('utf-8')
-                reader = csv.DictReader(io.StringIO(content))
-                data = list(reader)
-
-                st.markdown("##### Preview of Uploaded Data")
-                st.dataframe(data, width="stretch")
-
-                if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
-                    count = 0
-                    for row in data:
-                        payment_date_str = str(row.get('payment_date', ''))
-                        payment_date = date.today()
-                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
-                            try:
-                                payment_date = datetime.strptime(payment_date_str, fmt).date()
-                                break
-                            except:
-                                continue
-                        
-                        add_payment_received(
-                            payment_date,
-                            str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
-                            float(row.get('amount_eur', 0) or 0),
-                            str(row.get('notes', ''))
-                        )
-                        count += 1
-
-                    st.success(f"Imported {count} payments with auto-allocation!")
+            
+            if st.button("Record Payment & Auto-Allocate", type="primary", key="add_payment"):
+                if amount <= 0:
+                    st.error("Please enter a payment amount")
+                else:
+                    add_payment_received(payment_date, buyer, amount, notes)
+                    st.success("Payment recorded and allocated!")
                     st.rerun()
-            except Exception as e:
-                st.error(f"Error reading file: {str(e)}")
+
+        with tab3:
+            section_header("upload_file", "Bulk Upload Payments")
+
+            with st.expander("Required Columns Format"):
+                st.markdown("""
+                Your file should contain the following columns:
+                - `payment_date` - Date payment received (DD/MM/YYYY)
+                - `amount_eur` - Amount received in EUR
+                - `buyer` - Buyer name
+                - `notes` - Optional notes about the payment
+
+                Payments will be automatically allocated to oldest outstanding sales first (FIFO).
+                """)
+
+                sample_data = [
+                    {
+                        'payment_date': '03/11/2024',
+                        'amount_eur': 11200,
+                        'buyer': 'Keler',
+                        'notes': 'Settlement for Nov 1-2'
+                    }
+                ]
+                st.dataframe(sample_data)
+
+                output = io.StringIO()
+                writer = csv.DictWriter(output, fieldnames=sample_data[0].keys())
+                writer.writeheader()
+                writer.writerows(sample_data)
+                csv_data = output.getvalue()
+                st.download_button("Download Template CSV", csv_data, "payments_template.csv", "text/csv", key="payments_template_dl")
+
+            uploaded_file = st.file_uploader("Upload Payments File", type=['csv'], key="bulk_payments_file")
+
+            if uploaded_file:
+                try:
+                    content = uploaded_file.read().decode('utf-8')
+                    reader = csv.DictReader(io.StringIO(content))
+                    data = list(reader)
+
+                    st.markdown("##### Preview of Uploaded Data")
+                    st.dataframe(data, width="stretch")
+
+                    if st.button("Import & Auto-Allocate All", type="primary", key="import_payments"):
+                        count = 0
+                        for row in data:
+                            payment_date_str = str(row.get('payment_date', ''))
+                            payment_date = date.today()
+                            for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
+                                try:
+                                    payment_date = datetime.strptime(payment_date_str, fmt).date()
+                                    break
+                                except:
+                                    continue
+                            
+                            add_payment_received(
+                                payment_date,
+                                str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
+                                float(row.get('amount_eur', 0) or 0),
+                                str(row.get('notes', ''))
+                            )
+                            count += 1
+
+                        st.success(f"Imported {count} payments with auto-allocation!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error reading file: {str(e)}")

@@ -6,6 +6,7 @@ from database import (
     get_sales, add_sale, update_sale, delete_sale, get_settings, sales_to_df
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
+from auth import is_admin
 
 def show_sales():
     load_material_icons()
@@ -14,8 +15,12 @@ def show_sales():
 
     settings = get_settings()
     sales = get_sales()
+    admin = is_admin()
 
-    tab1, tab2, tab3 = st.tabs(["View Sales", "Add Sale", "Bulk Upload"])
+    if admin:
+        tab1, tab2, tab3 = st.tabs(["View Sales", "Add Sale", "Bulk Upload"])
+    else:
+        tab1 = st.tabs(["View Sales"])[0]
 
     with tab1:
         df = sales_to_df(sales)
@@ -84,137 +89,139 @@ def show_sales():
             
             st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
             
-            section_header("delete", "Delete Sale")
-            if len(sales) > 0:
-                sale_options = {f"{s['contract_date']} - {s.get('buyer', 'N/A')} - €{float(s['total_revenue']):.2f}": s['id'] for s in sales}
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    selected_sale = st.selectbox("Select sale to delete", options=list(sale_options.keys()), label_visibility="collapsed", key="sales_delete_select")
-                with col2:
-                    if st.button("Delete", type="secondary", key="sales_delete_btn"):
-                        sale_id = sale_options[selected_sale]
-                        delete_sale(sale_id)
-                        st.success("Sale deleted!")
-                        st.rerun()
+            if admin:
+                section_header("delete", "Delete Sale")
+                if len(sales) > 0:
+                    sale_options = {f"{s['contract_date']} - {s.get('buyer', 'N/A')} - €{float(s['total_revenue']):.2f}": s['id'] for s in sales}
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        selected_sale = st.selectbox("Select sale to delete", options=list(sale_options.keys()), label_visibility="collapsed", key="sales_delete_select")
+                    with col2:
+                        if st.button("Delete", type="secondary", key="sales_delete_btn"):
+                            sale_id = sale_options[selected_sale]
+                            delete_sale(sale_id)
+                            st.success("Sale deleted!")
+                            st.rerun()
         else:
             empty_state("leaderboard", "No sales recorded yet")
 
-    with tab2:
-        section_header("add_circle", "Add Single Sale Entry")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            contract_date = st.date_input("Contract Date (Delivery Date)", value=date.today(), key="single_contract_date")
-            sales_price = st.number_input("Sales Price (EUR/MWh)", min_value=0.0, step=0.01, value=0.0, key="single_sales_price")
-            quantity_mwh = st.number_input("Quantity (MWh)", min_value=0.0, step=1.0, key="single_sale_quantity")
-            buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_buyer")
-        
-        with col2:
-            supplier = st.selectbox("Supplier", options=settings.get("suppliers", ["GPE"]), key="single_supplier", help="Select the supplier for this purchase")
-            purchase_price = st.number_input("Purchase Price (EUR/MWh)", min_value=0.0, step=0.01, key="single_purchase_price", help="The cost at which gas was purchased")
-            cost_capacity = st.number_input("Cost of Capacity (EUR/MWh)", min_value=0.0, step=0.01, key="single_capacity")
-            cost_transport = st.number_input("Cost of Transport (EUR/MWh)", min_value=0.0, step=0.01, key="single_transport")
-            cost_customs = st.number_input("Cost of Customs (EUR/MWh)", min_value=0.0, step=0.01, key="single_customs", help="Customs expense per MWh")
-        
-        margin = sales_price - purchase_price - cost_capacity - cost_transport - cost_customs
-        total_revenue_calc = sales_price * quantity_mwh
-        total_margin_calc = margin * quantity_mwh
-        
-        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            metric_card("calculate", "Margin (EUR/MWh)", f"€{margin:,.2f}", "blue")
-        with col2:
-            metric_card("attach_money", "Total Revenue", f"€{total_revenue_calc:,.2f}", "green")
-        with col3:
-            color = "green" if total_margin_calc >= 0 else "red"
-            metric_card("trending_up" if total_margin_calc >= 0 else "trending_down", "Total Margin", f"€{total_margin_calc:,.2f}", color)
-        
-        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-        
-        if st.button("Add Sale", type="primary", key="add_single_sale"):
-            add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport, supplier, cost_customs)
-            st.success("Sale added successfully!")
-            st.rerun()
+    if admin:
+        with tab2:
+            section_header("add_circle", "Add Single Sale Entry")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                contract_date = st.date_input("Contract Date (Delivery Date)", value=date.today(), key="single_contract_date")
+                sales_price = st.number_input("Sales Price (EUR/MWh)", min_value=0.0, step=0.01, value=0.0, key="single_sales_price")
+                quantity_mwh = st.number_input("Quantity (MWh)", min_value=0.0, step=1.0, key="single_sale_quantity")
+                buyer = st.selectbox("Buyer", options=settings.get("buyers", ["Keler"]), key="single_buyer")
+            
+            with col2:
+                supplier = st.selectbox("Supplier", options=settings.get("suppliers", ["GPE"]), key="single_supplier", help="Select the supplier for this purchase")
+                purchase_price = st.number_input("Purchase Price (EUR/MWh)", min_value=0.0, step=0.01, key="single_purchase_price", help="The cost at which gas was purchased")
+                cost_capacity = st.number_input("Cost of Capacity (EUR/MWh)", min_value=0.0, step=0.01, key="single_capacity")
+                cost_transport = st.number_input("Cost of Transport (EUR/MWh)", min_value=0.0, step=0.01, key="single_transport")
+                cost_customs = st.number_input("Cost of Customs (EUR/MWh)", min_value=0.0, step=0.01, key="single_customs", help="Customs expense per MWh")
+            
+            margin = sales_price - purchase_price - cost_capacity - cost_transport - cost_customs
+            total_revenue_calc = sales_price * quantity_mwh
+            total_margin_calc = margin * quantity_mwh
+            
+            st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                metric_card("calculate", "Margin (EUR/MWh)", f"€{margin:,.2f}", "blue")
+            with col2:
+                metric_card("attach_money", "Total Revenue", f"€{total_revenue_calc:,.2f}", "green")
+            with col3:
+                color = "green" if total_margin_calc >= 0 else "red"
+                metric_card("trending_up" if total_margin_calc >= 0 else "trending_down", "Total Margin", f"€{total_margin_calc:,.2f}", color)
+            
+            st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+            
+            if st.button("Add Sale", type="primary", key="add_single_sale"):
+                add_sale(contract_date, buyer, quantity_mwh, sales_price, purchase_price, cost_capacity, cost_transport, supplier, cost_customs)
+                st.success("Sale added successfully!")
+                st.rerun()
 
-    with tab3:
-        section_header("upload_file", "Bulk Upload Sales")
-        
-        with st.expander("Required Columns Format"):
-            st.markdown("""
-            Your file should contain the following columns:
-            - `contract_date` - Date of contract/delivery (DD/MM/YYYY)
-            - `sales_price_eur_mwh` - Sales price in EUR per MWh
-            - `quantity_mwh` - Quantity in MWh
-            - `cost_capacity_eur_mwh` - Cost of capacity in EUR per MWh
-            - `cost_transport_eur_mwh` - Cost of transport in EUR per MWh
-            - `cost_customs_eur_mwh` - Cost of customs in EUR per MWh
-            - `purchase_price_eur_mwh` - Purchase price in EUR per MWh
-            - `buyer` - Buyer name
-            - `supplier` - Supplier name (optional, defaults to GPE)
-            """)
+        with tab3:
+            section_header("upload_file", "Bulk Upload Sales")
             
-            sample_data = [
-                {
-                    'contract_date': '01/11/2024',
-                    'sales_price_eur_mwh': 40.00,
-                    'quantity_mwh': 280,
-                    'cost_capacity_eur_mwh': 0.50,
-                    'cost_transport_eur_mwh': 0.30,
-                    'cost_customs_eur_mwh': 0.10,
-                    'purchase_price_eur_mwh': 35.50,
-                    'buyer': 'Keler',
-                    'supplier': 'GPE'
-                }
-            ]
-            st.dataframe(sample_data)
+            with st.expander("Required Columns Format"):
+                st.markdown("""
+                Your file should contain the following columns:
+                - `contract_date` - Date of contract/delivery (DD/MM/YYYY)
+                - `sales_price_eur_mwh` - Sales price in EUR per MWh
+                - `quantity_mwh` - Quantity in MWh
+                - `cost_capacity_eur_mwh` - Cost of capacity in EUR per MWh
+                - `cost_transport_eur_mwh` - Cost of transport in EUR per MWh
+                - `cost_customs_eur_mwh` - Cost of customs in EUR per MWh
+                - `purchase_price_eur_mwh` - Purchase price in EUR per MWh
+                - `buyer` - Buyer name
+                - `supplier` - Supplier name (optional, defaults to GPE)
+                """)
+                
+                sample_data = [
+                    {
+                        'contract_date': '01/11/2024',
+                        'sales_price_eur_mwh': 40.00,
+                        'quantity_mwh': 280,
+                        'cost_capacity_eur_mwh': 0.50,
+                        'cost_transport_eur_mwh': 0.30,
+                        'cost_customs_eur_mwh': 0.10,
+                        'purchase_price_eur_mwh': 35.50,
+                        'buyer': 'Keler',
+                        'supplier': 'GPE'
+                    }
+                ]
+                st.dataframe(sample_data)
+                
+                output = io.StringIO()
+                writer = csv.DictWriter(output, fieldnames=sample_data[0].keys())
+                writer.writeheader()
+                writer.writerows(sample_data)
+                csv_data = output.getvalue()
+                st.download_button("Download Template CSV", csv_data, "sales_template.csv", "text/csv", key="sales_template_dl")
             
-            output = io.StringIO()
-            writer = csv.DictWriter(output, fieldnames=sample_data[0].keys())
-            writer.writeheader()
-            writer.writerows(sample_data)
-            csv_data = output.getvalue()
-            st.download_button("Download Template CSV", csv_data, "sales_template.csv", "text/csv", key="sales_template_dl")
-        
-        uploaded_file = st.file_uploader("Upload Sales File", type=['csv'], key="bulk_sales")
-        
-        if uploaded_file:
-            try:
-                content = uploaded_file.read().decode('utf-8')
-                reader = csv.DictReader(io.StringIO(content))
-                data = list(reader)
-                
-                st.markdown("##### Preview of Uploaded Data")
-                st.dataframe(data, width="stretch")
-                
-                if st.button("Import All Rows", type="primary", key="import_sales"):
-                    count = 0
-                    for row in data:
-                        contract_date_str = row.get('contract_date', '')
-                        contract_date = date.today()
-                        for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
-                            try:
-                                contract_date = datetime.strptime(contract_date_str, fmt).date()
-                                break
-                            except:
-                                continue
-                        
-                        add_sale(
-                            contract_date,
-                            str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
-                            float(row.get('quantity_mwh', 0) or 0),
-                            float(row.get('sales_price_eur_mwh', 0) or 0),
-                            float(row.get('purchase_price_eur_mwh', 0) or 0),
-                            float(row.get('cost_capacity_eur_mwh', 0) or 0),
-                            float(row.get('cost_transport_eur_mwh', 0) or 0),
-                            str(row.get('supplier', settings['suppliers'][0] if settings['suppliers'] else 'GPE')),
-                            float(row.get('cost_customs_eur_mwh', 0) or 0)
-                        )
-                        count += 1
+            uploaded_file = st.file_uploader("Upload Sales File", type=['csv'], key="bulk_sales")
+            
+            if uploaded_file:
+                try:
+                    content = uploaded_file.read().decode('utf-8')
+                    reader = csv.DictReader(io.StringIO(content))
+                    data = list(reader)
                     
-                    st.success(f"Successfully imported {count} sales!")
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Error reading file: {str(e)}")
+                    st.markdown("##### Preview of Uploaded Data")
+                    st.dataframe(data, width="stretch")
+                    
+                    if st.button("Import All Rows", type="primary", key="import_sales"):
+                        count = 0
+                        for row in data:
+                            contract_date_str = row.get('contract_date', '')
+                            contract_date = date.today()
+                            for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
+                                try:
+                                    contract_date = datetime.strptime(contract_date_str, fmt).date()
+                                    break
+                                except:
+                                    continue
+                            
+                            add_sale(
+                                contract_date,
+                                str(row.get('buyer', settings['buyers'][0] if settings['buyers'] else 'Unknown')),
+                                float(row.get('quantity_mwh', 0) or 0),
+                                float(row.get('sales_price_eur_mwh', 0) or 0),
+                                float(row.get('purchase_price_eur_mwh', 0) or 0),
+                                float(row.get('cost_capacity_eur_mwh', 0) or 0),
+                                float(row.get('cost_transport_eur_mwh', 0) or 0),
+                                str(row.get('supplier', settings['suppliers'][0] if settings['suppliers'] else 'GPE')),
+                                float(row.get('cost_customs_eur_mwh', 0) or 0)
+                            )
+                            count += 1
+                        
+                        st.success(f"Successfully imported {count} sales!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error reading file: {str(e)}")

@@ -7,6 +7,7 @@ from database import (
     get_settings, supplier_payments_to_df, get_sales, get_invoices, get_dashboard_metrics, sales_to_df
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
+from auth import is_admin
 
 def show_seller_balance():
     load_material_icons()
@@ -18,6 +19,7 @@ def show_seller_balance():
     sales = get_sales()
     invoices = get_invoices()
     metrics = get_dashboard_metrics()
+    admin = is_admin()
 
     purchases_data = supplier_payments_to_df(purchases)
     sales_data = sales_to_df(sales)
@@ -38,7 +40,10 @@ def show_seller_balance():
 
     st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Balance Overview", "Add Payment", "Bulk Upload", "Invoice Tracking"])
+    if admin:
+        tab1, tab2, tab3, tab4 = st.tabs(["Balance Overview", "Add Payment", "Bulk Upload", "Invoice Tracking"])
+    else:
+        tab1, tab4 = st.tabs(["Balance Overview", "Invoice Tracking"])
 
     with tab1:
         section_header("account_balance", "Balance Breakdown by Supplier")
@@ -96,119 +101,121 @@ def show_seller_balance():
             
             st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
             
-            section_header("delete", "Delete Payment")
-            if len(purchases) > 0:
-                delete_options = {f"{p['payment_date']} - {p.get('supplier', 'N/A')} - €{float(p['amount_sent_eur']):.2f}": p['id'] for p in purchases}
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    selected_delete = st.selectbox("Select payment to delete", options=list(delete_options.keys()), key="del_payment", label_visibility="collapsed")
-                with col2:
-                    if st.button("Delete", type="secondary", key="seller_delete_btn"):
-                        payment_id = delete_options[selected_delete]
-                        delete_supplier_payment(payment_id)
-                        st.success("Payment deleted!")
-                        st.rerun()
+            if admin:
+                section_header("delete", "Delete Payment")
+                if len(purchases) > 0:
+                    delete_options = {f"{p['payment_date']} - {p.get('supplier', 'N/A')} - €{float(p['amount_sent_eur']):.2f}": p['id'] for p in purchases}
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        selected_delete = st.selectbox("Select payment to delete", options=list(delete_options.keys()), key="del_payment", label_visibility="collapsed")
+                    with col2:
+                        if st.button("Delete", type="secondary", key="seller_delete_btn"):
+                            payment_id = delete_options[selected_delete]
+                            delete_supplier_payment(payment_id)
+                            st.success("Payment deleted!")
+                            st.rerun()
         else:
             st.info("No payments recorded yet.")
 
-    with tab2:
-        section_header("add_card", "Add Supplier Payment")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            payment_date = st.date_input("Payment Date", value=date.today(), key="single_payment_date")
-            supplier = st.selectbox("Supplier", options=settings.get("suppliers", ["GPE"]), key="single_supplier_sel")
-            payment_method = st.selectbox("Payment Method", options=settings.get("payment_methods", ["Unicredit", "Financial Agent"]), key="single_payment_method")
-            amount_sent = st.number_input("Amount Sent (EUR)", min_value=0.0, step=100.0, key="single_amount_sent")
-            invoice_number = st.text_input("Invoice Number", key="single_invoice")
-        
-        with col2:
-            receipt_date = st.date_input("Receipt Date (by supplier)", value=date.today(), key="single_receipt_date")
-            amount_received = st.number_input("Amount Received by Supplier (EUR)", min_value=0.0, step=100.0, key="single_amount_received")
-        
-        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-        
-        if st.button("Add Payment", type="primary", key="add_single_supplier"):
-            add_supplier_payment(
-                payment_date, supplier, payment_method, amount_sent,
-                invoice_number, receipt_date, amount_received
-            )
-            st.success("Payment added successfully!")
-            st.rerun()
-
-    with tab3:
-        section_header("upload_file", "Bulk Upload Payments")
-        
-        with st.expander("Required Columns Format"):
-            st.markdown("""
-            Your file should contain the following columns:
-            - `payment_date` - Date of payment (DD/MM/YYYY)
-            - `supplier` - Supplier name
-            - `payment_method` - Payment method used
-            - `amount_sent_eur` - Amount sent in EUR
-            - `invoice_number` - Invoice reference
-            - `receipt_date` - Date received by supplier (DD/MM/YYYY)
-            - `amount_received_eur` - Amount received by supplier in EUR
-            """)
+    if admin:
+        with tab2:
+            section_header("add_card", "Add Supplier Payment")
             
-            sample_rows = [
-                ['payment_date', 'supplier', 'payment_method', 'amount_sent_eur', 'invoice_number', 'receipt_date', 'amount_received_eur'],
-                ['01/11/2024', 'GPE', 'Unicredit', 50000, 'INV-001', '03/11/2024', 49985]
-            ]
-            st.table(sample_rows)
+            col1, col2 = st.columns(2)
             
-            output = io.StringIO()
-            writer = csv.writer(output)
-            writer.writerows(sample_rows)
-            csv_data = output.getvalue()
-            st.download_button("Download Template CSV", csv_data, "supplier_payments_template.csv", "text/csv", key="supplier_template_dl")
-        
-        uploaded_file = st.file_uploader("Upload Payments File (CSV only)", type=['csv'], key="bulk_supplier_payments")
-        
-        if uploaded_file:
-            try:
-                content = uploaded_file.read().decode('utf-8')
-                csv_reader = csv.DictReader(io.StringIO(content))
-                rows = list(csv_reader)
-                
-                st.markdown("##### Preview of Uploaded Data")
-                st.dataframe(rows, width="stretch")
-                
-                if st.button("Import All Rows", type="primary", key="import_supplier_payments"):
-                    count = 0
-                    for row in rows:
-                        payment_date_str = row.get('payment_date', '').strip()
-                        receipt_date_str = row.get('receipt_date', '').strip()
-                        
-                        def parse_custom_date(date_str):
-                            if not date_str:
-                                return date.today()
-                            for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
-                                try:
-                                    return datetime.strptime(date_str, fmt).date()
-                                except ValueError:
-                                    continue
-                            return date.today()
+            with col1:
+                payment_date = st.date_input("Payment Date", value=date.today(), key="single_payment_date")
+                supplier = st.selectbox("Supplier", options=settings.get("suppliers", ["GPE"]), key="single_supplier_sel")
+                payment_method = st.selectbox("Payment Method", options=settings.get("payment_methods", ["Unicredit", "Financial Agent"]), key="single_payment_method")
+                amount_sent = st.number_input("Amount Sent (EUR)", min_value=0.0, step=100.0, key="single_amount_sent")
+                invoice_number = st.text_input("Invoice Number", key="single_invoice")
+            
+            with col2:
+                receipt_date = st.date_input("Receipt Date (by supplier)", value=date.today(), key="single_receipt_date")
+                amount_received = st.number_input("Amount Received by Supplier (EUR)", min_value=0.0, step=100.0, key="single_amount_received")
+            
+            st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+            
+            if st.button("Add Payment", type="primary", key="add_single_supplier"):
+                add_supplier_payment(
+                    payment_date, supplier, payment_method, amount_sent,
+                    invoice_number, receipt_date, amount_received
+                )
+                st.success("Payment added successfully!")
+                st.rerun()
 
-                        p_date = parse_custom_date(payment_date_str)
-                        r_date = parse_custom_date(receipt_date_str)
-                        
-                        add_supplier_payment(
-                            p_date,
-                            str(row.get('supplier', settings.get('suppliers', ['GPE'])[0])),
-                            str(row.get('payment_method', settings.get('payment_methods', ['Unicredit'])[0])),
-                            float(row.get('amount_sent_eur', 0) or 0),
-                            str(row.get('invoice_number', '')),
-                            r_date,
-                            float(row.get('amount_received_eur', 0) or 0)
-                        )
-                        count += 1
+        with tab3:
+            section_header("upload_file", "Bulk Upload Payments")
+            
+            with st.expander("Required Columns Format"):
+                st.markdown("""
+                Your file should contain the following columns:
+                - `payment_date` - Date of payment (DD/MM/YYYY)
+                - `supplier` - Supplier name
+                - `payment_method` - Payment method used
+                - `amount_sent_eur` - Amount sent in EUR
+                - `invoice_number` - Invoice reference
+                - `receipt_date` - Date received by supplier (DD/MM/YYYY)
+                - `amount_received_eur` - Amount received by supplier in EUR
+                """)
+                
+                sample_rows = [
+                    ['payment_date', 'supplier', 'payment_method', 'amount_sent_eur', 'invoice_number', 'receipt_date', 'amount_received_eur'],
+                    ['01/11/2024', 'GPE', 'Unicredit', 50000, 'INV-001', '03/11/2024', 49985]
+                ]
+                st.table(sample_rows)
+                
+                output = io.StringIO()
+                writer = csv.writer(output)
+                writer.writerows(sample_rows)
+                csv_data = output.getvalue()
+                st.download_button("Download Template CSV", csv_data, "supplier_payments_template.csv", "text/csv", key="supplier_template_dl")
+            
+            uploaded_file = st.file_uploader("Upload Payments File (CSV only)", type=['csv'], key="bulk_supplier_payments")
+            
+            if uploaded_file:
+                try:
+                    content = uploaded_file.read().decode('utf-8')
+                    csv_reader = csv.DictReader(io.StringIO(content))
+                    rows = list(csv_reader)
                     
-                    st.success(f"Successfully imported {count} payments!")
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Error reading file: {str(e)}")
+                    st.markdown("##### Preview of Uploaded Data")
+                    st.dataframe(rows, width="stretch")
+                    
+                    if st.button("Import All Rows", type="primary", key="import_supplier_payments"):
+                        count = 0
+                        for row in rows:
+                            payment_date_str = row.get('payment_date', '').strip()
+                            receipt_date_str = row.get('receipt_date', '').strip()
+                            
+                            def parse_custom_date(date_str):
+                                if not date_str:
+                                    return date.today()
+                                for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%m/%d/%Y']:
+                                    try:
+                                        return datetime.strptime(date_str, fmt).date()
+                                    except ValueError:
+                                        continue
+                                return date.today()
+
+                            p_date = parse_custom_date(payment_date_str)
+                            r_date = parse_custom_date(receipt_date_str)
+                            
+                            add_supplier_payment(
+                                p_date,
+                                str(row.get('supplier', settings.get('suppliers', ['GPE'])[0])),
+                                str(row.get('payment_method', settings.get('payment_methods', ['Unicredit'])[0])),
+                                float(row.get('amount_sent_eur', 0) or 0),
+                                str(row.get('invoice_number', '')),
+                                r_date,
+                                float(row.get('amount_received_eur', 0) or 0)
+                            )
+                            count += 1
+                        
+                        st.success(f"Successfully imported {count} payments!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error reading file: {str(e)}")
 
     with tab4:
         section_header("receipt", "Invoice Tracking")

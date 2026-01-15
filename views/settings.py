@@ -1,7 +1,7 @@
 import streamlit as st
 from database import get_settings, update_settings, add_supplier, add_buyer, add_payment_method, delete_supplier, delete_buyer, delete_payment_method
 from components import load_material_icons, page_header, section_header, metric_card
-from auth import get_current_user, sign_out
+from auth import get_current_user, sign_out, is_admin
 
 def show_settings():
     load_material_icons()
@@ -9,6 +9,7 @@ def show_settings():
     page_header("Settings", "Manage suppliers, buyers, and payment methods")
 
     settings = get_settings()
+    admin = is_admin()
 
     col1, col2, col3 = st.columns(3)
 
@@ -39,29 +40,38 @@ def show_settings():
         """, unsafe_allow_html=True)
 
         for i, supplier in enumerate(suppliers):
-            col_a, col_b = st.columns([4, 1])
-            with col_a:
+            if admin:
+                col_a, col_b = st.columns([4, 1])
+                with col_a:
+                    st.markdown(f"""
+                        <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="material-icons-round" style="color: #3b82f6; font-size: 18px;">store</span>
+                            <span style="font-weight: 500;">{supplier}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col_b:
+                    if st.button("Delete", key=f"del_supplier_{i}"):
+                        delete_supplier(supplier)
+                        st.rerun()
+            else:
                 st.markdown(f"""
                     <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
                         <span class="material-icons-round" style="color: #3b82f6; font-size: 18px;">store</span>
                         <span style="font-weight: 500;">{supplier}</span>
                     </div>
                 """, unsafe_allow_html=True)
-            with col_b:
-                if st.button("Delete", key=f"del_supplier_{i}"):
-                    delete_supplier(supplier)
-                    st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        new_supplier = st.text_input("Add new supplier", key="new_supplier", placeholder="Enter supplier name")
-        if st.button("Add Supplier", type="primary", key="add_supplier_btn"):
-            if new_supplier and new_supplier not in suppliers:
-                add_supplier(new_supplier)
-                st.success(f"Added supplier: {new_supplier}")
-                st.rerun()
-            elif new_supplier in suppliers:
-                st.warning("Supplier already exists")
+        if admin:
+            new_supplier = st.text_input("Add new supplier", key="new_supplier", placeholder="Enter supplier name")
+            if st.button("Add Supplier", type="primary", key="add_supplier_btn"):
+                if new_supplier and new_supplier not in suppliers:
+                    add_supplier(new_supplier)
+                    st.success(f"Added supplier: {new_supplier}")
+                    st.rerun()
+                elif new_supplier in suppliers:
+                    st.warning("Supplier already exists")
 
         st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
@@ -80,29 +90,38 @@ def show_settings():
         """, unsafe_allow_html=True)
 
         for i, method in enumerate(payment_methods):
-            col_a, col_b = st.columns([4, 1])
-            with col_a:
+            if admin:
+                col_a, col_b = st.columns([4, 1])
+                with col_a:
+                    st.markdown(f"""
+                        <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="material-icons-round" style="color: #10b981; font-size: 18px;">account_balance</span>
+                            <span style="font-weight: 500;">{method}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col_b:
+                    if st.button("Delete", key=f"del_method_{i}"):
+                        delete_payment_method(method)
+                        st.rerun()
+            else:
                 st.markdown(f"""
                     <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
                         <span class="material-icons-round" style="color: #10b981; font-size: 18px;">account_balance</span>
                         <span style="font-weight: 500;">{method}</span>
                     </div>
                 """, unsafe_allow_html=True)
-            with col_b:
-                if st.button("Delete", key=f"del_method_{i}"):
-                    delete_payment_method(method)
-                    st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        new_method = st.text_input("Add new payment method", key="new_method", placeholder="Enter payment method")
-        if st.button("Add Payment Method", type="primary", key="add_method_btn"):
-            if new_method and new_method not in payment_methods:
-                add_payment_method(new_method)
-                st.success(f"Added payment method: {new_method}")
-                st.rerun()
-            elif new_method in payment_methods:
-                st.warning("Payment method already exists")
+        if admin:
+            new_method = st.text_input("Add new payment method", key="new_method", placeholder="Enter payment method")
+            if st.button("Add Payment Method", type="primary", key="add_method_btn"):
+                if new_method and new_method not in payment_methods:
+                    add_payment_method(new_method)
+                    st.success(f"Added payment method: {new_method}")
+                    st.rerun()
+                elif new_method in payment_methods:
+                    st.warning("Payment method already exists")
 
     with col2:
         section_header("groups", "Buyers")
@@ -120,29 +139,38 @@ def show_settings():
         """, unsafe_allow_html=True)
 
         for i, buyer in enumerate(buyers):
-            col_a, col_b = st.columns([4, 1])
-            with col_a:
+            if admin:
+                col_a, col_b = st.columns([4, 1])
+                with col_a:
+                    st.markdown(f"""
+                        <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="material-icons-round" style="color: #f59e0b; font-size: 18px;">person</span>
+                            <span style="font-weight: 500;">{buyer}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col_b:
+                    if st.button("Delete", key=f"del_buyer_{i}"):
+                        delete_buyer(buyer)
+                        st.rerun()
+            else:
                 st.markdown(f"""
                     <div style="padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
                         <span class="material-icons-round" style="color: #f59e0b; font-size: 18px;">person</span>
                         <span style="font-weight: 500;">{buyer}</span>
                     </div>
                 """, unsafe_allow_html=True)
-            with col_b:
-                if st.button("Delete", key=f"del_buyer_{i}"):
-                    delete_buyer(buyer)
-                    st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        new_buyer = st.text_input("Add new buyer", key="new_buyer", placeholder="Enter buyer name")
-        if st.button("Add Buyer", type="primary", key="add_buyer_btn"):
-            if new_buyer and new_buyer not in buyers:
-                add_buyer(new_buyer)
-                st.success(f"Added buyer: {new_buyer}")
-                st.rerun()
-            elif new_buyer in buyers:
-                st.warning("Buyer already exists")
+        if admin:
+            new_buyer = st.text_input("Add new buyer", key="new_buyer", placeholder="Enter buyer name")
+            if st.button("Add Buyer", type="primary", key="add_buyer_btn"):
+                if new_buyer and new_buyer not in buyers:
+                    add_buyer(new_buyer)
+                    st.success(f"Added buyer: {new_buyer}")
+                    st.rerun()
+                elif new_buyer in buyers:
+                    st.warning("Buyer already exists")
 
     st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
 
@@ -172,6 +200,7 @@ def show_settings():
 
     user = get_current_user()
     if user:
+        role_text = "Admin" if admin else "Viewer"
         st.markdown(f"""
             <div style="
                 background: rgba(59, 130, 246, 0.1);
@@ -182,6 +211,7 @@ def show_settings():
             ">
                 <p style="margin: 0; font-weight: 600; color: #1e293b;">Signed in as</p>
                 <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #64748b;">{user.email}</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #94a3b8;">Role: {role_text}</p>
             </div>
         """, unsafe_allow_html=True)
         
