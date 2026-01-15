@@ -72,11 +72,27 @@ html, body, [class*="css"] {
 
 [data-testid="stSidebar"] > div:first-child {
     background: transparent !important;
-    padding-top: 1.5rem !important;
+    padding-top: 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
+/* Move sidebar logo to top using flexbox order */
+[data-testid="stSidebar"] [data-testid="stImage"] {
+    order: -1 !important;
+    margin-bottom: 1rem !important;
+    padding: 0 1rem !important;
+}
+
+/* Hide the expand/fullscreen button on sidebar images */
+[data-testid="stSidebar"] [data-testid="StyledFullScreenButton"] {
+    display: none !important;
+}
+
+/* Move navigation below logo */
 [data-testid="stSidebarNav"] {
     background: transparent !important;
+    order: 0 !important;
 }
 
 [data-testid="stSidebarNav"] li {
@@ -90,7 +106,7 @@ html, body, [class*="css"] {
     color: #475569 !important;
     font-weight: 500 !important;
     font-size: 1.05rem !important;
-    transition: all 0.2s ease-in-out !important;
+    transition: none !important;
     border: 1px solid transparent !important;
     display: flex !important;
     align-items: center !important;
@@ -99,7 +115,6 @@ html, body, [class*="css"] {
 [data-testid="stSidebarNav"] a:hover {
     background: rgba(255, 255, 255, 0.4) !important;
     color: #1e293b !important;
-    transform: translateY(-1px);
 }
 
 [data-testid="stSidebarNav"] a[aria-current="page"] {
@@ -108,6 +123,12 @@ html, body, [class*="css"] {
     color: #0f172a !important;
     font-weight: 700 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Prevent sidebar content flash during loading */
+[data-testid="stSidebarContent"] {
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* ============= Page Headers ============= */
