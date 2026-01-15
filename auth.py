@@ -134,6 +134,7 @@ def _clear_session():
             del st.session_state[key]
 
 def is_authenticated() -> bool:
+    """Check if user is authenticated and session is valid"""
     return st.session_state.get('authenticated', False) and st.session_state.get('user') is not None
 
 def get_current_user():
@@ -163,6 +164,7 @@ def refresh_session() -> bool:
     return False
 
 def require_auth():
+    """Ensure user is logged in, redirect to login page if not"""
     if not is_authenticated():
         st.switch_page("pages/_Login.py")
     return True

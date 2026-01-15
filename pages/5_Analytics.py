@@ -12,8 +12,8 @@ st.set_page_config(
     layout="wide"
 )
 
-setup_page()
 require_auth()
+setup_page()
 
 try:
     with open('style.css') as f:

@@ -14,8 +14,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-setup_page()
 require_auth()
+setup_page()
 
 initialize_database_system()
 
