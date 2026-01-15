@@ -16,7 +16,15 @@ try:
 except:
     pass
 
-get_cookie_manager()
+cm = get_cookie_manager()
+
+if 'cookie_init' not in st.session_state:
+    st.session_state.cookie_init = True
+    try:
+        cm.get_all()
+    except:
+        pass
+    st.rerun()
 
 restore_session()
 
