@@ -51,8 +51,19 @@ CRITICAL_CSS = """
     visibility: visible !important;
 }
 [data-testid="stLogo"] {
+    width: 180px !important;
+    max-width: 180px !important;
+    margin: 0 auto 1.5rem auto !important;
+    display: block !important;
+}
+[data-testid="stLogo"] img {
+    width: 100% !important;
     height: auto !important;
-    max-height: 80px !important;
+}
+[data-testid="stSidebarHeader"] {
+    display: flex !important;
+    justify-content: center !important;
+    padding: 1.5rem 1rem !important;
 }
 </style>
 """
