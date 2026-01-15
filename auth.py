@@ -163,8 +163,24 @@ def refresh_session() -> bool:
     _clear_session()
     return False
 
+def restore_session() -> bool:
+    """Attempt to restore session from Supabase client - call on every page load"""
+    if is_authenticated():
+        return True
+    
+    try:
+        client = get_supabase_client()
+        response = client.auth.get_session()
+        if response and response.session:
+            _store_session(response.session)
+            return True
+    except:
+        pass
+    return False
+
 def require_auth():
     """Ensure user is logged in, redirect to login page if not"""
+    restore_session()
     if not is_authenticated():
         st.switch_page("pages/_Login.py")
     return True

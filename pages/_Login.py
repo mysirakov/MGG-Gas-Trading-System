@@ -1,5 +1,5 @@
 import streamlit as st
-from auth import sign_in, sign_up, reset_password, is_authenticated, sign_out, get_current_user
+from auth import sign_in, sign_up, reset_password, is_authenticated, sign_out, get_current_user, restore_session
 from components import setup_page, load_material_icons
 
 st.set_page_config(
@@ -8,6 +8,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+restore_session()
+
+if is_authenticated():
+    st.switch_page("Dashboard.py")
 
 setup_page()
 load_material_icons()
@@ -38,9 +43,6 @@ div[data-testid="stTabs"] {
 </style>
 """, unsafe_allow_html=True)
 
-if is_authenticated():
-    st.switch_page("Dashboard.py")
-
 LOGO_URL = "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/project-uploads/704afe63-0b4a-4050-803e-5116d1754a58/logo-mgg-1768474458463.png?width=8000&height=8000&resize=contain"
 
 st.markdown(f"""
@@ -69,7 +71,7 @@ with tab1:
                 if result['success']:
                     st.success(result['message'])
                     st.balloons()
-                    st.switch_page("Dashboard.py")
+                    st.rerun()
                 else:
                     st.error(result['message'])
 
@@ -99,7 +101,7 @@ with tab2:
                     else:
                         st.success(result['message'])
                         st.balloons()
-                        st.switch_page("Dashboard.py")
+                        st.rerun()
                 else:
                     st.error(result['message'])
 
