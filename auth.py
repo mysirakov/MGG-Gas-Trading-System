@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from supabase import create_client, Client
+from st_supabase_connection import SupabaseConnection
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,10 +22,18 @@ ERROR_MESSAGES = {
     'network_error': 'Connection error. Please check your internet and try again.',
 }
 
-def get_supabase_client() -> Client:
-    if 'supabase_client' not in st.session_state:
-        st.session_state.supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-    return st.session_state.supabase_client
+@st.cache_resource
+def get_supabase_connection():
+    return st.connection(
+        "supabase",
+        type=SupabaseConnection,
+        url=SUPABASE_URL,
+        key=SUPABASE_ANON_KEY,
+    )
+
+def get_supabase_client():
+    conn = get_supabase_connection()
+    return conn.client
 
 def get_friendly_error(error) -> str:
     error_code = getattr(error, 'code', None)
@@ -51,23 +59,16 @@ def get_friendly_error(error) -> str:
     
     return f'An error occurred: {str(error)}'
 
-def _sync_session_state():
-    try:
-        for key in list(st.session_state.keys()):
-            st.session_state[key] = st.session_state[key]
-    except:
-        pass
-
 def sign_up(email: str, password: str) -> dict:
     try:
-        client = get_supabase_client()
-        response = client.auth.sign_up({
-            'email': email,
-            'password': password
-        })
+        conn = get_supabase_connection()
+        response = conn.auth.sign_up(
+            email=email,
+            password=password,
+        )
         
-        if response.user:
-            if response.session is None:
+        if response and response.user:
+            if not response.session:
                 return {
                     'success': True,
                     'message': 'Account created! Please check your email to confirm.',
@@ -75,7 +76,8 @@ def sign_up(email: str, password: str) -> dict:
                     'needs_confirmation': True
                 }
             else:
-                _store_session(response.session)
+                st.session_state['authenticated'] = True
+                st.session_state['user'] = response.user
                 return {
                     'success': True,
                     'message': 'Account created successfully!',
@@ -89,19 +91,19 @@ def sign_up(email: str, password: str) -> dict:
 
 def sign_in(email: str, password: str) -> dict:
     try:
-        client = get_supabase_client()
-        response = client.auth.sign_in_with_password({
-            'email': email,
-            'password': password
-        })
+        conn = get_supabase_connection()
+        response = conn.auth.sign_in_with_password(
+            email=email,
+            password=password,
+        )
         
-        if response.user and response.session:
-            _store_session(response.session)
+        if response and response.user:
+            st.session_state['authenticated'] = True
+            st.session_state['user'] = response.user
             return {
                 'success': True,
                 'message': 'Login successful!',
                 'user': response.user,
-                'refresh_token': response.session.refresh_token
             }
         return {'success': False, 'message': 'Login failed.', 'user': None}
     
@@ -110,17 +112,22 @@ def sign_in(email: str, password: str) -> dict:
 
 def sign_out() -> dict:
     try:
-        client = get_supabase_client()
-        client.auth.sign_out()
+        conn = get_supabase_connection()
+        conn.auth.sign_out()
     except:
         pass
-    _clear_session()
+    
+    keys_to_clear = ['user', 'authenticated', 'user_role']
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
+    
     return {'success': True, 'message': 'Logged out successfully.'}
 
 def reset_password(email: str) -> dict:
     try:
-        client = get_supabase_client()
-        client.auth.reset_password_email(email)
+        conn = get_supabase_connection()
+        conn.auth.reset_password_for_email(email=email)
         return {
             'success': True,
             'message': 'Password reset email sent! Check your inbox.'
@@ -128,50 +135,21 @@ def reset_password(email: str) -> dict:
     except Exception as e:
         return {'success': False, 'message': get_friendly_error(e)}
 
-def _store_session(session):
-    from cookie_manager import store_auth_cookie
-    
-    st.session_state['access_token'] = session.access_token
-    st.session_state['refresh_token'] = session.refresh_token
-    st.session_state['user'] = session.user
-    st.session_state['authenticated'] = True
-    
-    cookie_stored = store_auth_cookie(session.refresh_token)
-    
-    if not cookie_stored:
-        st.query_params['rt'] = session.refresh_token
-    else:
-        if 'rt' in st.query_params:
-            del st.query_params['rt']
-    
-    try:
-        client = get_supabase_client()
-        client.auth.set_session(session.access_token, session.refresh_token)
-    except:
-        pass
-    
-    _sync_session_state()
-
-def _clear_session():
-    from cookie_manager import delete_auth_cookie
-    
-    keys_to_clear = ['access_token', 'refresh_token', 'user', 'authenticated', 'supabase_client', 'user_role']
-    for key in keys_to_clear:
-        if key in st.session_state:
-            del st.session_state[key]
-    
-    delete_auth_cookie()
-    
-    if 'rt' in st.query_params:
-        del st.query_params['rt']
-
 def is_authenticated() -> bool:
-    return st.session_state.get('authenticated', False) and st.session_state.get('user') is not None
+    conn = get_supabase_connection()
+    session = conn.auth.get_session()
+    if session and session.user:
+        st.session_state['authenticated'] = True
+        st.session_state['user'] = session.user
+        return True
+    return False
 
 def get_current_user():
-    if not is_authenticated():
-        return None
-    return st.session_state.get('user')
+    conn = get_supabase_connection()
+    session = conn.auth.get_session()
+    if session and session.user:
+        return session.user
+    return None
 
 def is_admin() -> bool:
     user = get_current_user()
@@ -195,60 +173,13 @@ def is_admin() -> bool:
 
 def get_session():
     try:
-        client = get_supabase_client()
-        return client.auth.get_session()
+        conn = get_supabase_connection()
+        return conn.auth.get_session()
     except:
         return None
 
-def refresh_session() -> bool:
-    try:
-        client = get_supabase_client()
-        refresh_token = st.session_state.get('refresh_token')
-        if refresh_token:
-            response = client.auth.refresh_session(refresh_token)
-            if response.session:
-                _store_session(response.session)
-                return True
-    except:
-        pass
-    _clear_session()
-    return False
-
 def restore_session() -> bool:
-    from cookie_manager import get_auth_cookie
-    
-    if is_authenticated():
-        return True
-    
-    if st.session_state.get('_cookie_rerun_count', 0) < 1:
-        st.session_state['_cookie_rerun_count'] = st.session_state.get('_cookie_rerun_count', 0) + 1
-        import time
-        time.sleep(0.1)
-        st.rerun()
-    
-    refresh_token = get_auth_cookie()
-    
-    if not refresh_token:
-        refresh_token = st.query_params.get('rt')
-    
-    if not refresh_token:
-        refresh_token = st.session_state.get('refresh_token')
-    
-    if refresh_token:
-        try:
-            client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-            st.session_state.supabase_client = client
-            
-            response = client.auth.refresh_session(refresh_token)
-            if response and response.session:
-                _store_session(response.session)
-                return True
-        except Exception as e:
-            if 'rt' in st.query_params:
-                del st.query_params['rt']
-            _clear_session()
-    
-    return False
+    return is_authenticated()
 
 def require_auth():
     return restore_session()
