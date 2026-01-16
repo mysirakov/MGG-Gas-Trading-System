@@ -567,6 +567,26 @@ button[data-testid="stSidebarCollapseButton"] {
     z-index: 999999 !important;
 }
 
+/* ============= Lock Sidebar Width (prevent user resizing) ============= */
+[data-testid="stSidebar"] {
+    min-width: 280px !important;
+    max-width: 280px !important;
+    width: 280px !important;
+}
+
+[data-testid="stSidebar"][aria-expanded="false"] {
+    min-width: 0 !important;
+    max-width: 0 !important;
+    width: 0 !important;
+}
+
+/* Hide the resize handle */
+[data-testid="stSidebar"] > div[data-testid="stSidebarResizeHandle"],
+[data-testid="stSidebarResizeHandle"] {
+    display: none !important;
+    pointer-events: none !important;
+}
+
 /* ============= Hide Streamlit Branding ============= */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
