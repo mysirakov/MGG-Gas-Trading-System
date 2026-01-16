@@ -56,16 +56,41 @@ html, body, [class*="css"] {
 }
 
 .main .block-container {
-    padding: 1rem 2.5rem 2rem 2.5rem !important;
+    padding: 0.5rem 2.5rem 2rem 2.5rem !important;
+    padding-top: 0.5rem !important;
     max-width: 1400px !important;
     position: relative;
     z-index: 1;
 }
 
-/* Reduce top padding/margin on first element */
+/* Collapse empty elements at top */
+.main .block-container .stVerticalBlock > div:empty,
+.main .block-container .stMarkdown:empty,
+.main .block-container .stMarkdown > div:empty,
+.main .block-container .st-emotion-cache-8q5s2y:empty {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Collapse containers with hidden iframes */
+.stElementContainer:has(iframe[src*="streamlit_js_eval"]) {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Force first visible content to top */
 .main .block-container > div:first-child {
     padding-top: 0 !important;
     margin-top: 0 !important;
+}
+
+/* Reduce gap in main vertical block */
+.main .stVerticalBlock {
+    gap: 0.5rem !important;
 }
 
 /* ============= Sidebar Styling ============= */
