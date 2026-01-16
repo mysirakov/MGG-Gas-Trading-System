@@ -1,12 +1,16 @@
 import os
+import json
 import streamlit as st
-from st_supabase_connection import SupabaseConnection
+from supabase import create_client, Client
 from dotenv import load_dotenv
+from streamlit_js_eval import streamlit_js_eval
 
 load_dotenv()
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
+
+SESSION_KEY = 'mgg_auth_session'
 
 ERROR_MESSAGES = {
     'invalid_grant': 'Invalid email or password. Please try again.',
@@ -23,17 +27,8 @@ ERROR_MESSAGES = {
 }
 
 @st.cache_resource
-def get_supabase_connection():
-    return st.connection(
-        "supabase",
-        type=SupabaseConnection,
-        url=SUPABASE_URL,
-        key=SUPABASE_ANON_KEY,
-    )
-
-def get_supabase_client():
-    conn = get_supabase_connection()
-    return conn.client
+def get_supabase_client() -> Client:
+    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 def get_friendly_error(error) -> str:
     error_code = getattr(error, 'code', None)
@@ -59,13 +54,26 @@ def get_friendly_error(error) -> str:
     
     return f'An error occurred: {str(error)}'
 
+def _save_session_to_storage(access_token: str, refresh_token: str, user_id: str, user_email: str):
+    session_data = {
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'user_id': user_id,
+        'user_email': user_email
+    }
+    json_str = json.dumps(session_data).replace("'", "\\'")
+    streamlit_js_eval(js_expressions=f"localStorage.setItem('{SESSION_KEY}', '{json_str}')", key="save_session_action")
+
+def _clear_session_from_storage():
+    streamlit_js_eval(js_expressions=f"localStorage.removeItem('{SESSION_KEY}')", key="clear_session_action")
+
 def sign_up(email: str, password: str) -> dict:
     try:
-        conn = get_supabase_connection()
-        response = conn.auth.sign_up(
-            email=email,
-            password=password,
-        )
+        client = get_supabase_client()
+        response = client.auth.sign_up({
+            'email': email,
+            'password': password,
+        })
         
         if response and response.user:
             if not response.session:
@@ -78,6 +86,12 @@ def sign_up(email: str, password: str) -> dict:
             else:
                 st.session_state['authenticated'] = True
                 st.session_state['user'] = response.user
+                _save_session_to_storage(
+                    response.session.access_token,
+                    response.session.refresh_token,
+                    response.user.id,
+                    response.user.email
+                )
                 return {
                     'success': True,
                     'message': 'Account created successfully!',
@@ -91,15 +105,21 @@ def sign_up(email: str, password: str) -> dict:
 
 def sign_in(email: str, password: str) -> dict:
     try:
-        conn = get_supabase_connection()
-        response = conn.auth.sign_in_with_password(
-            email=email,
-            password=password,
-        )
+        client = get_supabase_client()
+        response = client.auth.sign_in_with_password({
+            'email': email,
+            'password': password,
+        })
         
         if response and response.user:
             st.session_state['authenticated'] = True
             st.session_state['user'] = response.user
+            _save_session_to_storage(
+                response.session.access_token,
+                response.session.refresh_token,
+                response.user.id,
+                response.user.email
+            )
             return {
                 'success': True,
                 'message': 'Login successful!',
@@ -112,12 +132,14 @@ def sign_in(email: str, password: str) -> dict:
 
 def sign_out() -> dict:
     try:
-        conn = get_supabase_connection()
-        conn.auth.sign_out()
+        client = get_supabase_client()
+        client.auth.sign_out()
     except:
         pass
     
-    keys_to_clear = ['user', 'authenticated', 'user_role']
+    _clear_session_from_storage()
+    
+    keys_to_clear = ['user', 'authenticated', 'user_role', '_session_restored']
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
@@ -126,8 +148,8 @@ def sign_out() -> dict:
 
 def reset_password(email: str) -> dict:
     try:
-        conn = get_supabase_connection()
-        conn.auth.reset_password_for_email(email=email)
+        client = get_supabase_client()
+        client.auth.reset_password_for_email(email)
         return {
             'success': True,
             'message': 'Password reset email sent! Check your inbox.'
@@ -135,21 +157,52 @@ def reset_password(email: str) -> dict:
     except Exception as e:
         return {'success': False, 'message': get_friendly_error(e)}
 
-def is_authenticated() -> bool:
-    conn = get_supabase_connection()
-    session = conn.auth.get_session()
-    if session and session.user:
-        st.session_state['authenticated'] = True
-        st.session_state['user'] = session.user
+def restore_session() -> bool:
+    if st.session_state.get('authenticated'):
         return True
+    
+    if st.session_state.get('_session_restored'):
+        return False
+    
+    stored_data = streamlit_js_eval(js_expressions=f"localStorage.getItem('{SESSION_KEY}')", key="restore_session_check")
+    
+    if stored_data is None:
+        return False
+    
+    st.session_state['_session_restored'] = True
+    
+    if not stored_data:
+        return False
+    
+    try:
+        session_data = json.loads(stored_data)
+        client = get_supabase_client()
+        response = client.auth.set_session(
+            session_data['access_token'],
+            session_data['refresh_token']
+        )
+        
+        if response and response.user:
+            st.session_state['authenticated'] = True
+            st.session_state['user'] = response.user
+            if response.session:
+                _save_session_to_storage(
+                    response.session.access_token,
+                    response.session.refresh_token,
+                    response.user.id,
+                    response.user.email
+                )
+            return True
+    except Exception as e:
+        _clear_session_from_storage()
+    
     return False
 
+def is_authenticated() -> bool:
+    return st.session_state.get('authenticated', False)
+
 def get_current_user():
-    conn = get_supabase_connection()
-    session = conn.auth.get_session()
-    if session and session.user:
-        return session.user
-    return None
+    return st.session_state.get('user')
 
 def is_admin() -> bool:
     user = get_current_user()
@@ -173,13 +226,10 @@ def is_admin() -> bool:
 
 def get_session():
     try:
-        conn = get_supabase_connection()
-        return conn.auth.get_session()
+        client = get_supabase_client()
+        return client.auth.get_session()
     except:
         return None
-
-def restore_session() -> bool:
-    return is_authenticated()
 
 def require_auth():
     return restore_session()
