@@ -535,36 +535,42 @@ div[data-testid="stDataFrame"] {
     }
 }
 
-/* ============= Mobile Nav Hint ============= */
-.mobile-nav-hint {
-    display: none;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--primary);
-    color: white;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-@media screen and (max-width: 768px) {
-    .mobile-nav-hint {
-        display: flex;
-    }
-}
-
 /* ============= Sidebar Toggle Button Styling ============= */
-button[data-testid="stSidebarCollapseButton"] {
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="stSidebarCollapsedControl"] button {
     background: white !important;
     border-radius: 50% !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     color: var(--primary) !important;
     padding: 0.5rem !important;
-    margin: 1rem !important;
     z-index: 999999 !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Position the collapsed control button */
+[data-testid="stSidebarCollapsedControl"] {
+    top: 1rem !important;
+    left: 1rem !important;
+}
+
+/* Replace arrows with sandwich menu icon - specific to sidebar toggle */
+[data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"],
+[data-testid="stSidebarCollapsedControl"] [data-testid="stIconMaterial"] {
+    font-size: 0 !important;
+}
+
+[data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"]::before,
+[data-testid="stSidebarCollapsedControl"] [data-testid="stIconMaterial"]::before {
+    content: 'menu' !important;
+    font-family: 'Material Icons Round' !important;
+    font-size: 24px !important;
+    display: block !important;
+    visibility: visible !important;
 }
 
 /* ============= Lock Sidebar Width (prevent user resizing) ============= */
