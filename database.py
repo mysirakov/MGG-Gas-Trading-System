@@ -187,9 +187,10 @@ def get_or_create_buyer(cur, name):
     if not name: return None
     cur.execute('SELECT id FROM buyers WHERE name = %s', (name,))
     result = cur.fetchone()
-    if result: return result[0]
+    if result: return result['id'] if isinstance(result, dict) else result[0]
     cur.execute('INSERT INTO buyers (name) VALUES (%s) RETURNING id', (name,))
-    return cur.fetchone()[0]
+    r = cur.fetchone()
+    return r['id'] if isinstance(r, dict) else r[0]
 
 def get_or_create_payment_method(cur, name):
     if not name: return None
