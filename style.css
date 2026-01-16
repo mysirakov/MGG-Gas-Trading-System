@@ -593,6 +593,17 @@ footer {visibility: hidden;}
 header { visibility: visible !important; background: transparent !important; }
 [data-testid="stHeader"] { background: transparent !important; z-index: 999998 !important; }
 
+/* ============= Hide streamlit-js-eval iframes ============= */
+iframe[title="streamlit_js_eval.streamlit_js_eval"],
+iframe[src*="streamlit_js_eval"] {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    border: none !important;
+    position: absolute !important;
+    visibility: hidden !important;
+}
+
 /* ============= Prevent Overflow ============= */
 .stApp, .main, .block-container {
     overflow-x: hidden !important;
