@@ -56,10 +56,16 @@ html, body, [class*="css"] {
 }
 
 .main .block-container {
-    padding: 2rem 2.5rem !important;
+    padding: 1rem 2.5rem 2rem 2.5rem !important;
     max-width: 1400px !important;
     position: relative;
     z-index: 1;
+}
+
+/* Reduce top padding/margin on first element */
+.main .block-container > div:first-child {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 /* ============= Sidebar Styling ============= */
