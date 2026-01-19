@@ -145,7 +145,7 @@ def sign_out() -> dict:
     
     _clear_session_from_storage()
     
-    keys_to_clear = ['user', 'authenticated', 'user_role', '_session_restore_complete', '_restore_attempt']
+    keys_to_clear = ['user', 'authenticated', 'user_role', '_session_checked']
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
@@ -167,20 +167,21 @@ def restore_session() -> bool:
     if st.session_state.get('authenticated'):
         return True
     
-    restore_key = f"restore_session_{st.session_state.get('_restore_attempt', 0)}"
+    if '_session_checked' not in st.session_state:
+        st.session_state['_session_checked'] = False
     
-    if st.session_state.get('_session_restore_complete'):
+    if st.session_state['_session_checked']:
         return False
     
     stored_data = streamlit_js_eval(
         js_expressions=f'localStorage.getItem("{SESSION_KEY}")', 
-        key=restore_key
+        key="restore_session_check"
     )
     
     if stored_data is None:
         return False
     
-    st.session_state['_session_restore_complete'] = True
+    st.session_state['_session_checked'] = True
     
     if not stored_data:
         return False
@@ -210,7 +211,7 @@ def restore_session() -> bool:
                     response.user.email
                 )
             return True
-    except Exception as e:
+    except:
         _clear_session_from_storage()
     
     return False
