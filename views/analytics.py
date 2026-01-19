@@ -159,7 +159,6 @@ def show_analytics():
                     formatted = f"€{value:,.2f}"
                 elif stat_key in ["avg_buy_price", "avg_sell_price", "avg_spread"]:
                     formatted = f"€{value:,.2f}/MWh"
-                    inverse = stat_key == "avg_buy_price"
                 elif stat_key == "total_quantity":
                     formatted = f"{value:,.0f} MWh"
                 elif stat_key == "trade_count":
@@ -171,11 +170,11 @@ def show_analytics():
                 else:
                     formatted = f"{value:,.2f}"
                 
-                inverse_colors = stat_key == "avg_buy_price"
+                inverse_colors = (stat_key == "avg_buy_price")
                 stat_card_with_delta(
-                    info["icon"], 
-                    info["label"], 
-                    formatted, 
+                    icon=info["icon"], 
+                    label=info["label"], 
+                    value=formatted, 
                     delta=delta, 
                     delta_label=period_label,
                     color=info["color"],
@@ -183,7 +182,10 @@ def show_analytics():
                 )
         st.markdown("<div style='height: 0.75rem;'></div>", unsafe_allow_html=True)
 
-    st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0 2rem 0;'>", unsafe_allow_html=True)
+    
+    section_header("assessment", "Overall Performance")
 
     sales = get_sales()
     purchases = get_supplier_payments()
