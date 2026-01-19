@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import streamlit as st
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -11,6 +12,8 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 
 SESSION_KEY = 'mgg_auth_session'
+SESSION_DURATION_DAYS = 30
+SESSION_DURATION_SECONDS = SESSION_DURATION_DAYS * 24 * 60 * 60
 
 ERROR_MESSAGES = {
     'invalid_grant': 'Invalid email or password. Please try again.',
@@ -55,17 +58,20 @@ def get_friendly_error(error) -> str:
     return f'An error occurred: {str(error)}'
 
 def _save_session_to_storage(access_token: str, refresh_token: str, user_id: str, user_email: str):
+    expires_at = int(time.time()) + SESSION_DURATION_SECONDS
     session_data = {
         'access_token': access_token,
         'refresh_token': refresh_token,
         'user_id': user_id,
-        'user_email': user_email
+        'user_email': user_email,
+        'expires_at': expires_at
     }
-    json_str = json.dumps(session_data).replace("'", "\\'")
-    streamlit_js_eval(js_expressions=f"localStorage.setItem('{SESSION_KEY}', '{json_str}')", key="save_session_action")
+    json_str = json.dumps(session_data).replace("'", "\\'").replace('"', '\\"')
+    js_code = f'localStorage.setItem("{SESSION_KEY}", "{json_str}")'
+    streamlit_js_eval(js_expressions=js_code, key=f"save_session_{int(time.time()*1000)}")
 
 def _clear_session_from_storage():
-    streamlit_js_eval(js_expressions=f"localStorage.removeItem('{SESSION_KEY}')", key="clear_session_action")
+    streamlit_js_eval(js_expressions=f'localStorage.removeItem("{SESSION_KEY}")', key=f"clear_session_{int(time.time()*1000)}")
 
 def sign_up(email: str, password: str) -> dict:
     try:
@@ -139,7 +145,7 @@ def sign_out() -> dict:
     
     _clear_session_from_storage()
     
-    keys_to_clear = ['user', 'authenticated', 'user_role', '_session_restored']
+    keys_to_clear = ['user', 'authenticated', 'user_role', '_session_restore_complete', '_restore_attempt']
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
@@ -161,21 +167,32 @@ def restore_session() -> bool:
     if st.session_state.get('authenticated'):
         return True
     
-    if st.session_state.get('_session_restored'):
+    restore_key = f"restore_session_{st.session_state.get('_restore_attempt', 0)}"
+    
+    if st.session_state.get('_session_restore_complete'):
         return False
     
-    stored_data = streamlit_js_eval(js_expressions=f"localStorage.getItem('{SESSION_KEY}')", key="restore_session_check")
+    stored_data = streamlit_js_eval(
+        js_expressions=f'localStorage.getItem("{SESSION_KEY}")', 
+        key=restore_key
+    )
     
     if stored_data is None:
         return False
     
-    st.session_state['_session_restored'] = True
+    st.session_state['_session_restore_complete'] = True
     
     if not stored_data:
         return False
     
     try:
         session_data = json.loads(stored_data)
+        
+        expires_at = session_data.get('expires_at', 0)
+        if expires_at and int(time.time()) > expires_at:
+            _clear_session_from_storage()
+            return False
+        
         client = get_supabase_client()
         response = client.auth.set_session(
             session_data['access_token'],

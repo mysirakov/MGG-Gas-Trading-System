@@ -15,9 +15,12 @@ try:
 except:
     pass
 
-restore_session()
+session_restored = restore_session()
 
 if not is_authenticated():
+    if not st.session_state.get('_session_restore_complete'):
+        st.spinner("Loading...")
+        st.stop()
     from views.login import show_login_page
     show_login_page()
     st.stop()
