@@ -6,3 +6,4 @@ sqlalchemy
 psycopg2-binary
 supabase>=2.0.0
 streamlit-js-eval>=1.0.0
+python-dateutil>=2.8.0

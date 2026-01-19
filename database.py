@@ -597,3 +597,84 @@ def load_sales(): return get_sales()
 def load_payments_received(): return get_payments_received()
 def load_settings(): return get_settings()
 def purchases_to_df(p=None): return supplier_payments_to_df(p)
+
+def get_filtered_statistics(date_from=None, date_to=None, buyers=None, suppliers=None):
+    """Get statistics for filtered sales data with period comparison"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    base_query = '''
+        SELECT 
+            COALESCE(SUM(s.total_margin), 0) as total_margin,
+            COALESCE(SUM(s.total_revenue), 0) as total_revenue,
+            COALESCE(SUM(s.quantity_mwh), 0) as total_quantity,
+            COALESCE(SUM(s.purchase_cost), 0) as total_purchase_cost,
+            COUNT(*) as trade_count,
+            CASE WHEN SUM(s.quantity_mwh) > 0 
+                THEN SUM(s.purchase_price_eur_mwh * s.quantity_mwh) / SUM(s.quantity_mwh) 
+                ELSE 0 END as avg_buy_price,
+            CASE WHEN SUM(s.quantity_mwh) > 0 
+                THEN SUM(s.sales_price_eur_mwh * s.quantity_mwh) / SUM(s.quantity_mwh) 
+                ELSE 0 END as avg_sell_price,
+            CASE WHEN SUM(s.quantity_mwh) > 0 
+                THEN SUM(s.total_margin) / SUM(s.quantity_mwh) 
+                ELSE 0 END as margin_per_mwh,
+            MAX(s.total_margin) as best_trade_margin,
+            MAX(s.total_revenue) as largest_trade_revenue
+        FROM sales s
+        LEFT JOIN buyers b ON s.buyer_id = b.id
+        LEFT JOIN suppliers sup ON s.supplier_id = sup.id
+        WHERE 1=1
+    '''
+    
+    params = []
+    if date_from:
+        base_query += ' AND s.contract_date >= %s'
+        params.append(date_from)
+    if date_to:
+        base_query += ' AND s.contract_date <= %s'
+        params.append(date_to)
+    if buyers and len(buyers) > 0:
+        base_query += ' AND b.name = ANY(%s)'
+        params.append(buyers)
+    if suppliers and len(suppliers) > 0:
+        base_query += ' AND sup.name = ANY(%s)'
+        params.append(suppliers)
+    
+    cur.execute(base_query, params)
+    current = dict(cur.fetchone())
+    
+    current['avg_spread'] = float(current['avg_sell_price'] or 0) - float(current['avg_buy_price'] or 0)
+    current['margin_pct'] = (float(current['total_margin'] or 0) / float(current['total_revenue']) * 100) if float(current['total_revenue'] or 0) > 0 else 0
+    
+    cur.close()
+    conn.close()
+    return sanitize_data(current)
+
+def get_period_comparison_statistics(date_from, date_to, prev_date_from, prev_date_to, buyers=None, suppliers=None):
+    """Get current and previous period statistics for comparison"""
+    current = get_filtered_statistics(date_from, date_to, buyers, suppliers)
+    previous = get_filtered_statistics(prev_date_from, prev_date_to, buyers, suppliers)
+    
+    def calc_delta(curr_val, prev_val):
+        if prev_val and prev_val != 0:
+            return ((curr_val - prev_val) / abs(prev_val)) * 100
+        return 0 if curr_val == 0 else 100
+    
+    deltas = {
+        'total_margin_delta': calc_delta(current['total_margin'], previous['total_margin']),
+        'total_revenue_delta': calc_delta(current['total_revenue'], previous['total_revenue']),
+        'total_quantity_delta': calc_delta(current['total_quantity'], previous['total_quantity']),
+        'avg_buy_price_delta': calc_delta(current['avg_buy_price'], previous['avg_buy_price']),
+        'avg_sell_price_delta': calc_delta(current['avg_sell_price'], previous['avg_sell_price']),
+        'avg_spread_delta': calc_delta(current['avg_spread'], previous['avg_spread']),
+        'margin_per_mwh_delta': calc_delta(current['margin_per_mwh'], previous['margin_per_mwh']),
+        'margin_pct_delta': calc_delta(current['margin_pct'], previous['margin_pct']),
+        'trade_count_delta': calc_delta(current['trade_count'], previous['trade_count']),
+    }
+    
+    return {
+        'current': current,
+        'previous': previous,
+        'deltas': deltas
+    }

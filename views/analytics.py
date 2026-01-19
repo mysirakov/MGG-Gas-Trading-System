@@ -2,13 +2,188 @@ import streamlit as st
 import csv
 import io
 from datetime import datetime, timedelta, date
-from database import get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics, sales_to_df, supplier_payments_to_df, payments_to_df
-from components import load_material_icons, page_header, section_header, metric_card, empty_state
+from dateutil.relativedelta import relativedelta
+from database import get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics, sales_to_df, supplier_payments_to_df, payments_to_df, get_settings, get_period_comparison_statistics
+from components import load_material_icons, page_header, section_header, metric_card, empty_state, stat_card_with_delta
+
+def get_date_range_for_preset(preset):
+    """Calculate date range based on preset selection"""
+    today = date.today()
+    
+    if preset == "Today":
+        return today, today, today - timedelta(days=1), today - timedelta(days=1)
+    elif preset == "This Week":
+        start = today - timedelta(days=today.weekday())
+        prev_start = start - timedelta(weeks=1)
+        prev_end = start - timedelta(days=1)
+        return start, today, prev_start, prev_end
+    elif preset == "This Month":
+        start = today.replace(day=1)
+        prev_end = start - timedelta(days=1)
+        prev_start = prev_end.replace(day=1)
+        return start, today, prev_start, prev_end
+    elif preset == "Last Month":
+        end = today.replace(day=1) - timedelta(days=1)
+        start = end.replace(day=1)
+        prev_end = start - timedelta(days=1)
+        prev_start = prev_end.replace(day=1)
+        return start, end, prev_start, prev_end
+    elif preset == "Last 3 Months":
+        start = today - relativedelta(months=3)
+        prev_start = start - relativedelta(months=3)
+        prev_end = start - timedelta(days=1)
+        return start, today, prev_start, prev_end
+    elif preset == "This Year":
+        start = today.replace(month=1, day=1)
+        prev_start = (start - relativedelta(years=1))
+        prev_end = start - timedelta(days=1)
+        return start, today, prev_start, prev_end
+    elif preset == "All Time":
+        return None, None, None, None
+    else:
+        return None, None, None, None
 
 def show_analytics():
     load_material_icons()
 
     page_header("Analytics", "Comprehensive P&L analysis, trading performance, and financial metrics")
+
+    settings = get_settings()
+    buyers_list = settings.get('buyers', [])
+    suppliers_list = settings.get('suppliers', [])
+
+    section_header("filter_alt", "Filtered Statistics")
+    
+    selected_buyers = []
+    selected_suppliers = []
+    
+    with st.container():
+        filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([1.5, 1, 1, 1])
+        
+        with filter_col1:
+            date_preset = st.selectbox(
+                "Period",
+                ["This Month", "Today", "This Week", "Last Month", "Last 3 Months", "This Year", "All Time", "Custom"],
+                index=0,
+                key="stats_date_preset"
+            )
+        
+        date_from, date_to, prev_from, prev_to = get_date_range_for_preset(date_preset)
+        
+        if date_preset == "Custom":
+            with filter_col2:
+                date_from = st.date_input("From", value=date.today().replace(day=1), key="stats_date_from")
+            with filter_col3:
+                date_to = st.date_input("To", value=date.today(), key="stats_date_to")
+            if date_from and date_to:
+                delta_days = (date_to - date_from).days + 1
+                prev_to = date_from - timedelta(days=1)
+                prev_from = prev_to - timedelta(days=delta_days - 1)
+        else:
+            with filter_col2:
+                selected_buyers = st.multiselect("Buyer", buyers_list, key="stats_buyers")
+            with filter_col3:
+                selected_suppliers = st.multiselect("Supplier", suppliers_list, key="stats_suppliers")
+        
+        if date_preset == "Custom":
+            filter_col_b1, filter_col_b2 = st.columns(2)
+            with filter_col_b1:
+                selected_buyers = st.multiselect("Buyer", buyers_list, key="stats_buyers_custom")
+            with filter_col_b2:
+                selected_suppliers = st.multiselect("Supplier", suppliers_list, key="stats_suppliers_custom")
+
+    st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
+    
+    available_stats = {
+        "total_margin": {"label": "Total Margin", "icon": "trending_up", "color": "green"},
+        "margin_per_mwh": {"label": "Margin/MWh", "icon": "paid", "color": "teal"},
+        "avg_buy_price": {"label": "Avg Buy Price", "icon": "shopping_cart", "color": "orange"},
+        "avg_sell_price": {"label": "Avg Sell Price", "icon": "storefront", "color": "blue"},
+        "avg_spread": {"label": "Spread", "icon": "swap_vert", "color": "purple"},
+        "total_quantity": {"label": "Volume (MWh)", "icon": "bolt", "color": "indigo"},
+        "trade_count": {"label": "# Trades", "icon": "receipt_long", "color": "teal"},
+        "margin_pct": {"label": "Margin %", "icon": "percent", "color": "green"},
+        "total_revenue": {"label": "Revenue", "icon": "attach_money", "color": "blue"},
+    }
+    
+    default_stats = ["total_margin", "margin_per_mwh", "avg_buy_price", "avg_sell_price", "avg_spread", "total_quantity"]
+    
+    with st.expander("Select Statistics to Display", expanded=False):
+        stat_cols = st.columns(3)
+        selected_stats = []
+        for i, (key, info) in enumerate(available_stats.items()):
+            with stat_cols[i % 3]:
+                if st.checkbox(info["label"], value=key in default_stats, key=f"stat_{key}"):
+                    selected_stats.append(key)
+    
+    if not selected_stats:
+        selected_stats = default_stats
+
+    buyers_filter = selected_buyers if selected_buyers else None
+    suppliers_filter = selected_suppliers if selected_suppliers else None
+    
+    stats_data = get_period_comparison_statistics(
+        date_from, date_to, prev_from, prev_to,
+        buyers=buyers_filter, suppliers=suppliers_filter
+    )
+    
+    current = stats_data['current']
+    deltas = stats_data['deltas']
+    
+    period_label = "vs prev period"
+    if date_preset == "This Month":
+        period_label = "vs last month"
+    elif date_preset == "This Week":
+        period_label = "vs last week"
+    elif date_preset == "Last Month":
+        period_label = "vs prev month"
+    elif date_preset == "This Year":
+        period_label = "vs last year"
+
+    st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
+
+    num_cols = min(len(selected_stats), 4)
+    stat_rows = [selected_stats[i:i+num_cols] for i in range(0, len(selected_stats), num_cols)]
+    
+    for row_stats in stat_rows:
+        cols = st.columns(len(row_stats))
+        for i, stat_key in enumerate(row_stats):
+            with cols[i]:
+                info = available_stats[stat_key]
+                value = current.get(stat_key, 0)
+                delta = deltas.get(f"{stat_key}_delta", None)
+                
+                if stat_key == "total_margin":
+                    formatted = f"€{value:,.0f}"
+                elif stat_key == "margin_per_mwh":
+                    formatted = f"€{value:,.2f}"
+                elif stat_key in ["avg_buy_price", "avg_sell_price", "avg_spread"]:
+                    formatted = f"€{value:,.2f}/MWh"
+                    inverse = stat_key == "avg_buy_price"
+                elif stat_key == "total_quantity":
+                    formatted = f"{value:,.0f} MWh"
+                elif stat_key == "trade_count":
+                    formatted = f"{int(value)}"
+                elif stat_key == "margin_pct":
+                    formatted = f"{value:.1f}%"
+                elif stat_key == "total_revenue":
+                    formatted = f"€{value:,.0f}"
+                else:
+                    formatted = f"{value:,.2f}"
+                
+                inverse_colors = stat_key == "avg_buy_price"
+                stat_card_with_delta(
+                    info["icon"], 
+                    info["label"], 
+                    formatted, 
+                    delta=delta, 
+                    delta_label=period_label,
+                    color=info["color"],
+                    inverse_colors=inverse_colors
+                )
+        st.markdown("<div style='height: 0.75rem;'></div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
     sales = get_sales()
     purchases = get_supplier_payments()

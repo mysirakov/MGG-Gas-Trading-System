@@ -188,4 +188,36 @@ def empty_state(icon: str, message: str):
         </div>
     """, unsafe_allow_html=True)
 
+def stat_card_with_delta(icon: str, label: str, value: str, delta: float = None, delta_label: str = "", color: str = "blue", inverse_colors: bool = False):
+    """
+    Render a statistic card with delta indicator
+    inverse_colors: if True, negative delta is good (e.g., for costs)
+    """
+    delta_html = ""
+    if delta is not None:
+        is_positive = delta > 0
+        is_good = is_positive if not inverse_colors else not is_positive
+        delta_class = "positive" if is_good else "negative"
+        arrow = "arrow_upward" if is_positive else "arrow_downward"
+        delta_html = f'''
+            <div class="stat-delta {delta_class}">
+                <span class="material-icons-round">{arrow}</span>
+                <span>{abs(delta):.1f}%</span>
+                <span class="delta-label">{delta_label}</span>
+            </div>
+        '''
+    
+    st.markdown(f"""
+        <div class="stat-card-delta">
+            <div class="stat-icon {color}">
+                <span class="material-icons-round">{icon}</span>
+            </div>
+            <div class="stat-content">
+                <p class="stat-label">{label}</p>
+                <p class="stat-value">{value}</p>
+                {delta_html}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
 
