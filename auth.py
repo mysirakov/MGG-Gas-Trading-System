@@ -15,7 +15,6 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 SESSION_KEY = 'mgg_auth_session'
 SESSION_DURATION_DAYS = 30
 
-@st.cache_resource(experimental_allow_widgets=True)
 def get_cookie_manager():
     return stx.CookieManager()
 
