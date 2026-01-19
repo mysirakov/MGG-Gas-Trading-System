@@ -1,15 +1,19 @@
 import os
 import json
+import time
 import streamlit as st
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from streamlit_js_eval import streamlit_js_eval
 
 load_dotenv()
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 
-SESSION_COOKIE_KEY = 'mgg_session'
+SESSION_KEY = 'mgg_auth_session'
+SESSION_DURATION_DAYS = 30
+SESSION_DURATION_SECONDS = SESSION_DURATION_DAYS * 24 * 60 * 60
 
 ERROR_MESSAGES = {
     'invalid_grant': 'Invalid email or password. Please try again.',
@@ -53,26 +57,21 @@ def get_friendly_error(error) -> str:
     
     return f'An error occurred: {str(error)}'
 
-def _get_session_from_cookie():
-    try:
-        cookies = st.context.cookies
-        session_data = cookies.get(SESSION_COOKIE_KEY)
-        if session_data:
-            return json.loads(session_data)
-    except:
-        pass
-    return None
-
-def _set_session_cookie(access_token: str, refresh_token: str):
-    session_data = json.dumps({
+def _save_session_to_storage(access_token: str, refresh_token: str, user_id: str, user_email: str):
+    expires_at = int(time.time()) + SESSION_DURATION_SECONDS
+    session_data = {
         'access_token': access_token,
-        'refresh_token': refresh_token
-    })
-    st.query_params['_auth'] = session_data
+        'refresh_token': refresh_token,
+        'user_id': user_id,
+        'user_email': user_email,
+        'expires_at': expires_at
+    }
+    json_str = json.dumps(session_data).replace("'", "\\'").replace('"', '\\"')
+    js_code = f'localStorage.setItem("{SESSION_KEY}", "{json_str}")'
+    streamlit_js_eval(js_expressions=js_code, key=f"save_session_{int(time.time()*1000)}")
 
-def _clear_session_cookie():
-    if '_auth' in st.query_params:
-        del st.query_params['_auth']
+def _clear_session_from_storage():
+    streamlit_js_eval(js_expressions=f'localStorage.removeItem("{SESSION_KEY}")', key=f"clear_session_{int(time.time()*1000)}")
 
 def sign_up(email: str, password: str) -> dict:
     try:
@@ -93,9 +92,12 @@ def sign_up(email: str, password: str) -> dict:
             else:
                 st.session_state['authenticated'] = True
                 st.session_state['user'] = response.user
-                st.session_state['access_token'] = response.session.access_token
-                st.session_state['refresh_token'] = response.session.refresh_token
-                _set_session_cookie(response.session.access_token, response.session.refresh_token)
+                _save_session_to_storage(
+                    response.session.access_token,
+                    response.session.refresh_token,
+                    response.user.id,
+                    response.user.email
+                )
                 return {
                     'success': True,
                     'message': 'Account created successfully!',
@@ -118,9 +120,12 @@ def sign_in(email: str, password: str) -> dict:
         if response and response.user:
             st.session_state['authenticated'] = True
             st.session_state['user'] = response.user
-            st.session_state['access_token'] = response.session.access_token
-            st.session_state['refresh_token'] = response.session.refresh_token
-            _set_session_cookie(response.session.access_token, response.session.refresh_token)
+            _save_session_to_storage(
+                response.session.access_token,
+                response.session.refresh_token,
+                response.user.id,
+                response.user.email
+            )
             return {
                 'success': True,
                 'message': 'Login successful!',
@@ -138,9 +143,9 @@ def sign_out() -> dict:
     except:
         pass
     
-    _clear_session_cookie()
+    _clear_session_from_storage()
     
-    keys_to_clear = ['user', 'authenticated', 'user_role', 'access_token', 'refresh_token', '_session_restored']
+    keys_to_clear = ['user', 'authenticated', 'user_role', '_session_checked']
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
@@ -162,36 +167,52 @@ def restore_session() -> bool:
     if st.session_state.get('authenticated'):
         return True
     
-    if st.session_state.get('_session_restored'):
+    if '_session_checked' not in st.session_state:
+        st.session_state['_session_checked'] = False
+    
+    if st.session_state['_session_checked']:
         return False
     
-    st.session_state['_session_restored'] = True
+    stored_data = streamlit_js_eval(
+        js_expressions=f'localStorage.getItem("{SESSION_KEY}")', 
+        key="restore_session_check"
+    )
     
-    auth_param = st.query_params.get('_auth')
-    if not auth_param:
+    if stored_data is None:
+        return False
+    
+    st.session_state['_session_checked'] = True
+    
+    if not stored_data:
         return False
     
     try:
-        session_data = json.loads(auth_param)
-        access_token = session_data.get('access_token')
-        refresh_token = session_data.get('refresh_token')
+        session_data = json.loads(stored_data)
         
-        if not access_token or not refresh_token:
+        expires_at = session_data.get('expires_at', 0)
+        if expires_at and int(time.time()) > expires_at:
+            _clear_session_from_storage()
             return False
         
         client = get_supabase_client()
-        response = client.auth.set_session(access_token, refresh_token)
+        response = client.auth.set_session(
+            session_data['access_token'],
+            session_data['refresh_token']
+        )
         
         if response and response.user:
             st.session_state['authenticated'] = True
             st.session_state['user'] = response.user
-            st.session_state['access_token'] = response.session.access_token
-            st.session_state['refresh_token'] = response.session.refresh_token
-            if response.session.access_token != access_token:
-                _set_session_cookie(response.session.access_token, response.session.refresh_token)
+            if response.session:
+                _save_session_to_storage(
+                    response.session.access_token,
+                    response.session.refresh_token,
+                    response.user.id,
+                    response.user.email
+                )
             return True
     except:
-        _clear_session_cookie()
+        _clear_session_from_storage()
     
     return False
 
