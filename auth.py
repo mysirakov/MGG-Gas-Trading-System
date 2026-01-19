@@ -1,10 +1,11 @@
 import os
 import json
 import time
+from datetime import datetime, timedelta
 import streamlit as st
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from streamlit_js_eval import streamlit_js_eval
+import extra_streamlit_components as stx
 
 load_dotenv()
 
@@ -13,7 +14,10 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 
 SESSION_KEY = 'mgg_auth_session'
 SESSION_DURATION_DAYS = 30
-SESSION_DURATION_SECONDS = SESSION_DURATION_DAYS * 24 * 60 * 60
+
+@st.cache_resource(experimental_allow_widgets=True)
+def get_cookie_manager():
+    return stx.CookieManager()
 
 ERROR_MESSAGES = {
     'invalid_grant': 'Invalid email or password. Please try again.',
@@ -58,20 +62,19 @@ def get_friendly_error(error) -> str:
     return f'An error occurred: {str(error)}'
 
 def _save_session_to_storage(access_token: str, refresh_token: str, user_id: str, user_email: str):
-    expires_at = int(time.time()) + SESSION_DURATION_SECONDS
     session_data = {
         'access_token': access_token,
         'refresh_token': refresh_token,
         'user_id': user_id,
-        'user_email': user_email,
-        'expires_at': expires_at
+        'user_email': user_email
     }
-    json_str = json.dumps(session_data).replace("'", "\\'").replace('"', '\\"')
-    js_code = f'localStorage.setItem("{SESSION_KEY}", "{json_str}")'
-    streamlit_js_eval(js_expressions=js_code, key=f"save_session_{int(time.time()*1000)}")
+    cookie_manager = get_cookie_manager()
+    expires_at = datetime.now() + timedelta(days=SESSION_DURATION_DAYS)
+    cookie_manager.set(SESSION_KEY, json.dumps(session_data), expires_at=expires_at, key=f"set_cookie_{int(time.time()*1000)}")
 
 def _clear_session_from_storage():
-    streamlit_js_eval(js_expressions=f'localStorage.removeItem("{SESSION_KEY}")', key=f"clear_session_{int(time.time()*1000)}")
+    cookie_manager = get_cookie_manager()
+    cookie_manager.delete(SESSION_KEY, key=f"delete_cookie_{int(time.time()*1000)}")
 
 def sign_up(email: str, password: str) -> dict:
     try:
@@ -167,19 +170,11 @@ def restore_session() -> bool:
     if st.session_state.get('authenticated'):
         return True
     
-    if '_session_checked' not in st.session_state:
-        st.session_state['_session_checked'] = False
-    
-    if st.session_state['_session_checked']:
+    if st.session_state.get('_session_checked'):
         return False
     
-    stored_data = streamlit_js_eval(
-        js_expressions=f'localStorage.getItem("{SESSION_KEY}")', 
-        key="restore_session_check"
-    )
-    
-    if stored_data is None:
-        return False
+    cookie_manager = get_cookie_manager()
+    stored_data = cookie_manager.get(SESSION_KEY)
     
     st.session_state['_session_checked'] = True
     
@@ -187,12 +182,10 @@ def restore_session() -> bool:
         return False
     
     try:
-        session_data = json.loads(stored_data)
-        
-        expires_at = session_data.get('expires_at', 0)
-        if expires_at and int(time.time()) > expires_at:
-            _clear_session_from_storage()
-            return False
+        if isinstance(stored_data, str):
+            session_data = json.loads(stored_data)
+        else:
+            session_data = stored_data
         
         client = get_supabase_client()
         response = client.auth.set_session(
