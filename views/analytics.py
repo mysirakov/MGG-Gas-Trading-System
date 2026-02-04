@@ -104,6 +104,7 @@ def show_analytics():
         "trade_count": {"label": "# Trades", "icon": "receipt_long", "color": "teal"},
         "margin_pct": {"label": "Margin %", "icon": "percent", "color": "green"},
         "total_revenue": {"label": "Revenue", "icon": "attach_money", "color": "blue"},
+        "total_purchase_cost": {"label": "Total Purchase Cost", "icon": "shopping_bag", "color": "red"},
     }
     
     default_stats = ["total_margin", "margin_per_mwh", "avg_buy_price", "avg_sell_price", "avg_spread", "total_quantity"]
@@ -165,12 +166,12 @@ def show_analytics():
                     formatted = f"{int(value)}"
                 elif stat_key == "margin_pct":
                     formatted = f"{value:.1f}%"
-                elif stat_key == "total_revenue":
+                elif stat_key in ["total_revenue", "total_purchase_cost"]:
                     formatted = f"€{value:,.0f}"
                 else:
                     formatted = f"{value:,.2f}"
                 
-                inverse_colors = (stat_key == "avg_buy_price")
+                inverse_colors = stat_key in ["avg_buy_price", "total_purchase_cost"]
                 stat_card_with_delta(
                     icon=info["icon"], 
                     label=info["label"], 

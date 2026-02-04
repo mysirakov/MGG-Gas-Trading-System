@@ -665,6 +665,7 @@ def get_period_comparison_statistics(date_from, date_to, prev_date_from, prev_da
         'total_margin_delta': calc_delta(current['total_margin'], previous['total_margin']),
         'total_revenue_delta': calc_delta(current['total_revenue'], previous['total_revenue']),
         'total_quantity_delta': calc_delta(current['total_quantity'], previous['total_quantity']),
+        'total_purchase_cost_delta': calc_delta(current['total_purchase_cost'], previous['total_purchase_cost']),
         'avg_buy_price_delta': calc_delta(current['avg_buy_price'], previous['avg_buy_price']),
         'avg_sell_price_delta': calc_delta(current['avg_sell_price'], previous['avg_sell_price']),
         'avg_spread_delta': calc_delta(current['avg_spread'], previous['avg_spread']),
