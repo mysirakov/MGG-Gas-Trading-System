@@ -448,6 +448,37 @@ def get_invoices():
     cur.close(); conn.close()
     return sanitize_data(res)
 
+def _reconcile_buyer_allocations(cur, buyer_name):
+    if not buyer_name: return
+    cur.execute('SELECT id FROM buyers WHERE name = %s', (buyer_name,))
+    row = cur.fetchone()
+    if not row: return
+    b_id = row['id'] if isinstance(row, dict) else row[0]
+
+    cur.execute('DELETE FROM payment_allocations WHERE payment_id IN (SELECT id FROM payments_received WHERE buyer_id = %s)', (b_id,))
+
+    cur.execute('SELECT id, amount_eur FROM payments_received WHERE buyer_id = %s ORDER BY payment_date ASC, id ASC', (b_id,))
+    payments = [(r['id'] if isinstance(r, dict) else r[0], float(r['amount_eur'] if isinstance(r, dict) else r[1])) for r in cur.fetchall()]
+
+    cur.execute('SELECT id, total_revenue FROM sales WHERE buyer_id = %s ORDER BY contract_date ASC, id ASC', (b_id,))
+    sales = [(r['id'] if isinstance(r, dict) else r[0], float(r['total_revenue'] if isinstance(r, dict) else r[1] or 0)) for r in cur.fetchall()]
+
+    sale_idx = 0
+    sale_remaining = sales[0][1] if sales else 0.0
+    for pid, p_amount in payments:
+        rem = p_amount
+        while rem > 0 and sale_idx < len(sales):
+            if sale_remaining <= 0:
+                sale_idx += 1
+                if sale_idx < len(sales):
+                    sale_remaining = sales[sale_idx][1]
+                continue
+            sid = sales[sale_idx][0]
+            alloc = min(rem, sale_remaining)
+            cur.execute('INSERT INTO payment_allocations (payment_id, sale_id, amount) VALUES (%s, %s, %s)', (pid, sid, alloc))
+            rem -= alloc
+            sale_remaining -= alloc
+
 def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -458,13 +489,19 @@ def add_sale(contract_date, buyer_name, quantity_mwh, sales_price, purchase_pric
         cost_capacity_eur_mwh, cost_transport_eur_mwh, supplier_id, cost_customs_eur_mwh)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (contract_date, b_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, s_id, customs_cost))
-    res = cur.fetchone(); s_id = res[0] if res else None
+    res = cur.fetchone()
+    new_sale_id = res[0] if res else None
+    _reconcile_buyer_allocations(cur, buyer_name)
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
-    return s_id
+    return new_sale_id
 
 def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, supplier_name=None, customs_cost=0):
     conn = get_db_connection()
     cur = conn.cursor()
+    cur.execute('SELECT b.name FROM sales s LEFT JOIN buyers b ON s.buyer_id = b.id WHERE s.id = %s', (sale_id,))
+    row = cur.fetchone()
+    old_buyer = row[0] if row else None
+
     b_id = get_or_create_buyer(cur, buyer_name)
     s_id = get_or_create_supplier(cur, supplier_name) if supplier_name else None
     cur.execute('''
@@ -472,59 +509,65 @@ def update_sale(sale_id, contract_date, buyer_name, quantity_mwh, sales_price, p
         purchase_price_eur_mwh = %s, cost_capacity_eur_mwh = %s, cost_transport_eur_mwh = %s, supplier_id = %s, cost_customs_eur_mwh = %s
         WHERE id = %s
     ''', (contract_date, b_id, quantity_mwh, sales_price, purchase_price, capacity_cost, transport_cost, s_id, customs_cost, sale_id))
+
+    if old_buyer and old_buyer != buyer_name:
+        _reconcile_buyer_allocations(cur, old_buyer)
+    _reconcile_buyer_allocations(cur, buyer_name)
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def delete_sale(sale_id):
     conn = get_db_connection()
     cur = conn.cursor()
+    cur.execute('SELECT b.name FROM sales s LEFT JOIN buyers b ON s.buyer_id = b.id WHERE s.id = %s', (sale_id,))
+    row = cur.fetchone()
+    buyer_name = row[0] if row else None
     cur.execute('DELETE FROM sales WHERE id = %s', (sale_id,))
+    if buyer_name:
+        _reconcile_buyer_allocations(cur, buyer_name)
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def add_payment_received(payment_date, buyer_name, amount_eur, notes=''):
     conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
     b_id = get_or_create_buyer(cur, buyer_name)
     cur.execute('INSERT INTO payments_received (payment_date, buyer_id, amount_eur, notes) VALUES (%s, %s, %s, %s) RETURNING id',
                 (payment_date, b_id, amount_eur, notes))
     res = cur.fetchone()
-    if not res: conn.close(); return None
-    p_id = res['id']
-    cur.execute('''
-        SELECT s.id, s.total_revenue - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0) as out
-        FROM sales s JOIN buyers b ON s.buyer_id = b.id
-        WHERE b.name = %s AND s.total_revenue > COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE sale_id = s.id), 0)
-        ORDER BY s.contract_date ASC
-    ''', (buyer_name,))
-    unpaid = cur.fetchall()
-    rem = float(amount_eur)
-    for s in unpaid:
-        if rem <= 0: break
-        alloc = min(rem, float(s['out']))
-        if alloc > 0:
-            cur.execute('INSERT INTO payment_allocations (payment_id, sale_id, amount) VALUES (%s, %s, %s)', (p_id, s['id'], alloc))
-            rem -= alloc
+    if not res: cur.close(); conn.close(); return None
+    p_id = res[0]
+    _reconcile_buyer_allocations(cur, buyer_name)
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
     return p_id
 
 def update_payment_received(payment_id, payment_date, buyer_name, amount_eur, notes=''):
     conn = get_db_connection()
     cur = conn.cursor()
+    cur.execute('SELECT b.name FROM payments_received p LEFT JOIN buyers b ON p.buyer_id = b.id WHERE p.id = %s', (payment_id,))
+    row = cur.fetchone()
+    old_buyer = row[0] if row else None
+
     b_id = get_or_create_buyer(cur, buyer_name)
     cur.execute('UPDATE payments_received SET payment_date = %s, buyer_id = %s, amount_eur = %s, notes = %s WHERE id = %s',
                 (payment_date, b_id, amount_eur, notes, payment_id))
+
+    if old_buyer and old_buyer != buyer_name:
+        _reconcile_buyer_allocations(cur, old_buyer)
+    _reconcile_buyer_allocations(cur, buyer_name)
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def delete_payment_received(payment_id):
     conn = get_db_connection()
     cur = conn.cursor()
+    cur.execute('SELECT b.name FROM payments_received p LEFT JOIN buyers b ON p.buyer_id = b.id WHERE p.id = %s', (payment_id,))
+    row = cur.fetchone()
+    buyer_name = row[0] if row else None
     cur.execute('DELETE FROM payments_received WHERE id = %s', (payment_id,))
+    if buyer_name:
+        _reconcile_buyer_allocations(cur, buyer_name)
     conn.commit(); cur.close(); conn.close(); clear_db_cache()
 
 def delete_payment(payment_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM payments_received WHERE id = %s', (payment_id,))
-    conn.commit(); cur.close(); conn.close(); clear_db_cache()
+    delete_payment_received(payment_id)
 
 def add_supplier_payment(payment_date, supplier_name, payment_method_name, amount_sent, invoice_number, receipt_date=None, amount_received=None):
     conn = get_db_connection()
