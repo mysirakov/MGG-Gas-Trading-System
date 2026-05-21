@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 from database import get_sales, sales_to_df
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
+from exports import rows_to_xlsx, XLSX_MIME
 
 def show_purchases():
     load_material_icons()
@@ -45,11 +46,20 @@ def show_purchases():
                     writer.writerows(valid_sales)
                 csv_data = output.getvalue()
                 st.download_button(
-                    "Export",
+                    "Export CSV",
                     csv_data,
                     "purchases.csv",
                     "text/csv",
                     key="export_btn"
+                )
+            with col_btn2:
+                xlsx_data = rows_to_xlsx(valid_sales, "Purchases")
+                st.download_button(
+                    "Export Excel",
+                    xlsx_data,
+                    "purchases.xlsx",
+                    XLSX_MIME,
+                    key="export_btn_xlsx"
                 )
             
             st.markdown("</div>", unsafe_allow_html=True)

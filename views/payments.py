@@ -8,6 +8,7 @@ from database import (
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
 from auth import is_admin
+from exports import rows_to_xlsx, XLSX_MIME
 
 def show_payments():
     load_material_icons()
@@ -87,7 +88,7 @@ def show_payments():
                 
             st.dataframe(display_filtered, width="stretch", height=300)
 
-            col1, col2 = st.columns([1, 4])
+            col1, col2, col3 = st.columns([1, 1, 3])
             with col1:
                 output = io.StringIO()
                 if filtered_df:
@@ -95,7 +96,10 @@ def show_payments():
                     writer.writeheader()
                     writer.writerows(filtered_df)
                 csv_data = output.getvalue()
-                st.download_button("Export", csv_data, "payments_export.csv", "text/csv", key="payments_export")
+                st.download_button("Export CSV", csv_data, "payments_export.csv", "text/csv", key="payments_export")
+            with col2:
+                xlsx_data = rows_to_xlsx(filtered_df, "Payments")
+                st.download_button("Export Excel", xlsx_data, "payments_export.xlsx", XLSX_MIME, key="payments_export_xlsx")
 
             st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
             

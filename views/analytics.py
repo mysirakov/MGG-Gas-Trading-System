@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from database import get_sales, get_supplier_payments, get_payments_received, get_dashboard_metrics, sales_to_df, supplier_payments_to_df, payments_to_df, get_settings, get_period_comparison_statistics
 from components import load_material_icons, page_header, section_header, metric_card, empty_state, stat_card_with_delta
+from exports import rows_to_xlsx, XLSX_MIME
 
 def get_date_range_for_preset(preset):
     """Calculate date range based on preset selection"""
@@ -474,12 +475,17 @@ def show_analytics():
 
         st.dataframe(summary_display)
 
-        output = io.StringIO()
         if summary_display:
+            output = io.StringIO()
             writer = csv.DictWriter(output, fieldnames=summary_display[0].keys())
             writer.writeheader()
             writer.writerows(summary_display)
             csv_data = output.getvalue()
-            st.download_button("Export Full Report", csv_data, "trading_report.csv", "text/csv", key="analytics_export")
+            xlsx_data = rows_to_xlsx(summary_display, "Trading Report")
+            col_csv, col_xlsx, col_spacer = st.columns([1, 1, 4])
+            with col_csv:
+                st.download_button("Export CSV", csv_data, "trading_report.csv", "text/csv", key="analytics_export")
+            with col_xlsx:
+                st.download_button("Export Excel", xlsx_data, "trading_report.xlsx", XLSX_MIME, key="analytics_export_xlsx")
     else:
         st.info("No trading data available yet")

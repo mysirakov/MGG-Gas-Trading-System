@@ -7,6 +7,7 @@ from database import (
 )
 from components import load_material_icons, page_header, metric_card, section_header, empty_state
 from auth import is_admin
+from exports import rows_to_xlsx, XLSX_MIME
 
 def show_sales():
     load_material_icons()
@@ -76,7 +77,7 @@ def show_sales():
                 
             st.dataframe(display_filtered, width="stretch", height=400)
             
-            col1, col2 = st.columns([1, 4])
+            col1, col2, col3 = st.columns([1, 1, 3])
             with col1:
                 output = io.StringIO()
                 if filtered_df:
@@ -84,7 +85,10 @@ def show_sales():
                     writer.writeheader()
                     writer.writerows(filtered_df)
                 csv_data = output.getvalue()
-                st.download_button("Export", csv_data, "sales_export.csv", "text/csv", key="sales_export")
+                st.download_button("Export CSV", csv_data, "sales_export.csv", "text/csv", key="sales_export")
+            with col2:
+                xlsx_data = rows_to_xlsx(filtered_df, "Sales")
+                st.download_button("Export Excel", xlsx_data, "sales_export.xlsx", XLSX_MIME, key="sales_export_xlsx")
 
             
             st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
