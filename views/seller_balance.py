@@ -79,14 +79,14 @@ def show_seller_balance():
         section_header("history", "Payment History")
         
         if purchases_data:
-            display_cols = ['payment_date', 'supplier', 'payment_method', 'amount_sent_eur', 'amount_received_eur', 'invoice_number']
-            
+            display_cols = ['payment_date', 'receipt_date', 'supplier', 'payment_method', 'amount_sent_eur', 'amount_received_eur', 'invoice_number']
+
             history_display = []
             for p in purchases_data:
                 row = {}
                 for col in display_cols:
                     val = p.get(col)
-                    if col == 'payment_date' and val:
+                    if col in ['payment_date', 'receipt_date'] and val:
                         if isinstance(val, (date, datetime)):
                             row[col] = val.strftime('%b %d, %Y')
                         else:
